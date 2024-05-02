@@ -64,6 +64,7 @@ def generate_launch_description():
     ),
     launch_arguments={
       'checkTerrainConn': checkTerrainConn,
+      'robot_id': robot_id
     }.items()
   )
 
