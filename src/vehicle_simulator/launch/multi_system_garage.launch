@@ -11,6 +11,23 @@ def push_namespace(context: LaunchContext, robot_id):
   id_str = context.perform_substitution(robot_id)
   return [PushRosNamespace('robot_' + str(id_str))]
 
+def launch_rviz_node(context: LaunchContext, robot_id):
+  id_str = context.perform_substitution(robot_id)
+  rviz_config_file = os.path.join(get_package_share_directory('vehicle_simulator'), 'rviz', 'multi_' + id_str + '.rviz')
+  start_rviz = Node(
+    package='rviz2',
+    executable='rviz2',
+    arguments=['-d', rviz_config_file],
+    output='screen'
+  )
+  delayed_start_rviz = TimerAction(
+    period=8.0,
+    actions=[
+      start_rviz
+    ]
+  )
+  return [delayed_start_rviz]
+
 def generate_launch_description():
   robot_id = LaunchConfiguration('robot_id')
   world_name = LaunchConfiguration('world_name')
@@ -99,21 +116,6 @@ def generate_launch_description():
     }.items()
   )
 
-  rviz_config_file = os.path.join(get_package_share_directory('vehicle_simulator'), 'rviz', 'multi_vehicle_simulator.rviz')
-  start_rviz = Node(
-    package='rviz2',
-    executable='rviz2',
-    arguments=['-d', rviz_config_file],
-    output='screen'
-  )
-
-  delayed_start_rviz = TimerAction(
-    period=8.0,
-    actions=[
-      start_rviz
-    ]
-  )
-
   ld = LaunchDescription()
 
   # Add the actions
@@ -137,6 +139,6 @@ def generate_launch_description():
   ld.add_action(start_vehicle_simulator)
   ld.add_action(start_sensor_scan_generation)
   ld.add_action(start_visualization_tools)
-  ld.add_action(delayed_start_rviz)
+  ld.add_action(OpaqueFunction(function=launch_rviz_node, args=[robot_id]))
 
   return ld

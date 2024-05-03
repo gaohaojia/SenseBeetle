@@ -70,7 +70,7 @@ private:
     laserCloud->clear();
     pcl::fromROSMsg(*laserCloudIn, *laserCloud);
 
-    if (true) {
+    if (flipRegisteredScan) {
       int laserCloudSize = laserCloud->points.size();
       for (int i = 0; i < laserCloudSize; i++) {
         float temp = laserCloud->points[i].x;

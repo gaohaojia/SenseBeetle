@@ -15,3 +15,4 @@ src/vehicle_simulator/log/*
 !readme.txt
 .cache
 .vscode
+.clang-format
