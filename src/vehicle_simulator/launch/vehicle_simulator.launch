@@ -67,7 +67,7 @@ def generate_launch_description():
   declare_gui = DeclareLaunchArgument('gui', default_value='false', description='')
   declare_record = DeclareLaunchArgument('record', default_value='false', description='')
   declare_verbose = DeclareLaunchArgument('verbose', default_value='false', description='')
-  declare_world_name = DeclareLaunchArgument('world_name', default_value='garage', description='')
+  declare_world_name = DeclareLaunchArgument('world_name', default_value='indoor', description='')
   
   lidar_xacro = os.path.join(get_package_share_directory('vehicle_simulator'), 'urdf', 'lidar.urdf.xacro')
   lidar_description = Command(['xacro',' ', lidar_xacro])
