@@ -58,7 +58,7 @@ def generate_launch_description():
 
   start_vehicle_simulator = IncludeLaunchDescription(
     PythonLaunchDescriptionSource(os.path.join(
-      get_package_share_directory('vehicle_simulator'), 'launch', 'vehicle_simulator.launch')
+      get_package_share_directory('vehicle_simulator'), 'launch', 'vehicle_simulator.launch.py')
     ),
     launch_arguments={
       'world_name': world_name,
