@@ -1,26 +1,26 @@
+#include "rclcpp/rclcpp.hpp"
+#include <iostream>
 #include <math.h>
-#include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <iostream>
-#include "rclcpp/rclcpp.hpp"
+#include <time.h>
 
 #include "nav_msgs/msg/odometry.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
 
 #include "tf2/transform_datatypes.h"
-#include "tf2_ros/transform_broadcaster.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
+#include "tf2_ros/transform_broadcaster.h"
 
-#include <pcl_conversions/pcl_conversions.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
+#include <pcl_conversions/pcl_conversions.h>
 
 #include "message_filters/subscriber.h"
-#include "message_filters/synchronizer.h"
 #include "message_filters/sync_policies/approximate_time.h"
-#include "rmw/types.h"
+#include "message_filters/synchronizer.h"
 #include "rmw/qos_profiles.h"
+#include "rmw/types.h"
 
 using namespace std;
 
@@ -39,7 +39,7 @@ bool newTransformToMap = false;
 nav_msgs::msg::Odometry odometryIn;
 shared_ptr<rclcpp::Publisher<nav_msgs::msg::Odometry>> pubOdometryPointer;
 tf2::Stamped<tf2::Transform> transformToMap;
-geometry_msgs::msg::TransformStamped transformTfGeom ; 
+geometry_msgs::msg::TransformStamped transformTfGeom;
 
 unique_ptr<tf2_ros::TransformBroadcaster> tfBroadcasterPointer;
 shared_ptr<rclcpp::Publisher<sensor_msgs::msg::PointCloud2>> pubLaserCloud;
@@ -54,18 +54,20 @@ void laserCloudAndOdometryHandler(const nav_msgs::msg::Odometry::ConstSharedPtr 
 
   odometryIn = *odometry;
 
-  transformToMap.setOrigin(
-      tf2::Vector3(odometryIn.pose.pose.position.x, odometryIn.pose.pose.position.y, odometryIn.pose.pose.position.z));
-  transformToMap.setRotation(tf2::Quaternion(odometryIn.pose.pose.orientation.x, odometryIn.pose.pose.orientation.y,
-                                            odometryIn.pose.pose.orientation.z, odometryIn.pose.pose.orientation.w));
+  transformToMap.setOrigin(tf2::Vector3(odometryIn.pose.pose.position.x,
+                                        odometryIn.pose.pose.position.y,
+                                        odometryIn.pose.pose.position.z));
+  transformToMap.setRotation(tf2::Quaternion(odometryIn.pose.pose.orientation.x,
+                                             odometryIn.pose.pose.orientation.y,
+                                             odometryIn.pose.pose.orientation.z,
+                                             odometryIn.pose.pose.orientation.w));
 
   int laserCloudInNum = laserCloudIn->points.size();
 
   pcl::PointXYZ p1;
   tf2::Vector3 vec;
 
-  for (int i = 0; i < laserCloudInNum; i++)
-  {
+  for (int i = 0; i < laserCloudInNum; i++) {
     p1 = laserCloudIn->points[i];
     vec.setX(p1.x);
     vec.setY(p1.y);
@@ -107,28 +109,28 @@ int main(int argc, char** argv)
   message_filters::Subscriber<nav_msgs::msg::Odometry> subOdometry;
   message_filters::Subscriber<sensor_msgs::msg::PointCloud2> subLaserCloud;
 
-  typedef message_filters::sync_policies::ApproximateTime<nav_msgs::msg::Odometry, sensor_msgs::msg::PointCloud2> syncPolicy;
+  typedef message_filters::sync_policies::ApproximateTime<nav_msgs::msg::Odometry,
+                                                          sensor_msgs::msg::PointCloud2>
+    syncPolicy;
   typedef message_filters::Synchronizer<syncPolicy> Sync;
   boost::shared_ptr<Sync> sync_;
-  
+
   // Define qos_profile as the pre-defined rmw_qos_profile_sensor_data, but with depth equal to 1.
-  rmw_qos_profile_t qos_profile=
-  {
-    RMW_QOS_POLICY_HISTORY_KEEP_LAST,
-    1,
-    RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT,
-    RMW_QOS_POLICY_DURABILITY_VOLATILE,
-    RMW_QOS_DEADLINE_DEFAULT,
-    RMW_QOS_LIFESPAN_DEFAULT,
-    RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT,
-    RMW_QOS_LIVELINESS_LEASE_DURATION_DEFAULT,
-    false
-  };
+  rmw_qos_profile_t qos_profile = {RMW_QOS_POLICY_HISTORY_KEEP_LAST,
+                                   1,
+                                   RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT,
+                                   RMW_QOS_POLICY_DURABILITY_VOLATILE,
+                                   RMW_QOS_DEADLINE_DEFAULT,
+                                   RMW_QOS_LIFESPAN_DEFAULT,
+                                   RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT,
+                                   RMW_QOS_LIVELINESS_LEASE_DURATION_DEFAULT,
+                                   false};
 
   subOdometry.subscribe(nh, "state_estimation", qos_profile);
   subLaserCloud.subscribe(nh, "registered_scan", qos_profile);
   sync_.reset(new Sync(syncPolicy(100), subOdometry, subLaserCloud));
-  sync_->registerCallback(std::bind(laserCloudAndOdometryHandler, placeholders::_1, placeholders::_2));
+  sync_->registerCallback(
+    std::bind(laserCloudAndOdometryHandler, placeholders::_1, placeholders::_2));
   pubOdometryPointer = nh->create_publisher<nav_msgs::msg::Odometry>("state_estimation_at_scan", 5);
 
   tfBroadcasterPointer = std::make_unique<tf2_ros::TransformBroadcaster>(*nh);
