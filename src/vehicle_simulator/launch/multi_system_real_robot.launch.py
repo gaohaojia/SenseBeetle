@@ -41,54 +41,53 @@ def generate_launch_description():
     declare_checkTerrainConn = DeclareLaunchArgument('checkTerrainConn', default_value='true', description='')
     declare_robot_id = DeclareLaunchArgument('robot_id', default_value='0', description='')
 
-    start_livox_ros_driver2_node = Node(
-        package='livox_ros_driver2',
-        executable='livox_ros_driver2_node',
-        name='livox_lidar_publisher',
-        output='screen'
+    start_livox_mid360 = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(
+            get_package_share_directory('livox_ros_driver2'), 'launch', 'msg_MID360_launch.py'
+        ))
     )
     
     start_local_planner = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
-        get_package_share_directory('local_planner'), 'launch', 'local_planner.launch.py')
+            get_package_share_directory('local_planner'), 'launch', 'local_planner.launch.py')
         ),
         launch_arguments={
-        'cameraOffsetZ': cameraOffsetZ,
-        'goalX': vehicleX,
-        'goalY': vehicleY,
+            'cameraOffsetZ': cameraOffsetZ,
+            'goalX': vehicleX,
+            'goalY': vehicleY,
         }.items()
     )
 
     start_terrain_analysis = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
-        get_package_share_directory('terrain_analysis'), 'launch', 'terrain_analysis.launch.py')
+            get_package_share_directory('terrain_analysis'), 'launch', 'terrain_analysis.launch.py')
         )
     )
 
     start_terrain_analysis_ext = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
-        get_package_share_directory('terrain_analysis_ext'), 'launch', 'terrain_analysis_ext.launch.py')
+            get_package_share_directory('terrain_analysis_ext'), 'launch', 'terrain_analysis_ext.launch.py')
         ),
         launch_arguments={
-        'checkTerrainConn': checkTerrainConn,
+            'checkTerrainConn': checkTerrainConn,
         }.items()
     )
 
     start_sensor_scan_generation = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
-        get_package_share_directory('sensor_scan_generation'), 'launch', 'sensor_scan_generation.launch.py')
+            get_package_share_directory('sensor_scan_generation'), 'launch', 'sensor_scan_generation.launch.py')
         )
     )
 
     start_loam_interface = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
-        get_package_share_directory('loam_interface'), 'launch', 'loam_interface.launch.py')
+            get_package_share_directory('loam_interface'), 'launch', 'loam_interface.launch.py')
         )
     )
 
     start_joy = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
-        get_package_share_directory('joy'), 'launch', 'joy-launch.py'))
+            get_package_share_directory('joy'), 'launch', 'joy-launch.py'))
     )
 
     ld = LaunchDescription()
@@ -101,7 +100,7 @@ def generate_launch_description():
 
     ld.add_action(OpaqueFunction(function=push_namespace, args=[robot_id]))
 
-    ld.add_action(start_livox_ros_driver2_node)
+    ld.add_action(start_livox_mid360)
     ld.add_action(start_local_planner)
     ld.add_action(start_terrain_analysis)
     ld.add_action(start_terrain_analysis_ext)
