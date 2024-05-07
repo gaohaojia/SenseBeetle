@@ -19,8 +19,8 @@ def generate_launch_description():
                 ('/tf_static', 'tf_static'),
             ],
             parameters=[{
-                "stateEstimationTopic" : "integrated_to_init",
-                "registeredScanTopic" : "velodyne_cloud_registered",
+                "stateEstimationTopic" : "Odometry",
+                "registeredScanTopic" : "cloud_registered",
                 "flipStateEstimation" : True,
                 "flipRegisteredScan" : True,
                 "sendTF" : True,

@@ -46,6 +46,12 @@ def generate_launch_description():
             get_package_share_directory('livox_ros_driver2'), 'launch', 'msg_MID360_launch.py'
         ))
     )
+
+    start_fast_lio = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(
+            get_package_share_directory('fast_lio'), 'launch', 'mapping_mid360.launch.py'
+        ))
+    )
     
     start_local_planner = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
@@ -93,6 +99,7 @@ def generate_launch_description():
     ld = LaunchDescription()
 
     # Add the actions
+    ld.add_action(declare_robot_id)
     ld.add_action(declare_cameraOffsetZ)
     ld.add_action(declare_vehicleX)
     ld.add_action(declare_vehicleY)
@@ -101,6 +108,7 @@ def generate_launch_description():
     ld.add_action(OpaqueFunction(function=push_namespace, args=[robot_id]))
 
     ld.add_action(start_livox_mid360)
+    ld.add_action(start_fast_lio)
     ld.add_action(start_local_planner)
     ld.add_action(start_terrain_analysis)
     ld.add_action(start_terrain_analysis_ext)
