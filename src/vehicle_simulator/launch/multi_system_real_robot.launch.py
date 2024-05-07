@@ -40,6 +40,13 @@ def generate_launch_description():
     declare_vehicleY = DeclareLaunchArgument('vehicleY', default_value='0.0', description='')
     declare_checkTerrainConn = DeclareLaunchArgument('checkTerrainConn', default_value='true', description='')
     declare_robot_id = DeclareLaunchArgument('robot_id', default_value='0', description='')
+
+    start_livox_ros_driver2_node = Node(
+        package='livox_ros_driver2',
+        executable='livox_ros_driver2_node',
+        name='livox_lidar_publisher',
+        output='screen'
+    )
     
     start_local_planner = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
@@ -94,6 +101,7 @@ def generate_launch_description():
 
     ld.add_action(OpaqueFunction(function=push_namespace, args=[robot_id]))
 
+    ld.add_action(start_livox_ros_driver2_node)
     ld.add_action(start_local_planner)
     ld.add_action(start_terrain_analysis)
     ld.add_action(start_terrain_analysis_ext)
