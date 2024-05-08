@@ -23,7 +23,7 @@ def launch_rviz_node(context: LaunchContext, robot_id):
     delayed_start_rviz = TimerAction(
         period=8.0,
         actions=[
-        start_rviz
+            start_rviz
         ]
     )
     return [delayed_start_rviz]
