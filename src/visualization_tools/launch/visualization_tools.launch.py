@@ -17,13 +17,13 @@ def visualization_tools_node(context: LaunchContext, world_name):
             "metricFile" : os.path.join(get_package_share_directory('vehicle_simulator'), 'log', 'metrics'),
             "trajFile" : os.path.join(get_package_share_directory('vehicle_simulator'), 'log', 'trajectory'),
             "mapFile" : os.path.join(get_package_share_directory('vehicle_simulator'), 'mesh', world_name_str, 'preview', 'pointcloud.py'),
-            "overallMapVoxelSize" : "0.5",
-            "exploredAreaVoxelSize" : "0.3",
-            "exploredVolumeVoxelSize" : "0.5",
-            "transInterval" : "0.2",
-            "yawInterval" : "10.0",
-            "overallMapDisplayInterval" : "2",
-            "exploredAreaDisplayInterval" : "1",
+            "overallMapVoxelSize" : 0.5,
+            "exploredAreaVoxelSize" : 0.3,
+            "exploredVolumeVoxelSize" : 0.5,
+            "transInterval" : 0.2,
+            "yawInterval" : 10.0,
+            "overallMapDisplayInterval" : 2,
+            "exploredAreaDisplayInterval" : 1,
         }]
     )]
 
