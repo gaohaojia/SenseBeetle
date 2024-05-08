@@ -422,7 +422,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /robot_3/waypoint
+        Value: waypoint
   Transformation:
     Current:
       Class: rviz_default_plugins/TF
