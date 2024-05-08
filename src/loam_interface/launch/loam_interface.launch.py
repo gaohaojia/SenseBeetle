@@ -14,10 +14,10 @@ def generate_launch_description():
             executable="loamInterface",
             name="loamInterface",
             output="screen",
-            remappings=[
-                ('/tf', 'tf'),
-                ('/tf_static', 'tf_static'),
-            ],
+            # remappings=[
+            #     ('/tf', 'tf'),
+            #     ('/tf_static', 'tf_static'),
+            # ],
             parameters=[{
                 "stateEstimationTopic" : "Odometry",
                 "registeredScanTopic" : "cloud_registered",

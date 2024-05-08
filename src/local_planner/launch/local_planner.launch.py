@@ -14,10 +14,10 @@ def get_vehicle_trans_publisher(context: LaunchContext, sensorOffsetX, sensorOff
         package="tf2_ros",
         executable="static_transform_publisher",
         name="vehicleTransPublisher",
-        remappings=[
-            ('/tf', 'tf'),
-            ('/tf_static', 'tf_static'),
-        ],
+        # remappings=[
+        #     ('/tf', 'tf'),
+        #     ('/tf_static', 'tf_static'),
+        # ],
         arguments=['-'+sensorOffsetX_str, '-'+sensorOffsetY_str, '0', '0', '0', '0', 'sensor', 'vehicle']
     )
     return [vehicle_trans_publisher]
@@ -28,10 +28,10 @@ def get_sensor_trans_publisher(context: LaunchContext, cameraOffsetZ):
         package="tf2_ros",
         executable="static_transform_publisher",
         name="sensorTransPublisher",
-        remappings=[
-            ('/tf', 'tf'),
-            ('/tf_static', 'tf_static'),
-        ],
+        # remappings=[
+        #     ('/tf', 'tf'),
+        #     ('/tf_static', 'tf_static'),
+        # ],
         arguments=['0', '0', cameraOffsetZ_str, '-1.5707963', '0', '-1.5707963', 'sensor', 'camera']
     )
     return [sensor_trans_publisher]

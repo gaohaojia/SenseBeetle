@@ -14,9 +14,9 @@ def generate_launch_description():
             executable="sensorScanGeneration",
             name="sensorScanGeneration",
             output="screen",
-            remappings=[
-                ('/tf', 'tf'),
-                ('/tf_static', 'tf_static'),
-            ]
+            # remappings=[
+            #     ('/tf', 'tf'),
+            #     ('/tf_static', 'tf_static'),
+            # ]
         )
     ])
