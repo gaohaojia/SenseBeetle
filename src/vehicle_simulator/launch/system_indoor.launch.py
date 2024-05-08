@@ -32,58 +32,58 @@ def generate_launch_description():
     
     start_local_planner = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
-        get_package_share_directory('local_planner'), 'launch', 'local_planner.launch.py')
+            get_package_share_directory('local_planner'), 'launch', 'local_planner.launch.py')
         ),
         launch_arguments={
-        'cameraOffsetZ': cameraOffsetZ,
-        'goalX': vehicleX,
-        'goalY': vehicleY,
+            'cameraOffsetZ': cameraOffsetZ,
+            'goalX': vehicleX,
+            'goalY': vehicleY,
         }.items()
     )
 
     start_terrain_analysis = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
-        get_package_share_directory('terrain_analysis'), 'launch', 'terrain_analysis.launch.py')
+            get_package_share_directory('terrain_analysis'), 'launch', 'terrain_analysis.launch.py')
         )
     )
 
     start_terrain_analysis_ext = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
-        get_package_share_directory('terrain_analysis_ext'), 'launch', 'terrain_analysis_ext.launch.py')
+            get_package_share_directory('terrain_analysis_ext'), 'launch', 'terrain_analysis_ext.launch.py')
         ),
         launch_arguments={
-        'checkTerrainConn': checkTerrainConn,
+            'checkTerrainConn': checkTerrainConn,
         }.items()
     )
 
     start_vehicle_simulator = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
-        get_package_share_directory('vehicle_simulator'), 'launch', 'vehicle_simulator.launch.py')
+            get_package_share_directory('vehicle_simulator'), 'launch', 'vehicle_simulator.launch.py')
         ),
         launch_arguments={
-        'world_name': world_name,
-        'vehicleHeight': vehicleHeight,
-        'cameraOffsetZ': cameraOffsetZ,
-        'vehicleX': vehicleX,
-        'vehicleY': vehicleY,
-        'terrainZ': terrainZ,
-        'vehicleYaw': vehicleYaw,
-        'gui': gazebo_gui,
+            'world_name': world_name,
+            'vehicleHeight': vehicleHeight,
+            'cameraOffsetZ': cameraOffsetZ,
+            'vehicleX': vehicleX,
+            'vehicleY': vehicleY,
+            'terrainZ': terrainZ,
+            'vehicleYaw': vehicleYaw,
+            'gui': gazebo_gui,
         }.items()
     )
 
     start_sensor_scan_generation = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
-        get_package_share_directory('sensor_scan_generation'), 'launch', 'sensor_scan_generation.launch.py')
+            get_package_share_directory('sensor_scan_generation'), 'launch', 'sensor_scan_generation.launch.py')
         )
     )
 
     start_visualization_tools = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
-        get_package_share_directory('visualization_tools'), 'launch', 'visualization_tools.launch.py')
+            get_package_share_directory('visualization_tools'), 'launch', 'visualization_tools.launch.py')
         ),
         launch_arguments={
-        'world_name': world_name,
+            'world_name': world_name,
         }.items()
     )
 
@@ -97,9 +97,7 @@ def generate_launch_description():
 
     delayed_start_rviz = TimerAction(
         period=8.0,
-        actions=[
-        start_rviz
-        ]
+        actions=[start_rviz]
     )
 
     ld = LaunchDescription()

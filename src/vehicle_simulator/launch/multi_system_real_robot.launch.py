@@ -22,9 +22,7 @@ def launch_rviz_node(context: LaunchContext, robot_id):
     )
     delayed_start_rviz = TimerAction(
         period=8.0,
-        actions=[
-            start_rviz
-        ]
+        actions=[start_rviz]
     )
     return [delayed_start_rviz]
 
@@ -93,7 +91,8 @@ def generate_launch_description():
 
     start_joy = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
-            get_package_share_directory('joy'), 'launch', 'joy-launch.py'))
+            get_package_share_directory('joy'), 'launch', 'joy-launch.py')
+        )
     )
 
     ld = LaunchDescription()

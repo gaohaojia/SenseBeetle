@@ -81,8 +81,8 @@ def generate_launch_description():
             ('/tf_static', 'tf_static'),
         ],
         parameters=[{
-        'use_sim_time': use_sim_time,
-        'robot_description': lidar_description
+            'use_sim_time': use_sim_time,
+            'robot_description': lidar_description
         }]
     )
 
@@ -94,8 +94,8 @@ def generate_launch_description():
             ('/tf_static', 'tf_static'),
         ],
         arguments=[
-        '-entity', 'lidar',
-        '-topic', 'robot_description',
+            '-entity', 'lidar',
+            '-topic', 'robot_description',
         ],
         output='screen',
     )
@@ -109,8 +109,8 @@ def generate_launch_description():
             ('/tf_static', 'tf_static'),
         ],
         arguments=[
-        '-file', robot_xacro,
-        '-entity', 'robot'
+            '-file', robot_xacro,
+            '-entity', 'robot'
         ],
         output='screen',
     )
@@ -124,20 +124,22 @@ def generate_launch_description():
             ('/tf_static', 'tf_static'),
         ],
         arguments=[
-        '-file', camera_xacro,
-        '-entity', 'camera'
+            '-file', camera_xacro,
+            '-entity', 'camera'
         ],
         output='screen'
     )
 
     start_gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
-        get_package_share_directory('gazebo_ros'), 'launch', 'gazebo.launch.py'))
+            get_package_share_directory('gazebo_ros'), 'launch', 'gazebo.launch.py')
+        )
     )
 
     start_joy = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
-        get_package_share_directory('joy'), 'launch', 'joy-launch.py'))
+            get_package_share_directory('joy'), 'launch', 'joy-launch.py')
+        )
     )
 
     start_vehicle_simulator = Node(
@@ -179,9 +181,7 @@ def generate_launch_description():
 
     delayed_start_vehicle_simulator = TimerAction(
         period=5.0,
-        actions=[
-        start_vehicle_simulator
-        ]
+        actions=[start_vehicle_simulator]
     )
 
     ld = LaunchDescription()

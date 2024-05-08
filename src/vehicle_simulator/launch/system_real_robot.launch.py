@@ -23,42 +23,43 @@ def generate_launch_description():
         get_package_share_directory('local_planner'), 'launch', 'local_planner.launch')
         ),
         launch_arguments={
-        'cameraOffsetZ': cameraOffsetZ,
-        'goalX': vehicleX,
-        'goalY': vehicleY,
+            'cameraOffsetZ': cameraOffsetZ,
+            'goalX': vehicleX,
+            'goalY': vehicleY,
         }.items()
     )
 
     start_terrain_analysis = IncludeLaunchDescription(
         FrontendLaunchDescriptionSource(os.path.join(
-        get_package_share_directory('terrain_analysis'), 'launch', 'terrain_analysis.launch')
+            get_package_share_directory('terrain_analysis'), 'launch', 'terrain_analysis.launch')
         )
     )
 
     start_terrain_analysis_ext = IncludeLaunchDescription(
         FrontendLaunchDescriptionSource(os.path.join(
-        get_package_share_directory('terrain_analysis_ext'), 'launch', 'terrain_analysis_ext.launch')
+            get_package_share_directory('terrain_analysis_ext'), 'launch', 'terrain_analysis_ext.launch')
         ),
         launch_arguments={
-        'checkTerrainConn': checkTerrainConn,
+            'checkTerrainConn': checkTerrainConn,
         }.items()
     )
 
     start_sensor_scan_generation = IncludeLaunchDescription(
         FrontendLaunchDescriptionSource(os.path.join(
-        get_package_share_directory('sensor_scan_generation'), 'launch', 'sensor_scan_generation.launch')
+            get_package_share_directory('sensor_scan_generation'), 'launch', 'sensor_scan_generation.launch')
         )
     )
 
     start_loam_interface = IncludeLaunchDescription(
         FrontendLaunchDescriptionSource(os.path.join(
-        get_package_share_directory('loam_interface'), 'launch', 'loam_interface.launch')
+            get_package_share_directory('loam_interface'), 'launch', 'loam_interface.launch')
         )
     )
 
     start_joy = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
-        get_package_share_directory('joy'), 'launch', 'joy-launch.py'))
+            get_package_share_directory('joy'), 'launch', 'joy-launch.py')
+        )
     )
 
     rviz_config_file = os.path.join(get_package_share_directory('vehicle_simulator'), 'rviz', 'vehicle_simulator.rviz')
@@ -71,9 +72,7 @@ def generate_launch_description():
 
     delayed_start_rviz = TimerAction(
         period=8.0,
-        actions=[
-        start_rviz
-        ]
+        actions=[start_rviz]
     )
 
     ld = LaunchDescription()
