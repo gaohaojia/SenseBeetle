@@ -103,8 +103,8 @@ def generate_launch_description():
     )
 
     start_visualization_tools = IncludeLaunchDescription(
-        FrontendLaunchDescriptionSource(os.path.join(
-            get_package_share_directory('visualization_tools'), 'launch', 'visualization_tools.launch')
+        PythonLaunchDescriptionSource(os.path.join(
+            get_package_share_directory('visualization_tools'), 'launch', 'visualization_tools.launch.py')
         ),
         launch_arguments={
             'world_name': world_name,

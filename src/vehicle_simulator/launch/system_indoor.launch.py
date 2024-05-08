@@ -31,8 +31,8 @@ def generate_launch_description():
     declare_checkTerrainConn = DeclareLaunchArgument('checkTerrainConn', default_value='false', description='')
     
     start_local_planner = IncludeLaunchDescription(
-        FrontendLaunchDescriptionSource(os.path.join(
-        get_package_share_directory('local_planner'), 'launch', 'local_planner.launch')
+        PythonLaunchDescriptionSource(os.path.join(
+        get_package_share_directory('local_planner'), 'launch', 'local_planner.launch.py')
         ),
         launch_arguments={
         'cameraOffsetZ': cameraOffsetZ,
@@ -42,14 +42,14 @@ def generate_launch_description():
     )
 
     start_terrain_analysis = IncludeLaunchDescription(
-        FrontendLaunchDescriptionSource(os.path.join(
-        get_package_share_directory('terrain_analysis'), 'launch', 'terrain_analysis.launch')
+        PythonLaunchDescriptionSource(os.path.join(
+        get_package_share_directory('terrain_analysis'), 'launch', 'terrain_analysis.launch.py')
         )
     )
 
     start_terrain_analysis_ext = IncludeLaunchDescription(
-        FrontendLaunchDescriptionSource(os.path.join(
-        get_package_share_directory('terrain_analysis_ext'), 'launch', 'terrain_analysis_ext.launch')
+        PythonLaunchDescriptionSource(os.path.join(
+        get_package_share_directory('terrain_analysis_ext'), 'launch', 'terrain_analysis_ext.launch.py')
         ),
         launch_arguments={
         'checkTerrainConn': checkTerrainConn,
@@ -73,14 +73,14 @@ def generate_launch_description():
     )
 
     start_sensor_scan_generation = IncludeLaunchDescription(
-        FrontendLaunchDescriptionSource(os.path.join(
-        get_package_share_directory('sensor_scan_generation'), 'launch', 'sensor_scan_generation.launch')
+        PythonLaunchDescriptionSource(os.path.join(
+        get_package_share_directory('sensor_scan_generation'), 'launch', 'sensor_scan_generation.launch.py')
         )
     )
 
     start_visualization_tools = IncludeLaunchDescription(
-        FrontendLaunchDescriptionSource(os.path.join(
-        get_package_share_directory('visualization_tools'), 'launch', 'visualization_tools.launch')
+        PythonLaunchDescriptionSource(os.path.join(
+        get_package_share_directory('visualization_tools'), 'launch', 'visualization_tools.launch.py')
         ),
         launch_arguments={
         'world_name': world_name,
