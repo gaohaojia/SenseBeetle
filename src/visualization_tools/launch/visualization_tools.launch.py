@@ -6,7 +6,7 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource, Fro
 from launch_ros.actions import Node, PushRosNamespace
 from launch.substitutions import LaunchConfiguration
 
-def visualization_tools_node(context: LaunchContext, world_name):
+def visualization_tools_node(context: LaunchContext, world_name, robot_id):
     world_name_str = context.perform_substitution(world_name)
     return [Node(
         package='visualization_tools',
@@ -14,6 +14,7 @@ def visualization_tools_node(context: LaunchContext, world_name):
         name='visualizationTools',
         output='screen',
         parameters=[{
+            'robot_id': robot_id,
             "metricFile" : os.path.join(get_package_share_directory('vehicle_simulator'), 'log', 'metrics'),
             "trajFile" : os.path.join(get_package_share_directory('vehicle_simulator'), 'log', 'trajectory'),
             "mapFile" : os.path.join(get_package_share_directory('vehicle_simulator'), 'mesh', world_name_str, 'preview', 'pointcloud.ply'),
@@ -28,7 +29,9 @@ def visualization_tools_node(context: LaunchContext, world_name):
     )]
 
 def generate_launch_description():
+    robot_id = LaunchConfiguration('robot_id')
     world_name = LaunchConfiguration('world_name')
+    declare_robot_id = DeclareLaunchArgument('robot_id', default_value='0', description='')
     declare_world_name = DeclareLaunchArgument('world_name', default_value='garage', description='')
 
     real_time_plot_node = Node(
@@ -40,6 +43,6 @@ def generate_launch_description():
 
     ld = LaunchDescription()
     ld.add_action(declare_world_name)
-    ld.add_action(OpaqueFunction(function=visualization_tools_node, args=[world_name]))
+    ld.add_action(OpaqueFunction(function=visualization_tools_node, args=[world_name, robot_id]))
     ld.add_action(real_time_plot_node)
     return ld

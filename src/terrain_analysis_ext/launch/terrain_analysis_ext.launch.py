@@ -6,7 +6,9 @@ from launch_ros.actions import Node, PushRosNamespace
 from launch.substitutions import LaunchConfiguration 
 
 def generate_launch_description():
+    robot_id = LaunchConfiguration('robot_id')
     checkTerrainConn = LaunchConfiguration('checkTerrainConn')
+    declare_robot_id = DeclareLaunchArgument('robot_id', default_value='0', description='')
     declare_checkTerrainConn = DeclareLaunchArgument('checkTerrainConn', default_value='true', description='')
 
     terrain_analysis_ext_node = Node(
@@ -15,6 +17,7 @@ def generate_launch_description():
         name='terrainAnalysisExt',
         output='screen',
         parameters=[{
+            'robot_id': robot_id,
             "scanVoxelSize": 0.1,
             "decayTime": 10.0,
             "noDecayDis": 0.0,
@@ -37,6 +40,7 @@ def generate_launch_description():
 
     ld = LaunchDescription()
 
+    ld.add_action(declare_robot_id)
     ld.add_action(declare_checkTerrainConn)
     ld.add_action(terrain_analysis_ext_node)
     

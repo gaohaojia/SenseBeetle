@@ -14,6 +14,7 @@ def generate_launch_description():
             name="waypointExample",
             output="screen",
             parameters=[{
+                'robot_id': LaunchConfiguration('robot_id'),
                 "waypoint_file_dir" : os.path.join(get_package_share_directory('waypoint_example'), 'data', 'waypoints_garage.ply'),
                 "boundary_file_dir" : os.path.join(get_package_share_directory('waypoint_example'), 'data', 'boundary_garage.ply'),
                 "waypointXYRadius" : 0.5,

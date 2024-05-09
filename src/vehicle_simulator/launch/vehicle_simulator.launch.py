@@ -13,6 +13,7 @@ def declare_world_action(context, world_name):
     return [declare_world]
 
 def generate_launch_description():
+    robot_id = LaunchConfiguration('robot_id')
     sensorOffsetX = LaunchConfiguration('sensorOffsetX')
     sensorOffsetY = LaunchConfiguration('sensorOffsetY')
     vehicleHeight = LaunchConfiguration('vehicleHeight')
@@ -41,6 +42,7 @@ def generate_launch_description():
     verbose = LaunchConfiguration('verbose')
     world_name = LaunchConfiguration('world_name')
 
+    declare_robot_id = DeclareLaunchArgument('robot_id', default_value='0', description='')
     declare_sensorOffsetX = DeclareLaunchArgument('sensorOffsetX', default_value='0.0', description='')
     declare_sensorOffsetY = DeclareLaunchArgument('sensorOffsetY', default_value='0.0', description='')
     declare_vehicleHeight = DeclareLaunchArgument('vehicleHeight', default_value='0.75', description='')
@@ -151,6 +153,7 @@ def generate_launch_description():
         # ],
         parameters=[
         {
+            'robot_id': robot_id,
             'use_gazebo_time': False,
             'sensorOffsetX': sensorOffsetX,
             'sensorOffsetY': sensorOffsetY,
@@ -187,6 +190,7 @@ def generate_launch_description():
     ld = LaunchDescription()
 
     # Add the actions
+    ld.add_action(declare_robot_id)
     ld.add_action(declare_sensorOffsetX)
     ld.add_action(declare_sensorOffsetY)
     ld.add_action(declare_vehicleHeight)

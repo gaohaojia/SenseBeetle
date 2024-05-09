@@ -69,6 +69,7 @@ def generate_launch_description():
         name="localPlanner",
         output="screen",
         parameters=[{
+            'robot_id': robot_id,
             "pathFolder" : os.path.join(get_package_share_directory('local_planner'), 'paths'),
             "vehicleLength" : 0.6,
             "vehicleWidth" : 0.6,
@@ -117,6 +118,7 @@ def generate_launch_description():
         name="pathFollower",
         output="screen",
         parameters=[{
+            'robot_id': robot_id,
             "sensorOffsetX" : LaunchConfiguration('sensorOffsetX'),
             "sensorOffsetY" : LaunchConfiguration('sensorOffsetY'),
             "pubSkipNum" : 1,

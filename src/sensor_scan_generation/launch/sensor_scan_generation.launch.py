@@ -17,6 +17,9 @@ def generate_launch_description():
             # remappings=[
             #     ('/tf', 'tf'),
             #     ('/tf_static', 'tf_static'),
-            # ]
+            # ],
+            parameters=[{
+                'robot_id': LaunchConfiguration('robot_id'),
+            }]
         )
     ])
