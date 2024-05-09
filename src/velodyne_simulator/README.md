@@ -19,7 +19,7 @@ URDF description and Gazebo plugins to simulate Velodyne laser scanners
 * ```*origin``` URDF transform from parent link.
 * ```parent``` URDF parent link name. Default ```base_link```
 * ```name``` URDF model name. Also used as tf frame_id for PointCloud2 output. Default ```velodyne```
-* ```topic``` PointCloud2 output topic name. Default ```/velodyne_points```
+* ```topic``` PointCloud2 output topic name. Default ```velodyne_points```
 * ```hz``` Update rate in hz. Default ```10```
 * ```lasers``` Number of vertical spinning lasers. Default ```VLP-16: 16, HDL-32E: 32```
 * ```samples``` Nuber of horizontal rotating samples. Default ```VLP-16: 1875, HDL-32E: 2187```

@@ -25,6 +25,7 @@ using namespace std;
 
 const double PI = 3.1415926;
 
+int robot_id = 0;
 string waypoint_file_dir;
 string boundary_file_dir;
 double waypointXYRadius = 0.5;
@@ -159,6 +160,7 @@ int main(int argc, char** argv)
   rclcpp::init(argc, argv);
   nh = rclcpp::Node::make_shared("waypointExample");
 
+  nh->declare_parameter<int>("robot_id", robot_id);
   nh->declare_parameter<std::string>("waypoint_file_dir", waypoint_file_dir);
   nh->declare_parameter<std::string>("boundary_file_dir", boundary_file_dir);
   nh->declare_parameter<double>("waypointXYRadius", waypointXYRadius);
@@ -169,6 +171,7 @@ int main(int argc, char** argv)
   nh->declare_parameter<bool>("sendSpeed", sendSpeed);
   nh->declare_parameter<bool>("sendBoundary", sendBoundary);
 
+  nh->get_parameter("robot_id", robot_id);
   nh->get_parameter("waypoint_file_dir", waypoint_file_dir);
   nh->get_parameter("boundary_file_dir", boundary_file_dir);
   nh->get_parameter("waypointXYRadius", waypointXYRadius);
@@ -183,14 +186,14 @@ int main(int argc, char** argv)
   
   auto pubWaypoint = nh->create_publisher<geometry_msgs::msg::PointStamped>("way_point", 5);
   geometry_msgs::msg::PointStamped waypointMsgs;
-  waypointMsgs.header.frame_id = "map";
+  waypointMsgs.header.frame_id = "robot_" + std::to_string(robot_id) + "/map";
   
   auto pubSpeed = nh->create_publisher<std_msgs::msg::Float32>("speed", 5);
   std_msgs::msg::Float32 speedMsgs;
   
   auto pubBoundary = nh->create_publisher<geometry_msgs::msg::PolygonStamped>("navigation_boundary", 5);
   geometry_msgs::msg::PolygonStamped boundaryMsgs;
-  boundaryMsgs.header.frame_id = "map";
+  boundaryMsgs.header.frame_id = "robot_" + std::to_string(robot_id) + "/map";
 
   // read waypoints from file
   readWaypointFile();

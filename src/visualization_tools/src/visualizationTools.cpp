@@ -1,4 +1,5 @@
 #include <math.h>
+#include <string>
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -57,6 +58,7 @@ pcl::PointCloud<pcl::PointXYZI>::Ptr exploredVolumeCloud(new pcl::PointCloud<pcl
 pcl::PointCloud<pcl::PointXYZI>::Ptr exploredVolumeCloud2(new pcl::PointCloud<pcl::PointXYZI>());
 pcl::PointCloud<pcl::PointXYZI>::Ptr trajectory(new pcl::PointCloud<pcl::PointXYZI>());
 
+int robot_id = 0;
 const int systemDelay = 5;
 int systemDelayCount = 0;
 bool systemDelayInited = false;
@@ -147,7 +149,7 @@ void odometryHandler(const nav_msgs::msg::Odometry::ConstSharedPtr odom)
   sensor_msgs::msg::PointCloud2 trajectory2;
   pcl::toROSMsg(*trajectory, trajectory2);
   trajectory2.header.stamp = odom->header.stamp;
-  trajectory2.header.frame_id = "map";
+  trajectory2.header.frame_id = "robot_" + std::to_string(robot_id) + "/map";
   pubTrajectoryPtr->publish(trajectory2);
 }
 
@@ -195,7 +197,7 @@ void laserCloudHandler(const sensor_msgs::msg::PointCloud2::ConstSharedPtr laser
     sensor_msgs::msg::PointCloud2 exploredArea2;
     pcl::toROSMsg(*exploredAreaCloud, exploredArea2);
     exploredArea2.header.stamp = laserCloudIn->header.stamp;
-    exploredArea2.header.frame_id = "map";
+    exploredArea2.header.frame_id = "robot_" + std::to_string(robot_id) + "/map";
     pubExploredAreaPtr->publish(exploredArea2);
 
     exploredAreaDisplayCount = 0;
@@ -222,6 +224,7 @@ int main(int argc, char** argv)
   rclcpp::init(argc, argv);
   auto nh = rclcpp::Node::make_shared("visualizationTools");
 
+  nh->declare_parameter<int>("robot_id", robot_id);
   nh->declare_parameter<std::string>("metricFile", metricFile);
   nh->declare_parameter<std::string>("trajFile", trajFile);
   nh->declare_parameter<std::string>("mapFile", mapFile);
@@ -233,6 +236,7 @@ int main(int argc, char** argv)
   nh->declare_parameter<int>("overallMapDisplayInterval", overallMapDisplayInterval);
   nh->declare_parameter<int>("exploredAreaDisplayInterval", exploredAreaDisplayInterval);
 
+  nh->get_parameter("robot_id", robot_id);
   nh->get_parameter("metricFile", metricFile);
   nh->get_parameter("trajFile", trajFile);
   nh->get_parameter("mapFile", mapFile);
@@ -299,7 +303,7 @@ int main(int argc, char** argv)
     overallMapDisplayCount++;
     if (overallMapDisplayCount >= 100 * overallMapDisplayInterval) {
       overallMap2.header.stamp = rclcpp::Time(static_cast<uint64_t>(systemTime * 1e9));
-      overallMap2.header.frame_id = "map";
+      overallMap2.header.frame_id = "robot_" + std::to_string(robot_id) + "/map";
       pubOverallMap->publish(overallMap2);
 
       overallMapDisplayCount = 0;

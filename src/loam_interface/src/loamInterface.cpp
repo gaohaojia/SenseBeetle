@@ -37,6 +37,7 @@ public:
   : Node("loamInterface")
   {
     // Declare Parameters
+    this->declare_parameter<int>("robot_id", robot_id);
     this->declare_parameter<std::string>("stateEstimationTopic", stateEstimationTopic);
     this->declare_parameter<std::string>("registeredScanTopic", registeredScanTopic);
     this->declare_parameter<bool>("flipStateEstimation", flipStateEstimation);
@@ -45,6 +46,7 @@ public:
     this->declare_parameter<bool>("reverseTF", reverseTF);
 
     // Initialize Parameters
+    this->get_parameter("robot_id", robot_id);
     this->get_parameter("stateEstimationTopic", stateEstimationTopic);
     this->get_parameter("registeredScanTopic", registeredScanTopic);
     this->get_parameter("flipStateEstimation", flipStateEstimation);
@@ -84,7 +86,7 @@ private:
     sensor_msgs::msg::PointCloud2 laserCloud2;
     pcl::toROSMsg(*laserCloud, laserCloud2);
     laserCloud2.header.stamp = laserCloudIn->header.stamp;
-    laserCloud2.header.frame_id = "map";
+    laserCloud2.header.frame_id = "robot_" + std::to_string(robot_id) + "/map";
     pubLaserCloud->publish(laserCloud2);
   }
 
@@ -111,26 +113,26 @@ private:
     }
 
     // publish odometry messages
-    odomData.header.frame_id = "map";
-    odomData.child_frame_id = "sensor";
+    odomData.header.frame_id = "robot_" + std::to_string(robot_id) + "/map";
+    odomData.child_frame_id = "robot_" + std::to_string(robot_id) + "/sensor";
     pubOdometry->publish(odomData);
 
     // publish tf messages
-    odomTrans.frame_id_ = "map";
+    odomTrans.frame_id_ = "robot_" + std::to_string(robot_id) + "/map";
     odomTrans.setRotation(tf2::Quaternion(geoQuat.x, geoQuat.y, geoQuat.z, geoQuat.w));
     odomTrans.setOrigin(tf2::Vector3(odomData.pose.pose.position.x, odomData.pose.pose.position.y, odomData.pose.pose.position.z));
 
     if (sendTF) {
       if (!reverseTF) {
         transformTfGeom = tf2::toMsg(odomTrans);
-        transformTfGeom.child_frame_id = "sensor";
+        transformTfGeom.child_frame_id = "robot_" + std::to_string(robot_id) + "/sensor";
         transformTfGeom.header.stamp = odom->header.stamp;
         tfBroadcasterPointer->sendTransform(transformTfGeom);
       } 
       else{
         transformTfGeom.transform = tf2::toMsg(odomTrans.inverse());
-        transformTfGeom.header.frame_id = "map";
-        transformTfGeom.child_frame_id = "sensor";
+        transformTfGeom.header.frame_id = "robot_" + std::to_string(robot_id) + "/map";
+        transformTfGeom.child_frame_id = "robot_" + std::to_string(robot_id) + "/sensor";
         transformTfGeom.header.stamp = odom->header.stamp;
         tfBroadcasterPointer->sendTransform(transformTfGeom);
       }
@@ -147,6 +149,7 @@ private:
 
   const double PI = 3.1415926;
 
+  int robot_id = 0;
   string stateEstimationTopic = "integrated_to_init";
   string registeredScanTopic = "velodyne_cloud_registered";
   bool flipStateEstimation = true;

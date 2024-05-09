@@ -35,12 +35,12 @@
   </link>
 
   <xacro:include filename="$(find velodyne_description)/urdf/VLP-16.urdf.xacro"/>
-  <xacro:VLP-16 parent="base_link" name="velodyne" topic="/velodyne_points" organize_cloud="${organize_cloud}" hz="10" samples="440" gpu="${gpu}">
+  <xacro:VLP-16 parent="base_link" name="velodyne" topic="velodyne_points" organize_cloud="${organize_cloud}" hz="10" samples="440" gpu="${gpu}">
     <origin xyz="0 0 0.4" rpy="0 0 0" />
   </xacro:VLP-16>
 
   <xacro:include filename="$(find velodyne_description)/urdf/HDL-32E.urdf.xacro"/>
-  <xacro:HDL-32E parent="base_link" name="velodyne2" topic="/velodyne_points2" organize_cloud="${organize_cloud}" hz="10" samples="220" gpu="${gpu}">
+  <xacro:HDL-32E parent="base_link" name="velodyne2" topic="velodyne_points2" organize_cloud="${organize_cloud}" hz="10" samples="220" gpu="${gpu}">
     <origin xyz="0 0 0.6" rpy="0 0 0" />
   </xacro:HDL-32E>
 

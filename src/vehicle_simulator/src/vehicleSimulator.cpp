@@ -1,4 +1,5 @@
 #include <math.h>
+#include <string>
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,6 +48,7 @@ using namespace std;
 
 const double PI = 3.1415926;
 
+int robot_id = 0;
 bool use_gazebo_time = false;
 double cameraOffsetZ = 0;
 double sensorOffsetX = 0;
@@ -180,7 +182,7 @@ void scanHandler(const sensor_msgs::msg::PointCloud2::ConstSharedPtr scanIn)
   sensor_msgs::msg::PointCloud2 scanData2;
   pcl::toROSMsg(*scanData, scanData2);
   scanData2.header.stamp = rclcpp::Time(static_cast<uint64_t>(odomRecTime * 1e9));
-  scanData2.header.frame_id = "map";
+  scanData2.header.frame_id = "robot_" + std::to_string(robot_id) + "/map";
   pubScanPointer->publish(scanData2);
 }
 
@@ -311,6 +313,7 @@ int main(int argc, char** argv)
   rclcpp::init(argc, argv);
   auto nh = rclcpp::Node::make_shared("vehicleSimulator");
 
+  nh->declare_parameter<int>("robot_id", robot_id);
   nh->declare_parameter<bool>("use_gazebo_time", use_gazebo_time);
   nh->declare_parameter<double>("cameraOffsetZ", cameraOffsetZ);
   nh->declare_parameter<double>("sensorOffsetX", sensorOffsetX);
@@ -332,6 +335,7 @@ int main(int argc, char** argv)
   nh->declare_parameter<double>("InclFittingThre", InclFittingThre);
   nh->declare_parameter<double>("maxIncl", maxIncl);
 
+  nh->get_parameter("robot_id", robot_id);
   nh->get_parameter("use_gazebo_time", use_gazebo_time);
   nh->get_parameter("cameraOffsetZ", cameraOffsetZ);
   nh->get_parameter("sensorOffsetX", sensorOffsetX);
@@ -353,7 +357,7 @@ int main(int argc, char** argv)
   nh->get_parameter("InclFittingThre", InclFittingThre);
   nh->get_parameter("maxIncl", maxIncl);
 
-  auto subScan = nh->create_subscription<sensor_msgs::msg::PointCloud2>("/velodyne_points", 2, scanHandler);
+  auto subScan = nh->create_subscription<sensor_msgs::msg::PointCloud2>("velodyne_points", 2, scanHandler);
 
   auto subTerrainCloud = nh->create_subscription<sensor_msgs::msg::PointCloud2>("terrain_map", 2, terrainCloudHandler);
 
@@ -361,20 +365,20 @@ int main(int argc, char** argv)
 
   auto pubVehicleOdom = nh->create_publisher<nav_msgs::msg::Odometry>("state_estimation", 5);
   nav_msgs::msg::Odometry odomData;
-  odomData.header.frame_id = "map";
-  odomData.child_frame_id = "sensor";
+  odomData.header.frame_id = "robot_" + std::to_string(robot_id) + "/map";
+  odomData.child_frame_id = "robot_" + std::to_string(robot_id) + "/sensor";
 
   auto tfBroadcaster = std::make_unique<tf2_ros::TransformBroadcaster>(*nh);
   tf2::Stamped<tf2::Transform> odomTrans;
   geometry_msgs::msg::TransformStamped transformTfGeom ; 
-  odomTrans.frame_id_ = "map";
+  odomTrans.frame_id_ = "robot_" + std::to_string(robot_id) + "/map";
 
   gazebo_msgs::msg::EntityState cameraState;
-  cameraState.name = "camera";
+  cameraState.name = "robot_" + std::to_string(robot_id) + "/camera";
   gazebo_msgs::msg::EntityState lidarState;
-  lidarState.name = "lidar";
+  lidarState.name = "robot_" + std::to_string(robot_id) + "/lidar";
   gazebo_msgs::msg::EntityState robotState;
-  robotState.name = "robot";
+  robotState.name = "robot_" + std::to_string(robot_id) + "/robot";
 
   rclcpp::Client<gazebo_msgs::srv::SetEntityState>::SharedPtr client = nh->create_client<gazebo_msgs::srv::SetEntityState>("/set_entity_state");
   auto request  = std::make_shared<gazebo_msgs::srv::SetEntityState::Request>();
@@ -443,7 +447,7 @@ int main(int argc, char** argv)
     odomTrans.setRotation(tf2::Quaternion(geoQuat.x, geoQuat.y, geoQuat.z, geoQuat.w));
     odomTrans.setOrigin(tf2::Vector3(vehicleX, vehicleY, vehicleZ));
     transformTfGeom = tf2::toMsg(odomTrans);
-    transformTfGeom.child_frame_id = "sensor";
+    transformTfGeom.child_frame_id = "robot_" + std::to_string(robot_id) + "/sensor";
     transformTfGeom.header.stamp = odomTime;
     tfBroadcaster->sendTransform(transformTfGeom);
 
