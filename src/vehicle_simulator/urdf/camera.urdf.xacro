@@ -1,6 +1,6 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="example">
 
-  <link name="camera">
+  <link name="robot_0/camera">
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
@@ -22,8 +22,8 @@
     </inertial>
   </link>
 
-  <gazebo reference="camera">
-    <sensor type="camera" name="camera">
+  <gazebo reference="robot_0/camera">
+    <sensor type="robot_0/camera" name="robot_0/camera">
       <update_rate>15.0</update_rate>
       <camera name="head">
         <horizontal_fov>2.0</horizontal_fov>

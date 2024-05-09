@@ -41,14 +41,17 @@ def generate_launch_description():
 
     start_livox_mid360 = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
-            get_package_share_directory('livox_ros_driver2'), 'launch', 'msg_MID360_launch.py'
-        ))
+            get_package_share_directory('livox_ros_driver2'), 'launch', 'msg_MID360_launch.py')
+        )
     )
 
     start_fast_lio = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
-            get_package_share_directory('fast_lio'), 'launch', 'mapping_mid360.launch.py'
-        ))
+            get_package_share_directory('fast_lio'), 'launch', 'mapping_mid360.launch.py')
+        ),
+        launch_arguments={
+            'robot_id': robot_id,
+        }.items()
     )
     
     start_local_planner = IncludeLaunchDescription(
@@ -56,6 +59,7 @@ def generate_launch_description():
             get_package_share_directory('local_planner'), 'launch', 'local_planner.launch.py')
         ),
         launch_arguments={
+            'robot_id': robot_id,
             'cameraOffsetZ': cameraOffsetZ,
             'goalX': vehicleX,
             'goalY': vehicleY,
@@ -65,7 +69,10 @@ def generate_launch_description():
     start_terrain_analysis = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
             get_package_share_directory('terrain_analysis'), 'launch', 'terrain_analysis.launch.py')
-        )
+        ),
+        launch_arguments={
+            'robot_id': robot_id,
+        }.items()
     )
 
     start_terrain_analysis_ext = IncludeLaunchDescription(
@@ -73,6 +80,7 @@ def generate_launch_description():
             get_package_share_directory('terrain_analysis_ext'), 'launch', 'terrain_analysis_ext.launch.py')
         ),
         launch_arguments={
+            'robot_id': robot_id,
             'checkTerrainConn': checkTerrainConn,
         }.items()
     )
@@ -80,13 +88,19 @@ def generate_launch_description():
     start_sensor_scan_generation = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
             get_package_share_directory('sensor_scan_generation'), 'launch', 'sensor_scan_generation.launch.py')
-        )
+        ),
+        launch_arguments={
+            'robot_id': robot_id,
+        }.items()
     )
 
     start_loam_interface = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
             get_package_share_directory('loam_interface'), 'launch', 'loam_interface.launch.py')
-        )
+        ),
+        launch_arguments={
+            'robot_id': robot_id,
+        }.items()
     )
 
     start_joy = IncludeLaunchDescription(

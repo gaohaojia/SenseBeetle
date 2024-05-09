@@ -94,7 +94,7 @@ def generate_launch_description():
         #     ('/tf_static', 'tf_static'),
         # ],
         arguments=[
-            '-entity', 'lidar',
+            '-entity', 'robot_0/lidar',
             '-topic', 'robot_description',
         ],
         output='screen',
@@ -110,7 +110,7 @@ def generate_launch_description():
         # ],
         arguments=[
             '-file', robot_xacro,
-            '-entity', 'robot'
+            '-entity', 'robot_0/robot'
         ],
         output='screen',
     )
@@ -125,7 +125,7 @@ def generate_launch_description():
         # ],
         arguments=[
             '-file', camera_xacro,
-            '-entity', 'camera'
+            '-entity', 'robot_0/camera'
         ],
         output='screen'
     )

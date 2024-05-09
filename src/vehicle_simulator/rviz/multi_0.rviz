@@ -30,7 +30,7 @@ Visualization Manager:
       Length: 1.5
       Name: Vehicle
       Radius: 0.20000000298023224
-      Reference Frame: vehicle
+      Reference Frame: robot_0/vehicle
       Value: true
     - Class: rviz_default_plugins/Image
       Enabled: false
@@ -411,7 +411,7 @@ Visualization Manager:
   Enabled: true
   Global Options:
     Background Color: 0; 0; 0
-    Fixed Frame: map
+    Fixed Frame: robot_0/map
     Frame Rate: 15
   Name: root
   Tools:
@@ -446,7 +446,7 @@ Visualization Manager:
       Name: Current View
       Near Clip Distance: 0.009999999776482582
       Pitch: 1.5697963237762451
-      Target Frame: vehicle
+      Target Frame: robot_0/vehicle
       Value: Orbit (rviz)
       Yaw: 3.1404049396514893
     Saved: ~

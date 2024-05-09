@@ -56,6 +56,7 @@ def generate_launch_description():
             get_package_share_directory('local_planner'), 'launch', 'local_planner.launch.py')
         ),
         launch_arguments={
+            'robot_id': robot_id,
             'cameraOffsetZ': cameraOffsetZ,
             'goalX': vehicleX,
             'goalY': vehicleY,
@@ -65,7 +66,10 @@ def generate_launch_description():
     start_terrain_analysis = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
             get_package_share_directory('terrain_analysis'), 'launch', 'terrain_analysis.launch.py')
-        )
+        ),
+        launch_arguments={
+            'robot_id': robot_id,
+        }.items()
     )
 
     start_terrain_analysis_ext = IncludeLaunchDescription(
@@ -73,6 +77,7 @@ def generate_launch_description():
             get_package_share_directory('terrain_analysis_ext'), 'launch', 'terrain_analysis_ext.launch.py')
         ),
         launch_arguments={
+            'robot_id': robot_id,
             'checkTerrainConn': checkTerrainConn,
             'robot_id': robot_id
         }.items()
@@ -83,6 +88,7 @@ def generate_launch_description():
             get_package_share_directory('vehicle_simulator'), 'launch', 'vehicle_simulator.launch.py')
         ),
         launch_arguments={
+            'robot_id': robot_id,
             'world_name': world_name,
             'vehicleHeight': vehicleHeight,
             'cameraOffsetZ': cameraOffsetZ,
@@ -97,7 +103,10 @@ def generate_launch_description():
     start_sensor_scan_generation = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
             get_package_share_directory('sensor_scan_generation'), 'launch', 'sensor_scan_generation.launch.py')
-        )
+        ),
+        launch_arguments={
+            'robot_id': robot_id,
+        }.items()
     )
 
     start_visualization_tools = IncludeLaunchDescription(
@@ -105,6 +114,7 @@ def generate_launch_description():
             get_package_share_directory('visualization_tools'), 'launch', 'visualization_tools.launch.py')
         ),
         launch_arguments={
+            'robot_id': robot_id,
             'world_name': world_name,
         }.items()
     )
