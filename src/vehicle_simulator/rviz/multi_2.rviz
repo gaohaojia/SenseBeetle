@@ -250,7 +250,7 @@ Visualization Manager:
       Enabled: true
       History Length: 1
       Name: Waypoint
-      Radius: 1.2000000476837158
+      Radius: 0.3
       Topic:
         Depth: 5
         Durability Policy: Volatile
