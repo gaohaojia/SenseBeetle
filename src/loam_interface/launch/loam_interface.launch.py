@@ -22,8 +22,8 @@ def generate_launch_description():
                 'robot_id': LaunchConfiguration('robot_id'),
                 "stateEstimationTopic" : "Odometry",
                 "registeredScanTopic" : "cloud_registered",
-                "flipStateEstimation" : True,
-                "flipRegisteredScan" : True,
+                "flipStateEstimation" : False,
+                "flipRegisteredScan" : False,
                 "sendTF" : True,
                 "reverseTF" : False,
             }]

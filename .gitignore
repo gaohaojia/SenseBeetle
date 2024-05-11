@@ -11,6 +11,7 @@ src/vehicle_simulator/mesh/matterport/meshes/*
 src/vehicle_simulator/mesh/matterport/segmentations/*
 src/vehicle_simulator/mesh/matterport/preview/*
 src/vehicle_simulator/log/*
+src/FAST_LIO/Log/*
 !download_environments.sh
 !readme.txt
 .cache
