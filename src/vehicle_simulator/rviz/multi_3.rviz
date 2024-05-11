@@ -27,9 +27,9 @@ Visualization Manager:
   Displays:
     - Class: rviz_default_plugins/Axes
       Enabled: true
-      Length: 1.5
+      Length: 1
       Name: Vehicle
-      Radius: 0.20000000298023224
+      Radius: 0.1
       Reference Frame: robot_3/vehicle
       Value: true
     - Class: rviz_default_plugins/Image
