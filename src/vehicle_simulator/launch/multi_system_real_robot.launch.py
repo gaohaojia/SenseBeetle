@@ -144,9 +144,9 @@ def generate_launch_description():
     ld.add_action(declare_multiOffsetPositionX)
     ld.add_action(declare_multiOffsetPositionY)
     ld.add_action(declare_multiOffsetPositionZ)
-    ld.add_action(multiOffsetRotateX)
-    ld.add_action(multiOffsetRotateY)
-    ld.add_action(multiOffsetRotateZ)
+    ld.add_action(declare_multiOffsetRotateX)
+    ld.add_action(declare_multiOffsetRotateY)
+    ld.add_action(declare_multiOffsetRotateZ)
 
     ld.add_action(OpaqueFunction(function=push_namespace, args=[robot_id]))
 
