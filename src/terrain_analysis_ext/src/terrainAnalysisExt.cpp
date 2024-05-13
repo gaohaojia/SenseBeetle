@@ -583,6 +583,7 @@ int main(int argc, char** argv)
       terrainCloud2.header.frame_id = "robot_" + std::to_string(robot_id) + "/map";
       pubTerrainCloud->publish(terrainCloud2);
 
+      totalTerrainCloudElev->clear();
       // Rotate and translate the point cloud
       for (unsigned int i = 0; i < terrainCloudElev->size(); i++){
         pcl::PointXYZI new_point;
