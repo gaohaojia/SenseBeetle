@@ -26,7 +26,6 @@
 using namespace std;
 
 pcl::PointCloud<pcl::PointXYZI>::Ptr laserCloud(new pcl::PointCloud<pcl::PointXYZI>());
-pcl::PointCloud<pcl::PointXYZI>::Ptr totalLaserCloud(new pcl::PointCloud<pcl::PointXYZI>());
 nav_msgs::msg::Odometry odomData;
 tf2::Stamped<tf2::Transform> odomTrans;
 geometry_msgs::msg::TransformStamped transformTfGeom ; 
@@ -39,12 +38,6 @@ public:
   {
     // Declare Parameters
     this->declare_parameter<int>("robot_id", robot_id);
-    this->declare_parameter<double>("multiOffsetPositionX", 0);
-    this->declare_parameter<double>("multiOffsetPositionY", 0);
-    this->declare_parameter<double>("multiOffsetPositionZ", 0);
-    this->declare_parameter<double>("multiOffsetRotateX", 0);
-    this->declare_parameter<double>("multiOffsetRotateY", 0);
-    this->declare_parameter<double>("multiOffsetRotateZ", 0);
     this->declare_parameter<std::string>("stateEstimationTopic", stateEstimationTopic);
     this->declare_parameter<std::string>("registeredScanTopic", registeredScanTopic);
     this->declare_parameter<bool>("flipStateEstimation", flipStateEstimation);
@@ -54,12 +47,6 @@ public:
 
     // Initialize Parameters
     this->get_parameter("robot_id", robot_id);
-    this->get_parameter("multiOffsetPositionX", multiOffsetPositionX);
-    this->get_parameter("multiOffsetPositionY", multiOffsetPositionY);
-    this->get_parameter("multiOffsetPositionZ", multiOffsetPositionZ);
-    this->get_parameter("multiOffsetRotateX", multiOffsetRotateX);
-    this->get_parameter("multiOffsetRotateY", multiOffsetRotateY);
-    this->get_parameter("multiOffsetRotateZ", multiOffsetRotateZ);
     this->get_parameter("stateEstimationTopic", stateEstimationTopic);
     this->get_parameter("registeredScanTopic", registeredScanTopic);
     this->get_parameter("flipStateEstimation", flipStateEstimation);
@@ -69,7 +56,6 @@ public:
 
     tfBroadcasterPointer = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
     pubLaserCloud = this->create_publisher<sensor_msgs::msg::PointCloud2>("registered_scan", 5);
-    pubTotalLaserCloud = this->create_publisher<sensor_msgs::msg::PointCloud2>("total_registered_scan", 5);
     pubOdometry = this->create_publisher<nav_msgs::msg::Odometry>("state_estimation", 5);
 
     subLaserCloud = this->create_subscription<sensor_msgs::msg::PointCloud2>(
@@ -97,45 +83,11 @@ private:
     }
 
     // publish registered scan messages
-    sensor_msgs::msg::PointCloud2 laserCloud2, totalTerrainCloud2;
+    sensor_msgs::msg::PointCloud2 laserCloud2;
     pcl::toROSMsg(*laserCloud, laserCloud2);
     laserCloud2.header.stamp = laserCloudIn->header.stamp;
     laserCloud2.header.frame_id = "robot_" + std::to_string(robot_id) + "/map";
     pubLaserCloud->publish(laserCloud2);
-
-    totalLaserCloud->clear();
-    // Rotate and translate the point cloud
-    for (unsigned int i = 0; i < laserCloud->size(); i++){
-      pcl::PointXYZI new_point;
-      double rx_x, rx_y, rx_z, ry_x, ry_y, ry_z, rz_x, rz_y, rz_z;
-
-      double px = laserCloud->points[i].x;
-      double py = laserCloud->points[i].y;
-      double pz = laserCloud->points[i].z;
-      new_point.intensity = laserCloud->points[i].intensity;
-
-      rx_x = px;
-      rx_y = cos(multiOffsetRotateX)*py + (-sin(multiOffsetRotateX))*pz;
-      rx_z = sin(multiOffsetRotateX)*py + cos(multiOffsetRotateX)*pz;
-
-      ry_x = cos(multiOffsetRotateY)*rx_x + (-sin(multiOffsetRotateY))*rx_z;
-      ry_y = rx_y;
-      ry_z = sin(multiOffsetRotateY)*rx_x + cos(multiOffsetRotateY)*rx_z;
-
-      rz_x = cos(multiOffsetRotateZ)*ry_x + (-sin(multiOffsetRotateZ))*ry_y;
-      rz_y = sin(multiOffsetRotateZ)*ry_x + cos(multiOffsetRotateZ)*ry_y;
-      rz_z = ry_z;
-
-      new_point.x = rz_x + multiOffsetPositionX;
-      new_point.y = rz_y + multiOffsetPositionY;
-      new_point.z = rz_z + multiOffsetPositionZ;
-      totalLaserCloud->points.push_back(new_point);
-    }
-
-    pcl::toROSMsg(*totalLaserCloud, totalTerrainCloud2);
-    totalTerrainCloud2.header.stamp = laserCloudIn->header.stamp;
-    totalTerrainCloud2.header.frame_id = "map";
-    pubTotalLaserCloud->publish(totalTerrainCloud2);
   }
 
   void odometryHandler(const nav_msgs::msg::Odometry::SharedPtr odom) const
@@ -188,7 +140,6 @@ private:
   }
 
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubLaserCloud;
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubTotalLaserCloud;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pubOdometry;
 
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr subLaserCloud;
@@ -199,12 +150,6 @@ private:
   const double PI = 3.1415926;
 
   int robot_id = 0;
-  double multiOffsetPositionX = 0;
-  double multiOffsetPositionY = 0;
-  double multiOffsetPositionZ = 0;
-  double multiOffsetRotateX = 0;
-  double multiOffsetRotateY = 0;
-  double multiOffsetRotateZ = 0;
   string stateEstimationTopic = "integrated_to_init";
   string registeredScanTopic = "velodyne_cloud_registered";
   bool flipStateEstimation = true;
