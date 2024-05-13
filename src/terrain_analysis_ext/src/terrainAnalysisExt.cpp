@@ -36,6 +36,12 @@ using namespace std;
 const double PI = 3.1415926;
 
 int robot_id = 0;
+double multiOffsetPositionX = 0;
+double multiOffsetPositionY = 0;
+double multiOffsetPositionZ = 0;
+double multiOffsetRotateX = 0;
+double multiOffsetRotateY = 0;
+double multiOffsetRotateZ = 0;
 double scanVoxelSize = 0.1;
 double decayTime = 10.0;
 double noDecayDis = 0;
@@ -74,6 +80,7 @@ pcl::PointCloud<pcl::PointXYZI>::Ptr laserCloudCrop(new pcl::PointCloud<pcl::Poi
 pcl::PointCloud<pcl::PointXYZI>::Ptr laserCloudDwz(new pcl::PointCloud<pcl::PointXYZI>());
 pcl::PointCloud<pcl::PointXYZI>::Ptr terrainCloud(new pcl::PointCloud<pcl::PointXYZI>());
 pcl::PointCloud<pcl::PointXYZI>::Ptr terrainCloudElev(new pcl::PointCloud<pcl::PointXYZI>());
+pcl::PointCloud<pcl::PointXYZI>::Ptr totalTerrainCloudElev(new pcl::PointCloud<pcl::PointXYZI>());
 pcl::PointCloud<pcl::PointXYZI>::Ptr terrainCloudLocal(new pcl::PointCloud<pcl::PointXYZI>());
 pcl::PointCloud<pcl::PointXYZI>::Ptr terrainVoxelCloud[terrainVoxelNum];
 
@@ -180,6 +187,12 @@ int main(int argc, char** argv)
   auto nh = rclcpp::Node::make_shared("terrainAnalysisExt");
 
   nh->declare_parameter<int>("robot_id", robot_id);
+  nh->declare_parameter<double>("multiOffsetPositionX", 0);
+  nh->declare_parameter<double>("multiOffsetPositionY", 0);
+  nh->declare_parameter<double>("multiOffsetPositionZ", 0);
+  nh->declare_parameter<double>("multiOffsetRotateX", 0);
+  nh->declare_parameter<double>("multiOffsetRotateY", 0);
+  nh->declare_parameter<double>("multiOffsetRotateZ", 0);
   nh->declare_parameter<double>("scanVoxelSize", scanVoxelSize);
   nh->declare_parameter<double>("decayTime", decayTime);
   nh->declare_parameter<double>("noDecayDis", noDecayDis);
@@ -199,6 +212,12 @@ int main(int argc, char** argv)
   nh->declare_parameter<double>("localTerrainMapRadius", localTerrainMapRadius);
 
   nh->get_parameter("robot_id", robot_id);
+  nh->get_parameter("multiOffsetPositionX", multiOffsetPositionX);
+  nh->get_parameter("multiOffsetPositionY", multiOffsetPositionY);
+  nh->get_parameter("multiOffsetPositionZ", multiOffsetPositionZ);
+  nh->get_parameter("multiOffsetRotateX", multiOffsetRotateX);
+  nh->get_parameter("multiOffsetRotateY", multiOffsetRotateY);
+  nh->get_parameter("multiOffsetRotateZ", multiOffsetRotateZ);
   nh->get_parameter("scanVoxelSize", scanVoxelSize);
   nh->get_parameter("decayTime", decayTime);
   nh->get_parameter("noDecayDis", noDecayDis);
@@ -228,6 +247,8 @@ int main(int argc, char** argv)
   auto subTerrainCloudLocal = nh->create_subscription<sensor_msgs::msg::PointCloud2>("terrain_map", 2, terrainCloudLocalHandler);
 
   auto pubTerrainCloud = nh->create_publisher<sensor_msgs::msg::PointCloud2>("terrain_map_ext", 2);
+
+  auto pubTotalTerrainCloud = nh->create_publisher<sensor_msgs::msg::PointCloud2>("/total_terrain_map_ext", 2);
 
   for (int i = 0; i < terrainVoxelNum; i++)
   {
@@ -556,11 +577,44 @@ int main(int argc, char** argv)
       clearingCloud = false;
 
       // publish points with elevation
-      sensor_msgs::msg::PointCloud2 terrainCloud2;
+      sensor_msgs::msg::PointCloud2 terrainCloud2, totalTerrainCloud2;
       pcl::toROSMsg(*terrainCloudElev, terrainCloud2);
       terrainCloud2.header.stamp = rclcpp::Time(static_cast<uint64_t>(laserCloudTime * 1e9));
       terrainCloud2.header.frame_id = "robot_" + std::to_string(robot_id) + "/map";
       pubTerrainCloud->publish(terrainCloud2);
+
+      // Rotate and translate the point cloud
+      for (unsigned int i = 0; i < terrainCloudElev->size(); i++){
+        pcl::PointXYZI new_point;
+        double rx_x, rx_y, rx_z, ry_x, ry_y, ry_z, rz_x, rz_y, rz_z;
+
+        double px = terrainCloudElev->points[i].x;
+        double py = terrainCloudElev->points[i].y;
+        double pz = terrainCloudElev->points[i].z;
+        new_point.intensity = terrainCloudElev->points[i].intensity;
+
+        rx_x = px;
+        rx_y = cos(multiOffsetRotateX)*py + (-sin(multiOffsetRotateX))*pz;
+        rx_z = sin(multiOffsetRotateX)*py + cos(multiOffsetRotateX)*pz;
+
+        ry_x = cos(multiOffsetRotateY)*rx_x + (-sin(multiOffsetRotateY))*rx_z;
+        ry_y = rx_y;
+        ry_z = sin(multiOffsetRotateY)*rx_x + cos(multiOffsetRotateY)*rx_z;
+
+        rz_x = cos(multiOffsetRotateZ)*ry_x + (-sin(multiOffsetRotateZ))*ry_y;
+        rz_y = sin(multiOffsetRotateZ)*ry_x + cos(multiOffsetRotateZ)*ry_y;
+        rz_z = ry_z;
+
+        new_point.x = rz_x + multiOffsetPositionX;
+        new_point.y = rz_y + multiOffsetPositionY;
+        new_point.z = rz_z + multiOffsetPositionZ;
+        totalTerrainCloudElev->points.push_back(new_point);
+      }
+
+      pcl::toROSMsg(*totalTerrainCloudElev, totalTerrainCloud2);
+      totalTerrainCloud2.header.stamp = rclcpp::Time(static_cast<uint64_t>(laserCloudTime * 1e9));
+      totalTerrainCloud2.header.frame_id = "map";
+      pubTotalTerrainCloud->publish(totalTerrainCloud2);
     }
 
     status = rclcpp::ok();

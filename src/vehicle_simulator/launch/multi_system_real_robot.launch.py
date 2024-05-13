@@ -32,12 +32,24 @@ def generate_launch_description():
     vehicleX = LaunchConfiguration('vehicleX')
     vehicleY = LaunchConfiguration('vehicleY')
     checkTerrainConn = LaunchConfiguration('checkTerrainConn')
+    multiOffsetPositionX = LaunchConfiguration('multiOffsetPositionX')
+    multiOffsetPositionY = LaunchConfiguration('multiOffsetPositionY')
+    multiOffsetPositionZ = LaunchConfiguration('multiOffsetPositionZ')
+    multiOffsetRotateX = LaunchConfiguration('multiOffsetRotateX')
+    multiOffsetRotateY = LaunchConfiguration('multiOffsetRotateY')
+    multiOffsetRotateZ = LaunchConfiguration('multiOffsetRotateZ')
     
     declare_cameraOffsetZ = DeclareLaunchArgument('cameraOffsetZ', default_value='0.0', description='')
     declare_vehicleX = DeclareLaunchArgument('vehicleX', default_value='0.0', description='')
     declare_vehicleY = DeclareLaunchArgument('vehicleY', default_value='0.0', description='')
     declare_checkTerrainConn = DeclareLaunchArgument('checkTerrainConn', default_value='true', description='')
     declare_robot_id = DeclareLaunchArgument('robot_id', default_value='0', description='')
+    declare_multiOffsetPositionX = DeclareLaunchArgument('multiOffsetPositionX', default_value='0', description='')
+    declare_multiOffsetPositionY = DeclareLaunchArgument('multiOffsetPositionY', default_value='0', description='')
+    declare_multiOffsetPositionZ = DeclareLaunchArgument('multiOffsetPositionZ', default_value='0', description='')
+    declare_multiOffsetRotateX = DeclareLaunchArgument('multiOffsetRotateX', default_value='0', description='')
+    declare_multiOffsetRotateY = DeclareLaunchArgument('multiOffsetRotateY', default_value='0', description='')
+    declare_multiOffsetRotateZ = DeclareLaunchArgument('multiOffsetRotateZ', default_value='0', description='')
 
     start_livox_mid360 = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
@@ -72,6 +84,12 @@ def generate_launch_description():
         ),
         launch_arguments={
             'robot_id': robot_id,
+            'multiOffsetPositionX': multiOffsetPositionX,
+            'multiOffsetPositionY': multiOffsetPositionY,
+            'multiOffsetPositionZ': multiOffsetPositionZ,
+            'multiOffsetRotateX': multiOffsetRotateX,
+            'multiOffsetRotateY': multiOffsetRotateY,
+            'multiOffsetRotateZ': multiOffsetRotateZ,
         }.items()
     )
 
@@ -82,6 +100,12 @@ def generate_launch_description():
         launch_arguments={
             'robot_id': robot_id,
             'checkTerrainConn': checkTerrainConn,
+            'multiOffsetPositionX': multiOffsetPositionX,
+            'multiOffsetPositionY': multiOffsetPositionY,
+            'multiOffsetPositionZ': multiOffsetPositionZ,
+            'multiOffsetRotateX': multiOffsetRotateX,
+            'multiOffsetRotateY': multiOffsetRotateY,
+            'multiOffsetRotateZ': multiOffsetRotateZ,
         }.items()
     )
 
@@ -117,6 +141,12 @@ def generate_launch_description():
     ld.add_action(declare_vehicleX)
     ld.add_action(declare_vehicleY)
     ld.add_action(declare_checkTerrainConn)
+    ld.add_action(declare_multiOffsetPositionX)
+    ld.add_action(declare_multiOffsetPositionY)
+    ld.add_action(declare_multiOffsetPositionZ)
+    ld.add_action(multiOffsetRotateX)
+    ld.add_action(multiOffsetRotateY)
+    ld.add_action(multiOffsetRotateZ)
 
     ld.add_action(OpaqueFunction(function=push_namespace, args=[robot_id]))
 
