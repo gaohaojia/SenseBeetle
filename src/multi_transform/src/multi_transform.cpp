@@ -14,7 +14,7 @@
 namespace multi_transform
 {
 MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions& options)
-  : Node("multi_transform_node", options)
+  : Node("multi_transform", options)
 {
   this->declare_parameter<int>("robot_id", 0);
   this->get_parameter("robot_id", robot_id);
