@@ -11,7 +11,7 @@ def generate_launch_description():
 
     multi_transform_node = Node(
         package='multi_transform',
-        executable='multi_transform_node',
+        executable='multi_transform',
         name='multi_transform',
         output='screen',
         parameters=[{
