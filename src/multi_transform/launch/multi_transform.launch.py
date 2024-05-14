@@ -7,7 +7,7 @@ from launch.substitutions import LaunchConfiguration
 
 def generate_launch_description():
     robot_id = LaunchConfiguration('robot_id')
-    declare_robot_id = DeclareLaunchArgument('robot_id', 0)
+    declare_robot_id = DeclareLaunchArgument('robot_id', default_value='0', description='')
 
     multi_transform_node = Node(
         package='multi_transform',
