@@ -105,6 +105,6 @@ void MultiTransformNode::RegisteredScanCallBack(const sensor_msgs::msg::PointClo
 }
 
 void MultiTransformNode::StateEstimationAtScanCallBack(const nav_msgs::msg::Odometry::ConstSharedPtr state_estimation_at_scan_msg){
-  std::shared_ptr<nav_msgs::msg::Odometry> odom_temp = std::make_shared<nav_msgs::msg::Odometry>(new nav_msgs::msg::Odometry(*state_estimation_at_scan_msg));
+  total_state_estimation_at_scan_pub_->publish(*state_estimation_at_scan_msg);
 }
 } // namespace multi_transform
