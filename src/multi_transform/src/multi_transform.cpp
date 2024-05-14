@@ -9,6 +9,7 @@
 #include <tf2/LinearMath/Transform.h>
 #include <tf2/LinearMath/Vector3.h>
 #include <tf2/convert.h>
+#include <tf2/time.h>
 #include <tf2/transform_datatypes.h>
 #include <tf2_eigen/tf2_eigen.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
@@ -61,7 +62,7 @@ MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions& options)
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
   try {
     transformStamped = std::make_shared<geometry_msgs::msg::TransformStamped>(
-      tf_buffer_->lookupTransform(toFrameRel, fromFrameRel, tf2::TimePointZero));
+      tf_buffer_->lookupTransform(toFrameRel, fromFrameRel, tf2::TimePointZero, tf2::durationFromSec(10.0)));
   } catch (const tf2::TransformException& ex) {
     RCLCPP_INFO(this->get_logger(),
                 "Could not transform %s to %s: %s",

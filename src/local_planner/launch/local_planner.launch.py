@@ -51,7 +51,7 @@ def get_id_map_trans_publisher(context: LaunchContext, offsetList, robot_id):
         #     ('/tf', 'tf'),
         #     ('/tf_static', 'tf_static'),
         # ],
-        arguments=[*offsetList_str, 'robot_' + robot_id_str + '/map', 'map']
+        arguments=[*offsetList_str, 'map', 'robot_' + robot_id_str + '/map']
     )
     return [sensor_trans_publisher]
 
