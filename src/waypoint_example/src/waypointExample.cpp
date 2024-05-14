@@ -184,7 +184,7 @@ int main(int argc, char** argv)
   
   auto subPose = nh->create_subscription<nav_msgs::msg::Odometry>("state_estimation", 5, poseHandler);
   
-  auto pubWaypoint = nh->create_publisher<geometry_msgs::msg::PointStamped>("way_point", 5);
+  auto pubWaypoint = nh->create_publisher<geometry_msgs::msg::PointStamped>("local_way_point", 5);
   geometry_msgs::msg::PointStamped waypointMsgs;
   waypointMsgs.header.frame_id = "robot_" + std::to_string(robot_id) + "/map";
   
