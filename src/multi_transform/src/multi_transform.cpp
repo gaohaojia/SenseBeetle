@@ -82,7 +82,7 @@ void MultiTransformNode::TerrainMapCallBack(
   pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_result(new pcl::PointCloud<pcl::PointXYZI>());
   pcl::fromROSMsg(*terrain_map_msg, *pointcloud_tmp);
   pcl::transformPointCloud(*pointcloud_tmp, *pointcloud_result, *fromIdMapToMap);
-  std::shared_ptr<sensor_msgs::msg::PointCloud2> totalTerrainCloud;
+  std::shared_ptr<sensor_msgs::msg::PointCloud2> totalTerrainCloud(new sensor_msgs::msg::PointCloud2());
   pcl::toROSMsg(*pointcloud_result, *totalTerrainCloud);
   totalTerrainCloud->header.stamp = terrain_map_msg->header.stamp;
   totalTerrainCloud->header.frame_id = "map";
@@ -96,7 +96,7 @@ void MultiTransformNode::TerrainMapExtCallBack(
   pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_result(new pcl::PointCloud<pcl::PointXYZI>());
   pcl::fromROSMsg(*terrain_map_ext_msg, *pointcloud_tmp);
   pcl::transformPointCloud(*pointcloud_tmp, *pointcloud_result, *fromIdMapToMap);
-  std::shared_ptr<sensor_msgs::msg::PointCloud2> totalTerrainExtCloud;
+  std::shared_ptr<sensor_msgs::msg::PointCloud2> totalTerrainExtCloud(new sensor_msgs::msg::PointCloud2());
   pcl::toROSMsg(*pointcloud_result, *totalTerrainExtCloud);
   totalTerrainExtCloud->header.stamp = terrain_map_ext_msg->header.stamp;
   totalTerrainExtCloud->header.frame_id = "map";
@@ -108,7 +108,7 @@ void MultiTransformNode::RegisteredScanCallBack(const sensor_msgs::msg::PointClo
   pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_result(new pcl::PointCloud<pcl::PointXYZI>());
   pcl::fromROSMsg(*registered_scan_msg, *pointcloud_tmp);
   pcl::transformPointCloud(*pointcloud_tmp, *pointcloud_result, *fromIdMapToMap);
-  std::shared_ptr<sensor_msgs::msg::PointCloud2> registeredScanCloud;
+  std::shared_ptr<sensor_msgs::msg::PointCloud2> registeredScanCloud(new sensor_msgs::msg::PointCloud2());
   pcl::toROSMsg(*pointcloud_result, *registeredScanCloud);
   registeredScanCloud->header.stamp = registered_scan_msg->header.stamp;
   registeredScanCloud->header.frame_id = "map";
