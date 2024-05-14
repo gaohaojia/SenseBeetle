@@ -84,12 +84,6 @@ def generate_launch_description():
         ),
         launch_arguments={
             'robot_id': robot_id,
-            'multiOffsetPositionX': multiOffsetPositionX,
-            'multiOffsetPositionY': multiOffsetPositionY,
-            'multiOffsetPositionZ': multiOffsetPositionZ,
-            'multiOffsetRotateR': multiOffsetRotateR,
-            'multiOffsetRotateP': multiOffsetRotateP,
-            'multiOffsetRotateY': multiOffsetRotateY,
         }.items()
     )
 
@@ -100,12 +94,6 @@ def generate_launch_description():
         launch_arguments={
             'robot_id': robot_id,
             'checkTerrainConn': checkTerrainConn,
-            'multiOffsetPositionX': multiOffsetPositionX,
-            'multiOffsetPositionY': multiOffsetPositionY,
-            'multiOffsetPositionZ': multiOffsetPositionZ,
-            'multiOffsetRotateR': multiOffsetRotateR,
-            'multiOffsetRotateP': multiOffsetRotateP,
-            'multiOffsetRotateY': multiOffsetRotateY,
         }.items()
     )
 
