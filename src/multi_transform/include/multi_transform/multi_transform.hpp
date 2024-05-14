@@ -41,16 +41,19 @@ private:
   void TerrainMapExtCallBack(const sensor_msgs::msg::PointCloud2::ConstSharedPtr terrain_map_ext_msg);
   void RegisteredScanCallBack(const sensor_msgs::msg::PointCloud2::ConstSharedPtr registered_scan_msg);
   void StateEstimationAtScanCallBack(const nav_msgs::msg::Odometry::ConstSharedPtr state_estimation_at_scan_msg);
+  void WayPointCallBack(const geometry_msgs::msg::PointStamped::ConstSharedPtr way_point_msg);
 
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr terrain_map_sub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr terrain_map_ext_sub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr registered_scan_sub_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr state_estimation_at_scan_sub_;
+  rclcpp::Subscription<geometry_msgs::msg::PointStamped>::SharedPtr way_point_sub_;
 
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr total_terrain_map_pub_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr total_terrain_map_ext_pub_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr total_registered_scan_pub_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr total_state_estimation_at_scan_pub_;
+  rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr local_way_point_pub_;
 };
 }  // namespace multi_transform
 

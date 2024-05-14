@@ -1,4 +1,5 @@
 #include <functional>
+#include <geometry_msgs/msg/detail/point_stamped__struct.hpp>
 #include <memory>
 #include <nav_msgs/msg/detail/odometry__struct.hpp>
 #include <pcl/common/transforms.h>
@@ -34,15 +35,21 @@ MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions& options)
     "state_estimation_at_scan",
     5,
     std::bind(&MultiTransformNode::StateEstimationAtScanCallBack, this, std::placeholders::_1));
+  way_point_sub_ = this->create_subscription<geometry_msgs::msg::PointStamped>(
+    "way_point",
+    2,
+    std::bind(&MultiTransformNode::WayPointCallBack, this, std::placeholders::_1));
 
   total_terrain_map_pub_ =
     this->create_publisher<sensor_msgs::msg::PointCloud2>("/total_terrain_map", 2);
   total_terrain_map_ext_pub_ =
     this->create_publisher<sensor_msgs::msg::PointCloud2>("/total_terrain_map_ext", 2);
   total_registered_scan_pub_ =
-    this->create_publisher<sensor_msgs::msg::PointCloud2>("total_registered_scan", 2);
+    this->create_publisher<sensor_msgs::msg::PointCloud2>("total_registered_scan", 5);
   total_state_estimation_at_scan_pub_ =
-    this->create_publisher<nav_msgs::msg::Odometry>("total_state_estimation_at_scan", 2);
+    this->create_publisher<nav_msgs::msg::Odometry>("total_state_estimation_at_scan", 5);
+  local_way_point_pub_ =
+    this->create_publisher<geometry_msgs::msg::PointStamped>("local_way_point", 2);
 
   std::shared_ptr<geometry_msgs::msg::TransformStamped> transformStamped;
   std::string fromFrameRel = "robot_" + std::to_string(robot_id) + "/map";
@@ -106,5 +113,10 @@ void MultiTransformNode::RegisteredScanCallBack(const sensor_msgs::msg::PointClo
 
 void MultiTransformNode::StateEstimationAtScanCallBack(const nav_msgs::msg::Odometry::ConstSharedPtr state_estimation_at_scan_msg){
   total_state_estimation_at_scan_pub_->publish(*state_estimation_at_scan_msg);
+}
+
+void MultiTransformNode::WayPointCallBack(const geometry_msgs::msg::PointStamped::ConstSharedPtr way_point_msg){
+  std::shared_ptr<geometry_msgs::msg::PointStamped> local_point = std::make_shared<geometry_msgs::msg::PointStamped>(tf_buffer_->transform(*way_point_msg, "robot_" + std::to_string(robot_id) + "/map"));
+  local_way_point_pub_->publish(*local_point);
 }
 } // namespace multi_transform
