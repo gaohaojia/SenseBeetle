@@ -1,49 +1,61 @@
 cmake_minimum_required(VERSION 3.10)
 project(multi_transform)
 
-# Default to C99
-if(NOT CMAKE_C_STANDARD)
-  set(CMAKE_C_STANDARD 99)
-endif()
+## Use C++14
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Default to C++14
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
-endif()
+## By adding -Wall and -Werror, the compiler does not ignore warnings anymore,
+## enforcing cleaner code.
+add_definitions(-Wall -Werror)
 
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
-endif()
+## Export compile commands for clangd
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-find_package(ament_cmake REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(nav_msgs REQUIRED)
-find_package(geometry_msgs REQUIRED)
-find_package(sensor_msgs REQUIRED)
-find_package(tf2_ros REQUIRED)
-find_package(tf2_geometry_msgs REQUIRED)
-find_package(tf2 REQUIRED)
-find_package(tf2_eigen REQUIRED)
-find_package(pcl_conversions REQUIRED)
-find_package(pcl_ros REQUIRED)
-find_package(PCL REQUIRED)
+#######################
+## Find dependencies ##
+#######################
 
-add_executable(multi_transform src/multi_transform.cpp)
-ament_target_dependencies(multi_transform rclcpp sensor_msgs nav_msgs geometry_msgs tf2 tf2_eigen tf2_ros tf2_geometry_msgs pcl_ros pcl_conversions PCL)
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
-install(TARGETS
-  multi_transform
-  DESTINATION lib/${PROJECT_NAME})
+###########
+## Build ##
+###########
 
-install(
-  DIRECTORY
-  launch
-  DESTINATION share/${PROJECT_NAME}
+ament_auto_add_library(${PROJECT_NAME} SHARED
+  src/multi_transform.cpp
 )
+
+rclcpp_components_register_node(${PROJECT_NAME}
+  PLUGIN multi_transform::MultiTransformNode
+  EXECUTABLE ${PROJECT_NAME}_node
+)
+
+#############
+## Testing ##
+#############
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
+  list(APPEND AMENT_LINT_AUTO_EXCLUDE
+    ament_cmake_copyright
+    ament_cmake_uncrustify
+    ament_cmake_cpplint
+  )
   ament_lint_auto_find_test_dependencies()
+
+  # find_package(ament_cmake_gtest)
+  # set(TEST_NAME test_kalman_filter)
+  # ament_add_gtest(${TEST_NAME} test/${TEST_NAME}.cpp)
+  # target_link_libraries(${TEST_NAME} ${PROJECT_NAME})
 endif()
 
-ament_package()
+#############
+## Install ##
+#############
+
+ament_auto_package(
+  INSTALL_TO_SHARE
+  launch
+)
