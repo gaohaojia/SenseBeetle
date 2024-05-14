@@ -6,15 +6,22 @@ from launch_ros.actions import Node, PushRosNamespace
 from launch.substitutions import LaunchConfiguration 
 
 def generate_launch_description():
+    robot_id = LaunchConfiguration('robot_id')
+    declare_robot_id = DeclareLaunchArgument('robot_id', 0)
+
     multi_transform_node = Node(
         package='multi_transform',
         executable='multi_transform',
         name='multi_transform',
-        output='screen'
+        output='screen',
+        parameters=[{
+            'robot_id': robot_id
+        }]
     )
 
     ld = LaunchDescription()
 
+    ld.add_action(declare_robot_id)
     ld.add_action(multi_transform_node)
     
     return ld

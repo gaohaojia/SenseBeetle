@@ -57,7 +57,10 @@ def generate_launch_description():
     start_multi_transform = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
             get_package_share_directory('multi_transform'), 'launch', 'multi_transform.launch.py')
-        )
+        ),
+        launch_arguments={
+            'robot_id': robot_id
+        }.items()
     )
     
     start_local_planner = IncludeLaunchDescription(
