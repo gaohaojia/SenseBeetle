@@ -53,6 +53,12 @@ def generate_launch_description():
             'robot_id': robot_id,
         }.items()
     )
+
+    start_multi_transform = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(
+            get_package_share_directory('multi_transform'), 'launch', 'multi_transform.launch.py')
+        )
+    )
     
     start_local_planner = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
@@ -122,6 +128,7 @@ def generate_launch_description():
 
     ld.add_action(start_livox_mid360)
     ld.add_action(start_fast_lio)
+    ld.add_action(start_multi_transform)
     ld.add_action(start_local_planner)
     ld.add_action(start_terrain_analysis)
     ld.add_action(start_terrain_analysis_ext)

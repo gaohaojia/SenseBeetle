@@ -55,4 +55,6 @@ endif()
 ## Install ##
 #############
 
-ament_auto_package()
+ament_auto_package(
+  launch
+)
