@@ -6,8 +6,12 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include <sensor_msgs/msg/detail/point_cloud2__struct.hpp>
 #include <string>
-
-#include "geometry_msgs/msg/transform_stamped.hpp"
+#include <tf2/LinearMath/Transform.h>
+#include <tf2/LinearMath/Vector3.h>
+#include <tf2/convert.h>
+#include <tf2/transform_datatypes.h>
+#include <tf2_eigen/tf2_eigen.hpp>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include "multi_transform/multi_transform.hpp"
 
@@ -51,7 +55,6 @@ MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions& options)
   local_way_point_pub_ =
     this->create_publisher<geometry_msgs::msg::PointStamped>("local_way_point", 2);
 
-  std::shared_ptr<geometry_msgs::msg::TransformStamped> transformStamped;
   std::string fromFrameRel = "robot_" + std::to_string(robot_id) + "/map";
   std::string toFrameRel = "map";
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
@@ -67,7 +70,7 @@ MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions& options)
                 ex.what());
     return;
   }
-  formIdMapToMap = std::make_shared<Eigen::Matrix4d>(
+  fromIdMapToMap = std::make_shared<Eigen::Matrix4d>(
     tf2::transformToEigen(transformStamped->transform).matrix().cast<double>());
 }
 
@@ -77,7 +80,7 @@ void MultiTransformNode::TerrainMapCallBack(
   pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_tmp(new pcl::PointCloud<pcl::PointXYZI>());
   pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_result(new pcl::PointCloud<pcl::PointXYZI>());
   pcl::fromROSMsg(*terrain_map_msg, *pointcloud_tmp);
-  pcl::transformPointCloud(*pointcloud_tmp, *pointcloud_result, *formIdMapToMap);
+  pcl::transformPointCloud(*pointcloud_tmp, *pointcloud_result, *fromIdMapToMap);
   std::shared_ptr<sensor_msgs::msg::PointCloud2> totalTerrainCloud;
   pcl::toROSMsg(*pointcloud_result, *totalTerrainCloud);
   totalTerrainCloud->header.stamp = terrain_map_msg->header.stamp;
@@ -91,7 +94,7 @@ void MultiTransformNode::TerrainMapExtCallBack(
   pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_tmp(new pcl::PointCloud<pcl::PointXYZI>());
   pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_result(new pcl::PointCloud<pcl::PointXYZI>());
   pcl::fromROSMsg(*terrain_map_ext_msg, *pointcloud_tmp);
-  pcl::transformPointCloud(*pointcloud_tmp, *pointcloud_result, *formIdMapToMap);
+  pcl::transformPointCloud(*pointcloud_tmp, *pointcloud_result, *fromIdMapToMap);
   std::shared_ptr<sensor_msgs::msg::PointCloud2> totalTerrainExtCloud;
   pcl::toROSMsg(*pointcloud_result, *totalTerrainExtCloud);
   totalTerrainExtCloud->header.stamp = terrain_map_ext_msg->header.stamp;
@@ -103,7 +106,7 @@ void MultiTransformNode::RegisteredScanCallBack(const sensor_msgs::msg::PointClo
   pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_tmp(new pcl::PointCloud<pcl::PointXYZI>());
   pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_result(new pcl::PointCloud<pcl::PointXYZI>());
   pcl::fromROSMsg(*registered_scan_msg, *pointcloud_tmp);
-  pcl::transformPointCloud(*pointcloud_tmp, *pointcloud_result, *formIdMapToMap);
+  pcl::transformPointCloud(*pointcloud_tmp, *pointcloud_result, *fromIdMapToMap);
   std::shared_ptr<sensor_msgs::msg::PointCloud2> registeredScanCloud;
   pcl::toROSMsg(*pointcloud_result, *registeredScanCloud);
   registeredScanCloud->header.stamp = registered_scan_msg->header.stamp;
@@ -116,7 +119,8 @@ void MultiTransformNode::StateEstimationAtScanCallBack(const nav_msgs::msg::Odom
 }
 
 void MultiTransformNode::WayPointCallBack(const geometry_msgs::msg::PointStamped::ConstSharedPtr way_point_msg){
-  std::shared_ptr<geometry_msgs::msg::PointStamped> local_point = std::make_shared<geometry_msgs::msg::PointStamped>(tf_buffer_->transform(*way_point_msg, "robot_" + std::to_string(robot_id) + "/map"));
+  std::shared_ptr<geometry_msgs::msg::PointStamped> local_point;
+  local_point = std::make_shared<geometry_msgs::msg::PointStamped>(tf_buffer_->transform(*way_point_msg, "robot_" + std::to_string(robot_id) + "/map"));
   local_way_point_pub_->publish(*local_point);
 }
 } // namespace multi_transform

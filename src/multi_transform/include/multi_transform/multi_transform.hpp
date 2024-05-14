@@ -20,6 +20,7 @@
 #include "tf2_eigen/tf2_eigen.hpp"
 #include "tf2_ros/transform_listener.h"
 
+#include "geometry_msgs/msg/transform_stamped.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 
@@ -35,7 +36,8 @@ private:
 
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
-  std::shared_ptr<Eigen::Matrix4d> formIdMapToMap;
+  std::shared_ptr<geometry_msgs::msg::TransformStamped> transformStamped;
+  std::shared_ptr<Eigen::Matrix4d> fromIdMapToMap;
 
   void TerrainMapCallBack(const sensor_msgs::msg::PointCloud2::ConstSharedPtr terrain_map_msg);
   void TerrainMapExtCallBack(const sensor_msgs::msg::PointCloud2::ConstSharedPtr terrain_map_ext_msg);
