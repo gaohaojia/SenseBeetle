@@ -122,7 +122,9 @@ void MultiTransformNode::RegisteredScanCallBack(
 void MultiTransformNode::StateEstimationAtScanCallBack(
   const nav_msgs::msg::Odometry::ConstSharedPtr state_estimation_at_scan_msg)
 {
-  total_state_estimation_at_scan_pub_->publish(*state_estimation_at_scan_msg);
+  std::shared_ptr<nav_msgs::msg::Odometry> total_state_estimation_at_scan_msg(new nav_msgs::msg::Odometry(*state_estimation_at_scan_msg));
+  total_state_estimation_at_scan_msg->header.frame_id = "map";
+  total_state_estimation_at_scan_pub_->publish(*total_state_estimation_at_scan_msg);
 }
 
 void MultiTransformNode::WayPointCallBack(
