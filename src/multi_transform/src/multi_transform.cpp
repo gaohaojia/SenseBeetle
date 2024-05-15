@@ -1,5 +1,6 @@
 #include <functional>
 #include <geometry_msgs/msg/detail/point_stamped__struct.hpp>
+#include <geometry_msgs/msg/detail/pose__struct.hpp>
 #include <memory>
 #include <nav_msgs/msg/detail/odometry__struct.hpp>
 #include <pcl/common/transforms.h>
@@ -18,7 +19,7 @@
 
 namespace multi_transform
 {
-MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions & options)
+MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions& options)
   : Node("multi_transform", options)
 {
   this->declare_parameter<int>("robot_id", 0);
@@ -62,7 +63,7 @@ MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions & options)
     transformStamped =
       std::make_shared<geometry_msgs::msg::TransformStamped>(tf_buffer_->lookupTransform(
         toFrameRel, fromFrameRel, tf2::TimePointZero, tf2::durationFromSec(10.0)));
-  } catch (const tf2::TransformException & ex) {
+  } catch (const tf2::TransformException& ex) {
     RCLCPP_INFO(this->get_logger(),
                 "Could not transform %s to %s: %s",
                 toFrameRel.c_str(),
@@ -122,7 +123,12 @@ void MultiTransformNode::RegisteredScanCallBack(
 void MultiTransformNode::StateEstimationAtScanCallBack(
   const nav_msgs::msg::Odometry::ConstSharedPtr state_estimation_at_scan_msg)
 {
-  std::shared_ptr<nav_msgs::msg::Odometry> total_state_estimation_at_scan_msg(new nav_msgs::msg::Odometry(*state_estimation_at_scan_msg));
+  std::shared_ptr<geometry_msgs::msg::Pose> total_state;
+  total_state = std::make_shared<geometry_msgs::msg::Pose>(
+    tf_buffer_->transform(state_estimation_at_scan_msg->pose.pose, "map"));
+  std::shared_ptr<nav_msgs::msg::Odometry> total_state_estimation_at_scan_msg(
+    new nav_msgs::msg::Odometry(*state_estimation_at_scan_msg));
+  total_state_estimation_at_scan_msg->pose.set__pose(*total_state);
   total_state_estimation_at_scan_msg->header.frame_id = "map";
   total_state_estimation_at_scan_pub_->publish(*total_state_estimation_at_scan_msg);
 }
