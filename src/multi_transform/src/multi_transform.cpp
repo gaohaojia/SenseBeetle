@@ -1,11 +1,7 @@
 #include <functional>
-#include <geometry_msgs/msg/detail/point_stamped__struct.hpp>
-#include <geometry_msgs/msg/detail/pose__struct.hpp>
 #include <memory>
-#include <nav_msgs/msg/detail/odometry__struct.hpp>
 #include <pcl/common/transforms.h>
 #include <pcl_conversions/pcl_conversions.h>
-#include <sensor_msgs/msg/detail/point_cloud2__struct.hpp>
 #include <string>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2/LinearMath/Vector3.h>
@@ -14,6 +10,7 @@
 #include <tf2/transform_datatypes.h>
 #include <tf2_eigen/tf2_eigen.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
 
 #include "multi_transform/multi_transform.hpp"
 
@@ -123,12 +120,15 @@ void MultiTransformNode::RegisteredScanCallBack(
 void MultiTransformNode::StateEstimationAtScanCallBack(
   const nav_msgs::msg::Odometry::ConstSharedPtr state_estimation_at_scan_msg)
 {
-  std::shared_ptr<geometry_msgs::msg::Pose> total_state;
-  total_state = std::make_shared<geometry_msgs::msg::Pose>(
-    tf_buffer_->transform(state_estimation_at_scan_msg->pose.pose, "map", tf2::durationFromSec(10.0)));
+  std::shared_ptr<geometry_msgs::msg::PoseStamped> local_state(new geometry_msgs::msg::PoseStamped);
+  local_state->set__pose(state_estimation_at_scan_msg->pose.pose);
+  local_state->header = state_estimation_at_scan_msg->header;
+  std::shared_ptr<geometry_msgs::msg::PoseStamped> total_state;
+  total_state = std::make_shared<geometry_msgs::msg::PoseStamped>(
+    tf_buffer_->transform(*local_state, "map", tf2::durationFromSec(10.0)));
   std::shared_ptr<nav_msgs::msg::Odometry> total_state_estimation_at_scan_msg(
     new nav_msgs::msg::Odometry(*state_estimation_at_scan_msg));
-  total_state_estimation_at_scan_msg->pose.set__pose(*total_state);
+  total_state_estimation_at_scan_msg->pose.set__pose(total_state->pose);
   total_state_estimation_at_scan_msg->header.frame_id = "map";
   total_state_estimation_at_scan_pub_->publish(*total_state_estimation_at_scan_msg);
 }
