@@ -125,7 +125,7 @@ void MultiTransformNode::StateEstimationAtScanCallBack(
 {
   std::shared_ptr<geometry_msgs::msg::Pose> total_state;
   total_state = std::make_shared<geometry_msgs::msg::Pose>(
-    tf_buffer_->transform(state_estimation_at_scan_msg->pose.pose, "map"));
+    tf_buffer_->transform(state_estimation_at_scan_msg->pose.pose, "map", tf2::durationFromSec(10.0)));
   std::shared_ptr<nav_msgs::msg::Odometry> total_state_estimation_at_scan_msg(
     new nav_msgs::msg::Odometry(*state_estimation_at_scan_msg));
   total_state_estimation_at_scan_msg->pose.set__pose(*total_state);
@@ -138,7 +138,7 @@ void MultiTransformNode::WayPointCallBack(
 {
   std::shared_ptr<geometry_msgs::msg::PointStamped> local_point;
   local_point = std::make_shared<geometry_msgs::msg::PointStamped>(
-    tf_buffer_->transform(*way_point_msg, "robot_" + std::to_string(robot_id) + "/map"));
+    tf_buffer_->transform(*way_point_msg, "robot_" + std::to_string(robot_id) + "/map", tf2::durationFromSec(10.0)));
   local_way_point_pub_->publish(*local_point);
 }
 } // namespace multi_transform
