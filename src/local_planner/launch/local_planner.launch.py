@@ -11,8 +11,8 @@ def get_vehicle_trans_publisher(context: LaunchContext, sensorOffsetX, sensorOff
     robot_id_str = 'robot_' + context.perform_substitution(robot_id)
     sensorOffsetX_str = context.perform_substitution(sensorOffsetX)
     sensorOffsetY_str = context.perform_substitution(sensorOffsetY)
-    sensorOffsetX_str = str(-int(sensorOffsetX_str))
-    sensorOffsetY_str = str(-int(sensorOffsetY_str))
+    sensorOffsetX_str = str(-float(sensorOffsetX_str))
+    sensorOffsetY_str = str(-float(sensorOffsetY_str))
     vehicle_trans_publisher = Node(
         package="tf2_ros",
         executable="static_transform_publisher",
