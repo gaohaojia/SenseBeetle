@@ -8,9 +8,11 @@ from launch_ros.actions import Node, PushRosNamespace
 from launch.substitutions import LaunchConfiguration
 
 def get_vehicle_trans_publisher(context: LaunchContext, sensorOffsetX, sensorOffsetY, robot_id):
-    robot_id_str = context.perform_substitution(robot_id)
+    robot_id_str = 'robot_' + context.perform_substitution(robot_id)
     sensorOffsetX_str = context.perform_substitution(sensorOffsetX)
     sensorOffsetY_str = context.perform_substitution(sensorOffsetY)
+    sensorOffsetX_str = str(-int(sensorOffsetX_str))
+    sensorOffsetY_str = str(-int(sensorOffsetY_str))
     vehicle_trans_publisher = Node(
         package="tf2_ros",
         executable="static_transform_publisher",
@@ -19,12 +21,12 @@ def get_vehicle_trans_publisher(context: LaunchContext, sensorOffsetX, sensorOff
         #     ('/tf', 'tf'),
         #     ('/tf_static', 'tf_static'),
         # ],
-        arguments=['-'+sensorOffsetX_str, '-'+sensorOffsetY_str, '0', '0', '0', '0', 'robot_' + robot_id_str + '/sensor', 'robot_' + robot_id_str + '/vehicle']
+        arguments=[sensorOffsetX_str, sensorOffsetY_str, '0', '0', '0', '0', robot_id_str + '/sensor', robot_id_str + '/vehicle']
     )
     return [vehicle_trans_publisher]
 
 def get_sensor_trans_publisher(context: LaunchContext, cameraOffsetZ, robot_id):
-    robot_id_str = context.perform_substitution(robot_id)
+    robot_id_str = 'robot_' + context.perform_substitution(robot_id)
     cameraOffsetZ_str = context.perform_substitution(cameraOffsetZ)
     sensor_trans_publisher = Node(
         package="tf2_ros",
@@ -34,12 +36,12 @@ def get_sensor_trans_publisher(context: LaunchContext, cameraOffsetZ, robot_id):
         #     ('/tf', 'tf'),
         #     ('/tf_static', 'tf_static'),
         # ],
-        arguments=['0', '0', cameraOffsetZ_str, '-1.5707963', '0', '-1.5707963', 'robot_' + robot_id_str + '/sensor', 'robot_' + robot_id_str + '/camera']
+        arguments=['0', '0', cameraOffsetZ_str, '-1.5707963', '0', '-1.5707963', robot_id_str + '/sensor', robot_id_str + '/camera']
     )
     return [sensor_trans_publisher]
 
 def get_id_map_trans_publisher(context: LaunchContext, offsetList, robot_id):
-    robot_id_str = context.perform_substitution(robot_id)
+    robot_id_str = 'robot_' + context.perform_substitution(robot_id)
     offsetList_str = []
     for idx in offsetList:
         offsetList_str.append(context.perform_substitution(idx))
@@ -51,7 +53,7 @@ def get_id_map_trans_publisher(context: LaunchContext, offsetList, robot_id):
         #     ('/tf', 'tf'),
         #     ('/tf_static', 'tf_static'),
         # ],
-        arguments=[*offsetList_str, 'map', 'robot_' + robot_id_str + '/map']
+        arguments=[*offsetList_str, 'map', robot_id_str + '/map']
     )
     return [sensor_trans_publisher]
 
