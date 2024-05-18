@@ -70,6 +70,7 @@ MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions& options)
   }
   fromIdMapToMap = std::make_shared<Eigen::Matrix4d>(
     tf2::transformToEigen(transformStamped->transform).matrix().cast<double>());
+  RCLCPP_INFO(this->get_logger(), "Finish init multi transform node.");
 }
 
 void MultiTransformNode::TerrainMapCallBack(
@@ -78,7 +79,12 @@ void MultiTransformNode::TerrainMapCallBack(
   pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_tmp(new pcl::PointCloud<pcl::PointXYZI>());
   pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_result(new pcl::PointCloud<pcl::PointXYZI>());
   pcl::fromROSMsg(*terrain_map_msg, *pointcloud_tmp);
-  pcl::transformPointCloud(*pointcloud_tmp, *pointcloud_result, *fromIdMapToMap);
+  try{
+    pcl::transformPointCloud(*pointcloud_tmp, *pointcloud_result, *fromIdMapToMap);
+  }catch(const tf2::TransformException& ex){
+    RCLCPP_INFO(this->get_logger(), "%s", ex.what());
+    return;
+  }
   std::shared_ptr<sensor_msgs::msg::PointCloud2> totalTerrainCloud(
     new sensor_msgs::msg::PointCloud2());
   pcl::toROSMsg(*pointcloud_result, *totalTerrainCloud);
@@ -93,7 +99,12 @@ void MultiTransformNode::TerrainMapExtCallBack(
   pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_tmp(new pcl::PointCloud<pcl::PointXYZI>());
   pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_result(new pcl::PointCloud<pcl::PointXYZI>());
   pcl::fromROSMsg(*terrain_map_ext_msg, *pointcloud_tmp);
-  pcl::transformPointCloud(*pointcloud_tmp, *pointcloud_result, *fromIdMapToMap);
+  try{
+    pcl::transformPointCloud(*pointcloud_tmp, *pointcloud_result, *fromIdMapToMap);
+  }catch(const tf2::TransformException& ex){
+    RCLCPP_INFO(this->get_logger(), "%s", ex.what());
+    return;
+  }
   std::shared_ptr<sensor_msgs::msg::PointCloud2> totalTerrainExtCloud(
     new sensor_msgs::msg::PointCloud2());
   pcl::toROSMsg(*pointcloud_result, *totalTerrainExtCloud);
@@ -108,7 +119,12 @@ void MultiTransformNode::RegisteredScanCallBack(
   pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_tmp(new pcl::PointCloud<pcl::PointXYZI>());
   pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_result(new pcl::PointCloud<pcl::PointXYZI>());
   pcl::fromROSMsg(*registered_scan_msg, *pointcloud_tmp);
-  pcl::transformPointCloud(*pointcloud_tmp, *pointcloud_result, *fromIdMapToMap);
+  try{
+    pcl::transformPointCloud(*pointcloud_tmp, *pointcloud_result, *fromIdMapToMap);
+  }catch(const tf2::TransformException& ex){
+    RCLCPP_INFO(this->get_logger(), "%s", ex.what());
+    return;
+  }
   std::shared_ptr<sensor_msgs::msg::PointCloud2> registeredScanCloud(
     new sensor_msgs::msg::PointCloud2());
   pcl::toROSMsg(*pointcloud_result, *registeredScanCloud);
