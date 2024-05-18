@@ -2,10 +2,11 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription, LaunchContext
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction, OpaqueFunction
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction, OpaqueFunction, GroupAction
 from launch.launch_description_sources import PythonLaunchDescriptionSource, FrontendLaunchDescriptionSource
 from launch_ros.actions import Node, PushRosNamespace
 from launch.substitutions import LaunchConfiguration
+from launch.conditions import LaunchConfigurationEquals
 
 def push_namespace(context: LaunchContext, robot_id):
     id_str = context.perform_substitution(robot_id)
@@ -28,16 +29,18 @@ def launch_rviz_node(context: LaunchContext, robot_id):
 
 def generate_launch_description():
     robot_id = LaunchConfiguration('robot_id')
+    lio_mode = LaunchConfiguration('lio_mode')
     cameraOffsetZ = LaunchConfiguration('cameraOffsetZ')
     vehicleX = LaunchConfiguration('vehicleX')
     vehicleY = LaunchConfiguration('vehicleY')
     checkTerrainConn = LaunchConfiguration('checkTerrainConn')
     
+    declare_robot_id = DeclareLaunchArgument('robot_id', default_value='0', description='')
+    declare_lio_mode = DeclareLaunchArgument('lio_mode', default_value='point_lio', description='')
     declare_cameraOffsetZ = DeclareLaunchArgument('cameraOffsetZ', default_value='0.0', description='')
     declare_vehicleX = DeclareLaunchArgument('vehicleX', default_value='0.0', description='')
     declare_vehicleY = DeclareLaunchArgument('vehicleY', default_value='0.0', description='')
     declare_checkTerrainConn = DeclareLaunchArgument('checkTerrainConn', default_value='true', description='')
-    declare_robot_id = DeclareLaunchArgument('robot_id', default_value='0', description='')
 
     start_livox_mid360 = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
@@ -45,13 +48,32 @@ def generate_launch_description():
         )
     )
 
-    start_fast_lio = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(
-            get_package_share_directory('fast_lio'), 'launch', 'mapping_mid360.launch.py')
-        ),
-        launch_arguments={
-            'robot_id': robot_id,
-        }.items()
+    start_fast_lio = GroupAction(
+        condition=LaunchConfigurationEquals('lio_mode', 'fast_lio'),
+        actions=[
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(os.path.join(
+                    get_package_share_directory('fast_lio'), 'launch', 'mapping_mid360.launch.py')
+                ),
+                launch_arguments={
+                    'robot_id': robot_id,
+                }.items()
+            )
+        ]
+    )
+
+    start_point_lio = GroupAction(
+        condition=LaunchConfigurationEquals('lio_mode', 'point_lio'),
+        actions=[
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(os.path.join(
+                    get_package_share_directory('point_lio'), 'launch', 'mapping_mid360.launch.py')
+                ),
+                launch_arguments={
+                    'robot_id': robot_id,
+                }.items()
+            )
+        ]
     )
 
     start_multi_transform = IncludeLaunchDescription(
@@ -122,6 +144,7 @@ def generate_launch_description():
 
     # Add the actions
     ld.add_action(declare_robot_id)
+    ld.add_action(declare_lio_mode)
     ld.add_action(declare_cameraOffsetZ)
     ld.add_action(declare_vehicleX)
     ld.add_action(declare_vehicleY)
@@ -131,6 +154,7 @@ def generate_launch_description():
 
     ld.add_action(start_livox_mid360)
     ld.add_action(start_fast_lio)
+    ld.add_action(start_point_lio)
     ld.add_action(TimerAction(period=10.0, actions=[start_multi_transform]))
     ld.add_action(start_local_planner)
     ld.add_action(start_terrain_analysis)
