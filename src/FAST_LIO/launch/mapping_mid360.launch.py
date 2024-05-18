@@ -57,10 +57,6 @@ def generate_launch_description():
     fast_lio_node = Node(
         package='fast_lio',
         executable='fastlio_mapping',
-        # remappings=[
-        #     ('/tf', 'tf'),
-        #     ('/tf_static', 'tf_static'),
-        # ],
         parameters=[config_path,
                     {'robot_id': robot_id,
                     'use_sim_time': use_sim_time,

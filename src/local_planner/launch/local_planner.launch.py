@@ -17,10 +17,6 @@ def get_vehicle_trans_publisher(context: LaunchContext, sensorOffsetX, sensorOff
         package="tf2_ros",
         executable="static_transform_publisher",
         name="vehicleTransPublisher",
-        # remappings=[
-        #     ('/tf', 'tf'),
-        #     ('/tf_static', 'tf_static'),
-        # ],
         arguments=[sensorOffsetX_str, sensorOffsetY_str, '0', '0', '0', '0', robot_id_str + '/sensor', robot_id_str + '/vehicle']
     )
     return [vehicle_trans_publisher]
@@ -32,10 +28,6 @@ def get_sensor_trans_publisher(context: LaunchContext, cameraOffsetZ, robot_id):
         package="tf2_ros",
         executable="static_transform_publisher",
         name="sensorTransPublisher",
-        # remappings=[
-        #     ('/tf', 'tf'),
-        #     ('/tf_static', 'tf_static'),
-        # ],
         arguments=['0', '0', cameraOffsetZ_str, '-1.5707963', '0', '-1.5707963', robot_id_str + '/sensor', robot_id_str + '/camera']
     )
     return [sensor_trans_publisher]
@@ -49,10 +41,6 @@ def get_id_map_trans_publisher(context: LaunchContext, offsetList, robot_id):
         package="tf2_ros",
         executable="static_transform_publisher",
         name="idMapTransPublisher",
-        # remappings=[
-        #     ('/tf', 'tf'),
-        #     ('/tf_static', 'tf_static'),
-        # ],
         arguments=[*offsetList_str, 'map', robot_id_str + '/map']
     )
     return [sensor_trans_publisher]

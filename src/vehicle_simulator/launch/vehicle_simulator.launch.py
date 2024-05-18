@@ -78,10 +78,6 @@ def generate_launch_description():
         executable='robot_state_publisher',
         name='robot_state_publisher',
         output='screen',
-        # remappings=[
-        #     ('/tf', 'tf'),
-        #     ('/tf_static', 'tf_static'),
-        # ],
         parameters=[{
             'use_sim_time': use_sim_time,
             'robot_description': lidar_description
@@ -91,10 +87,6 @@ def generate_launch_description():
     spawn_lidar = Node(
         package='gazebo_ros', 
         executable='spawn_entity.py',
-        # remappings=[
-        #     ('/tf', 'tf'),
-        #     ('/tf_static', 'tf_static'),
-        # ],
         arguments=[
             '-entity', 'robot_0/lidar',
             '-topic', 'robot_description',
@@ -106,10 +98,6 @@ def generate_launch_description():
     spawn_robot = Node(
         package='gazebo_ros', 
         executable='spawn_entity.py',
-        # remappings=[
-        #     ('/tf', 'tf'),
-        #     ('/tf_static', 'tf_static'),
-        # ],
         arguments=[
             '-file', robot_xacro,
             '-entity', 'robot_0/robot'
@@ -121,10 +109,6 @@ def generate_launch_description():
     spawn_camera = Node(
         package='gazebo_ros', 
         executable='spawn_entity.py',
-        # remappings=[
-        #     ('/tf', 'tf'),
-        #     ('/tf_static', 'tf_static'),
-        # ],
         arguments=[
             '-file', camera_xacro,
             '-entity', 'robot_0/camera'
@@ -147,10 +131,6 @@ def generate_launch_description():
     start_vehicle_simulator = Node(
         package='vehicle_simulator', 
         executable='vehicleSimulator',
-        # remappings=[
-        #     ('/tf', 'tf'),
-        #     ('/tf_static', 'tf_static'),
-        # ],
         parameters=[
         {
             'robot_id': robot_id,

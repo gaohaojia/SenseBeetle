@@ -14,10 +14,6 @@ def generate_launch_description():
             executable="loamInterface",
             name="loamInterface",
             output="screen",
-            # remappings=[
-            #     ('/tf', 'tf'),
-            #     ('/tf_static', 'tf_static'),
-            # ],
             parameters=[{
                 'robot_id': LaunchConfiguration('robot_id'),
                 "stateEstimationTopic" : "Odometry",
