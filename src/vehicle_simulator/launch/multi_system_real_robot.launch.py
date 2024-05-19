@@ -48,32 +48,24 @@ def generate_launch_description():
         )
     )
 
-    start_fast_lio = GroupAction(
-        condition=LaunchConfigurationEquals('lio_mode', 'fast_lio'),
-        actions=[
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(os.path.join(
-                    get_package_share_directory('fast_lio'), 'launch', 'mapping_mid360.launch.py')
-                ),
-                launch_arguments={
-                    'robot_id': robot_id,
-                }.items()
-            )
-        ]
+    start_fast_lio = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(
+            get_package_share_directory('fast_lio'), 'launch', 'mapping_mid360.launch.py')
+        ),
+        launch_arguments={
+            'robot_id': robot_id,
+        }.items(),
+        condition=LaunchConfigurationEquals('lio_mode', 'fast_lio')
     )
 
-    start_point_lio = GroupAction(
-        condition=LaunchConfigurationEquals('lio_mode', 'point_lio'),
-        actions=[
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(os.path.join(
-                    get_package_share_directory('point_lio'), 'launch', 'mapping_mid360.launch.py')
-                ),
-                launch_arguments={
-                    'robot_id': robot_id,
-                }.items()
-            )
-        ]
+    start_point_lio = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(
+            get_package_share_directory('point_lio'), 'launch', 'mapping_mid360.launch.py')
+        ),
+        launch_arguments={
+            'robot_id': robot_id,
+        }.items(),
+        condition=LaunchConfigurationEquals('lio_mode', 'point_lio')
     )
 
     start_multi_transform = IncludeLaunchDescription(
