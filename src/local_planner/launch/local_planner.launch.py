@@ -196,5 +196,5 @@ def generate_launch_description():
     ld.add_action(OpaqueFunction(function=get_vehicle_trans_publisher, args=[sensorOffsetX, sensorOffsetY, robot_id]))
     ld.add_action(OpaqueFunction(function=get_sensor_trans_publisher, args=[cameraOffsetZ, robot_id]))
     ld.add_action(OpaqueFunction(function=get_id_map_trans_publisher, 
-                                 args=[[multiOffsetPositionX, multiOffsetPositionY, multiOffsetPositionZ, multiOffsetRotateR, multiOffsetRotateP, multiOffsetRotateY], robot_id]))
+                                 args=[[multiOffsetPositionX, multiOffsetPositionY, multiOffsetPositionZ, multiOffsetRotateY, multiOffsetRotateP, multiOffsetRotateR], robot_id]))
     return ld
