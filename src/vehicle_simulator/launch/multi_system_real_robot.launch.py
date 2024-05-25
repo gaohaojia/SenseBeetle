@@ -132,6 +132,15 @@ def generate_launch_description():
         )
     )
 
+    start_explored_area = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(
+            get_package_share_directory('explored_area'), 'launch', 'explored_area.launch.py')
+        ),
+        launch_arguments={
+            'robot_id': robot_id
+        }.items()
+    )
+
     ld = LaunchDescription()
 
     # Add the actions
@@ -154,6 +163,7 @@ def generate_launch_description():
     ld.add_action(start_sensor_scan_generation)
     ld.add_action(start_loam_interface)
     ld.add_action(start_joy)
+    ld.add_action(TimerAction(period=10.0, actions=[start_explored_area]))
     ld.add_action(OpaqueFunction(function=launch_rviz_node, args=[robot_id]))
 
     return ld
