@@ -36,6 +36,7 @@ ExploredAreaNode::ExploredAreaNode(const rclcpp::NodeOptions & options)
 
   exploredVolumeDwzFilter.setLeafSize(
     exploredVolumeVoxelSize, exploredVolumeVoxelSize, exploredVolumeVoxelSize);
+  exploredAreaDwzFilter.setLeafSize(exploredAreaVoxelSize, exploredAreaVoxelSize, exploredAreaVoxelSize);
 }
 
 void ExploredAreaNode::RegisteredScanCallBack(

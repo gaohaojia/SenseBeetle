@@ -27,6 +27,7 @@ private:
   int exploredAreaDisplayCount = 0;
   int exploredAreaDisplayInterval = 1;
   double exploredVolumeVoxelSize = 0.5;
+  double exploredAreaVoxelSize = 0.3;
   float exploredVolume = 0;
   float travelingDis = 0;
 
