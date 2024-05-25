@@ -20,23 +20,19 @@ ExploredAreaNode::ExploredAreaNode(const rclcpp::NodeOptions & options)
   explored_volume_pub_ = this->create_publisher<std_msgs::msg::Float32>("explored_volume", 5);
   traveling_dis_pub_ = this->create_publisher<std_msgs::msg::Float32>("traveling_distance", 5);
 
-  pcl::PointCloud<pcl::PointXYZI>::Ptr exploredVolumeCloud(new pcl::PointCloud<pcl::PointXYZI>());
-  pcl::PointCloud<pcl::PointXYZI>::Ptr exploredVolumeCloud2(new pcl::PointCloud<pcl::PointXYZI>());
-  pcl::PointCloud<pcl::PointXYZI>::Ptr exploredAreaCloud(new pcl::PointCloud<pcl::PointXYZI>());
-  pcl::PointCloud<pcl::PointXYZI>::Ptr exploredAreaCloud2(new pcl::PointCloud<pcl::PointXYZI>());
-
-  // exploredVolumeCloud =
-  //   std::make_shared<pcl::PointCloud<pcl::PointXYZI>>(new pcl::PointCloud<pcl::PointXYZI>());
-  // exploredVolumeCloud2 =
-  //   std::make_shared<pcl::PointCloud<pcl::PointXYZI>>(new pcl::PointCloud<pcl::PointXYZI>());
-  // exploredAreaCloud =
-  //   std::make_shared<pcl::PointCloud<pcl::PointXYZI>>(new pcl::PointCloud<pcl::PointXYZI>());
-  // exploredAreaCloud2 =
-  //   std::make_shared<pcl::PointCloud<pcl::PointXYZI>>(new pcl::PointCloud<pcl::PointXYZI>());
+  exploredVolumeCloud =
+    std::make_shared<pcl::PointCloud<pcl::PointXYZI>>();
+  exploredVolumeCloud2 =
+    std::make_shared<pcl::PointCloud<pcl::PointXYZI>>();
+  exploredAreaCloud =
+    std::make_shared<pcl::PointCloud<pcl::PointXYZI>>();
+  exploredAreaCloud2 =
+    std::make_shared<pcl::PointCloud<pcl::PointXYZI>>();
 
   exploredVolumeDwzFilter.setLeafSize(
     exploredVolumeVoxelSize, exploredVolumeVoxelSize, exploredVolumeVoxelSize);
-  exploredAreaDwzFilter.setLeafSize(exploredAreaVoxelSize, exploredAreaVoxelSize, exploredAreaVoxelSize);
+  exploredAreaDwzFilter.setLeafSize(
+    exploredAreaVoxelSize, exploredAreaVoxelSize, exploredAreaVoxelSize);
 }
 
 void ExploredAreaNode::RegisteredScanCallBack(
@@ -47,12 +43,12 @@ void ExploredAreaNode::RegisteredScanCallBack(
 
   *exploredVolumeCloud += *laserCloud;
 
-  exploredVolumeCloud2->clear();
-  exploredVolumeDwzFilter.setInputCloud(exploredVolumeCloud);
-  exploredVolumeDwzFilter.filter(*exploredVolumeCloud2);
+  // exploredVolumeCloud2->clear();
+  // exploredVolumeDwzFilter.setInputCloud(exploredVolumeCloud);
+  // exploredVolumeDwzFilter.filter(*exploredVolumeCloud2);
 
   pcl::PointCloud<pcl::PointXYZI>::Ptr tempCloud = exploredVolumeCloud;
-  exploredVolumeCloud = exploredVolumeCloud2;
+  // exploredVolumeCloud = exploredVolumeCloud2;
   exploredVolumeCloud2 = tempCloud;
 
   exploredVolume = exploredVolumeVoxelSize * exploredVolumeVoxelSize * exploredVolumeVoxelSize *
@@ -62,12 +58,12 @@ void ExploredAreaNode::RegisteredScanCallBack(
 
   exploredAreaDisplayCount++;
   if (exploredAreaDisplayCount >= 5 * exploredAreaDisplayInterval) {
-    exploredAreaCloud2->clear();
-    exploredAreaDwzFilter.setInputCloud(exploredAreaCloud);
-    exploredAreaDwzFilter.filter(*exploredAreaCloud2);
+    // exploredAreaCloud2->clear();
+    // exploredAreaDwzFilter.setInputCloud(exploredAreaCloud);
+    // exploredAreaDwzFilter.filter(*exploredAreaCloud2);
 
     tempCloud = exploredAreaCloud;
-    exploredAreaCloud = exploredAreaCloud2;
+    // exploredAreaCloud = exploredAreaCloud2;
     exploredAreaCloud2 = tempCloud;
 
     sensor_msgs::msg::PointCloud2 exploredArea2;
