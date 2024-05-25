@@ -16,7 +16,7 @@ ExploredAreaNode::ExploredAreaNode(const rclcpp::NodeOptions & options)
     5,
     std::bind(&ExploredAreaNode::RegisteredScanCallBack, this, std::placeholders::_1));
 
-  explored_area_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("explored_area", 5);
+  explored_area_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("explored_areas", 5);
   explored_volume_pub_ = this->create_publisher<std_msgs::msg::Float32>("explored_volume", 5);
   traveling_dis_pub_ = this->create_publisher<std_msgs::msg::Float32>("traveling_distance", 5);
 
