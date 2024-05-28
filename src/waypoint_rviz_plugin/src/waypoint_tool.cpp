@@ -41,7 +41,7 @@ void WaypointTool::updateTopic()
   raw_node->get_parameter("robot_id", robot_id);
   sub_ = raw_node->template create_subscription<nav_msgs::msg::Odometry>("state_estimation", 5 ,std::bind(&WaypointTool::odomHandler,this,std::placeholders::_1));
   
-  pub_ = raw_node->template create_publisher<geometry_msgs::msg::PointStamped>("local_way_point", qos_profile_);
+  pub_ = raw_node->template create_publisher<geometry_msgs::msg::PointStamped>("way_point", qos_profile_);
   pub_joy_ = raw_node->template create_publisher<sensor_msgs::msg::Joy>("joy", qos_profile_);
   clock_ = raw_node->get_clock();
 }
