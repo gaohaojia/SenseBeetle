@@ -593,7 +593,7 @@ int main(int argc, char** argv)
 
   auto subJoystick = nh->create_subscription<sensor_msgs::msg::Joy>("joy", 5, joystickHandler);
 
-  auto subGoal = nh->create_subscription<geometry_msgs::msg::PointStamped> ("way_point", 5, goalHandler);
+  auto subGoal = nh->create_subscription<geometry_msgs::msg::PointStamped> ("local_way_point", 5, goalHandler);
 
   auto subSpeed = nh->create_subscription<std_msgs::msg::Float32>("speed", 5, speedHandler);
 
