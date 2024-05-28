@@ -55,7 +55,7 @@ MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions& options)
   total_state_estimation_at_scan_pub_ =
     this->create_publisher<nav_msgs::msg::Odometry>("total_state_estimation_at_scan", 5);
   local_way_point_pub_ =
-    this->create_publisher<geometry_msgs::msg::PointStamped>("local_way_point", 2);
+    this->create_publisher<geometry_msgs::msg::PointStamped>("way_point", 2);
 
   std::string fromFrameRel = "robot_" + std::to_string(robot_id) + "/map";
   std::string toFrameRel = "map";
