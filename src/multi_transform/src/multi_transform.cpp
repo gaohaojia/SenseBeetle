@@ -37,21 +37,21 @@ MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions& options)
     std::bind(&MultiTransformNode::TerrainMapExtCallBack, this, std::placeholders::_1));
   registered_scan_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "registered_scan",
-    qos,
+    5,
     std::bind(&MultiTransformNode::RegisteredScanCallBack, this, std::placeholders::_1));
   state_estimation_at_scan_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
     "state_estimation_at_scan",
-    qos,
+    5,
     std::bind(&MultiTransformNode::StateEstimationAtScanCallBack, this, std::placeholders::_1));
   way_point_sub_ = this->create_subscription<geometry_msgs::msg::PointStamped>(
     "way_point", 2, std::bind(&MultiTransformNode::WayPointCallBack, this, std::placeholders::_1));
 
   total_terrain_map_pub_ =
-    this->create_publisher<sensor_msgs::msg::PointCloud2>("/total_terrain_map", 2);
+    this->create_publisher<sensor_msgs::msg::PointCloud2>("total_terrain_map", 2);
   total_terrain_map_ext_pub_ =
-    this->create_publisher<sensor_msgs::msg::PointCloud2>("/total_terrain_map_ext", 2);
+    this->create_publisher<sensor_msgs::msg::PointCloud2>("total_terrain_map_ext", 2);
   total_registered_scan_pub_ =
-    this->create_publisher<sensor_msgs::msg::PointCloud2>("total_registered_scan", 5);
+    this->create_publisher<sensor_msgs::msg::PointCloud2>("total_registered_scan", qos);
   total_state_estimation_at_scan_pub_ =
     this->create_publisher<nav_msgs::msg::Odometry>("total_state_estimation_at_scan", 5);
   local_way_point_pub_ =
