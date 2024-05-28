@@ -121,21 +121,21 @@ void MultiTransformNode::TerrainMapExtCallBack(
 void MultiTransformNode::RegisteredScanCallBack(
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr registered_scan_msg)
 {
-  pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_tmp(new pcl::PointCloud<pcl::PointXYZI>());
-  pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_result(new pcl::PointCloud<pcl::PointXYZI>());
-  pcl::fromROSMsg(*registered_scan_msg, *pointcloud_tmp);
-  try{
-    pcl::transformPointCloud(*pointcloud_tmp, *pointcloud_result, *fromIdMapToMap);
-  }catch(const tf2::TransformException& ex){
-    RCLCPP_INFO(this->get_logger(), "%s", ex.what());
-    return;
-  }
-  std::shared_ptr<sensor_msgs::msg::PointCloud2> registeredScanCloud(
-    new sensor_msgs::msg::PointCloud2());
-  pcl::toROSMsg(*pointcloud_result, *registeredScanCloud);
-  registeredScanCloud->header.stamp = registered_scan_msg->header.stamp;
-  registeredScanCloud->header.frame_id = "map";
-  total_registered_scan_pub_->publish(*registeredScanCloud);
+  // pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_tmp(new pcl::PointCloud<pcl::PointXYZI>());
+  // pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_result(new pcl::PointCloud<pcl::PointXYZI>());
+  // pcl::fromROSMsg(*registered_scan_msg, *pointcloud_tmp);
+  // try{
+  //   pcl::transformPointCloud(*pointcloud_tmp, *pointcloud_result, *fromIdMapToMap);
+  // }catch(const tf2::TransformException& ex){
+  //   RCLCPP_INFO(this->get_logger(), "%s", ex.what());
+  //   return;
+  // }
+  // std::shared_ptr<sensor_msgs::msg::PointCloud2> registeredScanCloud(
+  //   new sensor_msgs::msg::PointCloud2());
+  // pcl::toROSMsg(*pointcloud_result, *registeredScanCloud);
+  // registeredScanCloud->header.stamp = registered_scan_msg->header.stamp;
+  // registeredScanCloud->header.frame_id = "map";
+  total_registered_scan_pub_->publish(*registered_scan_msg);
 }
 
 void MultiTransformNode::StateEstimationAtScanCallBack(
