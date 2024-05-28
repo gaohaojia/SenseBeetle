@@ -2,6 +2,8 @@
 #include <memory>
 #include <pcl/common/transforms.h>
 #include <pcl_conversions/pcl_conversions.h>
+#include <rclcpp/qos.hpp>
+#include <rmw/types.h>
 #include <string>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2/LinearMath/Vector3.h>
@@ -22,6 +24,9 @@ MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions& options)
   this->declare_parameter<int>("robot_id", 0);
   this->get_parameter("robot_id", robot_id);
 
+  rclcpp::QoS qos(5);
+  qos.keep_last(5).best_effort();
+
   terrain_map_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "terrain_map",
     2,
@@ -32,11 +37,11 @@ MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions& options)
     std::bind(&MultiTransformNode::TerrainMapExtCallBack, this, std::placeholders::_1));
   registered_scan_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "registered_scan",
-    5,
+    qos,
     std::bind(&MultiTransformNode::RegisteredScanCallBack, this, std::placeholders::_1));
   state_estimation_at_scan_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
     "state_estimation_at_scan",
-    5,
+    qos,
     std::bind(&MultiTransformNode::StateEstimationAtScanCallBack, this, std::placeholders::_1));
   way_point_sub_ = this->create_subscription<geometry_msgs::msg::PointStamped>(
     "way_point", 2, std::bind(&MultiTransformNode::WayPointCallBack, this, std::placeholders::_1));
