@@ -1,8 +1,11 @@
+#include <chrono>
 #include <functional>
+#include <geometry_msgs/msg/pose_stamped.hpp>
 #include <memory>
 #include <pcl/common/transforms.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <rclcpp/qos.hpp>
+#include <rclcpp/utilities.hpp>
 #include <rmw/qos_profiles.h>
 #include <rmw/types.h>
 #include <string>
@@ -13,7 +16,7 @@
 #include <tf2/transform_datatypes.h>
 #include <tf2_eigen/tf2_eigen.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
-#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <thread>
 
 #include "multi_transform/multi_transform.hpp"
 
@@ -48,8 +51,8 @@ MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions& options)
   //   this->create_publisher<sensor_msgs::msg::PointCloud2>("total_terrain_map", 2);
   // total_terrain_map_ext_pub_ =
   //   this->create_publisher<sensor_msgs::msg::PointCloud2>("total_terrain_map_ext", 2);
-  total_registered_scan_pub_ =
-    this->create_publisher<sensor_msgs::msg::PointCloud2>("total_registered_scan", rclcpp::SensorDataQoS());
+  total_registered_scan_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
+    "total_registered_scan", rclcpp::SensorDataQoS());
   // total_state_estimation_at_scan_pub_ =
   //   this->create_publisher<nav_msgs::msg::Odometry>("total_state_estimation_at_scan", 5);
   local_way_point_pub_ =
@@ -73,7 +76,30 @@ MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions& options)
   }
   fromIdMapToMap = std::make_shared<Eigen::Matrix4d>(
     tf2::transformToEigen(transformStamped->transform).matrix().cast<double>());
+
+  send_thread_ = std::thread();
+
   RCLCPP_INFO(this->get_logger(), "Finish init multi transform node.");
+}
+
+MultiTransformNode::~MultiTransformNode()
+{
+  if (send_thread_.joinable()) {
+    send_thread_.join();
+  }
+}
+
+void MultiTransformNode::SendTotalRegisteredScan()
+{
+  while (rclcpp::ok()) {
+    rclcpp::sleep_for(std::chrono::nanoseconds(10));
+    if (!total_registered_scan_queue.empty()) {
+      std::shared_ptr<sensor_msgs::msg::PointCloud2> totalRegisteredScan =
+        std::make_shared<sensor_msgs::msg::PointCloud2>(total_registered_scan_queue.front());
+      total_registered_scan_queue.pop();
+      total_registered_scan_pub_->publish(*totalRegisteredScan);
+    }
+  }
 }
 
 // void MultiTransformNode::TerrainMapCallBack(
@@ -133,13 +159,17 @@ void MultiTransformNode::RegisteredScanCallBack(
   // pcl::toROSMsg(*pointcloud_result, *registeredScanCloud);
   // registeredScanCloud->header.stamp = registered_scan_msg->header.stamp;
   // registeredScanCloud->header.frame_id = "map";
-  total_registered_scan_pub_->publish(*registered_scan_msg);
+  if (total_registered_scan_queue.size() >= 5) {
+    total_registered_scan_queue.pop();
+  }
+  total_registered_scan_queue.push(*registered_scan_msg);
 }
 
 // void MultiTransformNode::StateEstimationAtScanCallBack(
 //   const nav_msgs::msg::Odometry::ConstSharedPtr state_estimation_at_scan_msg)
 // {
-//   std::shared_ptr<geometry_msgs::msg::PoseStamped> local_state(new geometry_msgs::msg::PoseStamped);
+//   std::shared_ptr<geometry_msgs::msg::PoseStamped> local_state(new
+//   geometry_msgs::msg::PoseStamped);
 //   local_state->set__pose(state_estimation_at_scan_msg->pose.pose);
 //   local_state->header = state_estimation_at_scan_msg->header;
 //   std::shared_ptr<geometry_msgs::msg::PoseStamped> total_state;
@@ -156,8 +186,8 @@ void MultiTransformNode::WayPointCallBack(
   const geometry_msgs::msg::PointStamped::ConstSharedPtr way_point_msg)
 {
   std::shared_ptr<geometry_msgs::msg::PointStamped> local_point;
-  local_point = std::make_shared<geometry_msgs::msg::PointStamped>(
-    tf_buffer_->transform(*way_point_msg, "robot_" + std::to_string(robot_id) + "/map", tf2::durationFromSec(10.0)));
+  local_point = std::make_shared<geometry_msgs::msg::PointStamped>(tf_buffer_->transform(
+    *way_point_msg, "robot_" + std::to_string(robot_id) + "/map", tf2::durationFromSec(10.0)));
   local_way_point_pub_->publish(*local_point);
 }
 } // namespace multi_transform

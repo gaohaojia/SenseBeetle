@@ -3,6 +3,7 @@
 
 #include <memory>
 
+#include <queue>
 #include <rclcpp/node.hpp>
 #include <rclcpp/node_options.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -13,6 +14,7 @@
 #include <pcl/point_types.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/kdtree/kdtree_flann.h>
+#include <thread>
 
 #include "tf2/transform_datatypes.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
@@ -30,14 +32,20 @@ class MultiTransformNode : public rclcpp::Node
 {
 public:
   MultiTransformNode(const rclcpp::NodeOptions& options);
+  ~MultiTransformNode() override;
 
 private:
   int robot_id;
+
+  std::thread send_thread_;
+  std::queue<sensor_msgs::msg::PointCloud2> total_registered_scan_queue;
 
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
   std::shared_ptr<geometry_msgs::msg::TransformStamped> transformStamped;
   std::shared_ptr<Eigen::Matrix4d> fromIdMapToMap;
+
+  void SendTotalRegisteredScan();
 
   void TerrainMapCallBack(const sensor_msgs::msg::PointCloud2::ConstSharedPtr terrain_map_msg);
   void TerrainMapExtCallBack(const sensor_msgs::msg::PointCloud2::ConstSharedPtr terrain_map_ext_msg);
