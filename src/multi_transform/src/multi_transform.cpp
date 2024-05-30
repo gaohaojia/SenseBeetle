@@ -77,7 +77,7 @@ MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions& options)
   fromIdMapToMap = std::make_shared<Eigen::Matrix4d>(
     tf2::transformToEigen(transformStamped->transform).matrix().cast<double>());
 
-  send_thread_ = std::thread();
+  send_thread_ = std::thread(&MultiTransformNode::SendTotalRegisteredScan, this);
 
   RCLCPP_INFO(this->get_logger(), "Finish init multi transform node.");
 }
