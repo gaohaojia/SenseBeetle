@@ -27,12 +27,12 @@ MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions& options)
   : Node("multi_transform", options)
 {
   this->declare_parameter<int>("robot_id", 0);
-  this->declare_parameter<double>("multiOffsetPositionX", 0);
-  this->declare_parameter<double>("multiOffsetPositionY", 0);
-  this->declare_parameter<double>("multiOffsetPositionZ", 0);
-  this->declare_parameter<double>("multiOffsetRotateR", 0);
-  this->declare_parameter<double>("multiOffsetRotateP", 0);
-  this->declare_parameter<double>("multiOffsetRotateY", 0);
+  this->declare_parameter<double>("multiOffsetPositionX", 0.0);
+  this->declare_parameter<double>("multiOffsetPositionY", 0.0);
+  this->declare_parameter<double>("multiOffsetPositionZ", 0.0);
+  this->declare_parameter<double>("multiOffsetRotateR", 0.0);
+  this->declare_parameter<double>("multiOffsetRotateP", 0.0);
+  this->declare_parameter<double>("multiOffsetRotateY", 0.0);
 
   this->get_parameter("robot_id", robot_id);
   this->get_parameter("multiOffsetPositionX", multiOffsetPositionX);
