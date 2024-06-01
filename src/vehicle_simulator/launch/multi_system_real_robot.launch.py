@@ -147,7 +147,7 @@ def generate_launch_description():
     ld.add_action(start_livox_mid360)
     ld.add_action(start_fast_lio)
     ld.add_action(start_point_lio)
-    # ld.add_action(TimerAction(period=10.0, actions=[start_multi_transform]))
+    ld.add_action(TimerAction(period=10.0, actions=[start_multi_transform]))
     ld.add_action(start_local_planner)
     ld.add_action(start_terrain_analysis)
     ld.add_action(start_terrain_analysis_ext)

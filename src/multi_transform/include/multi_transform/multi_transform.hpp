@@ -14,6 +14,7 @@
 #include <pcl/point_types.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/kdtree/kdtree_flann.h>
+#include <tf2/LinearMath/Transform.h>
 #include <thread>
 
 #include "tf2/transform_datatypes.h"
@@ -37,13 +38,20 @@ public:
 private:
   int robot_id;
 
+  double multiOffsetPositionX;
+  double multiOffsetPositionY;
+  double multiOffsetPositionZ;
+  double multiOffsetRotateR;
+  double multiOffsetRotateP;
+  double multiOffsetRotateY;
+
   std::thread send_thread_;
   std::queue<sensor_msgs::msg::PointCloud2> total_registered_scan_queue;
 
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
   std::shared_ptr<geometry_msgs::msg::TransformStamped> transformStamped;
-  std::shared_ptr<Eigen::Matrix4d> fromIdMapToMap;
+  std::shared_ptr<tf2::Transform> mapToFromIdMap;
 
   void SendTotalRegisteredScan();
 

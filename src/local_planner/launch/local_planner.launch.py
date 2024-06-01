@@ -32,19 +32,6 @@ def get_sensor_trans_publisher(context: LaunchContext, cameraOffsetZ, robot_id):
     )
     return [sensor_trans_publisher]
 
-def get_id_map_trans_publisher(context: LaunchContext, offsetList, robot_id):
-    robot_id_str = 'robot_' + context.perform_substitution(robot_id)
-    offsetList_str = []
-    for idx in offsetList:
-        offsetList_str.append(context.perform_substitution(idx))
-    sensor_trans_publisher = Node(
-        package="tf2_ros",
-        executable="static_transform_publisher",
-        name="idMapTransPublisher",
-        arguments=[*offsetList_str, 'map', robot_id_str + '/map']
-    )
-    return [sensor_trans_publisher]
-
 def generate_launch_description():
     robot_id = LaunchConfiguration('robot_id')
     sensorOffsetX = LaunchConfiguration('sensorOffsetX')
@@ -57,12 +44,6 @@ def generate_launch_description():
     joyToSpeedDelay = LaunchConfiguration('joyToSpeedDelay')
     goalX = LaunchConfiguration('goalX')
     goalY = LaunchConfiguration('goalY')
-    multiOffsetPositionX = LaunchConfiguration('multiOffsetPositionX')
-    multiOffsetPositionY = LaunchConfiguration('multiOffsetPositionY')
-    multiOffsetPositionZ = LaunchConfiguration('multiOffsetPositionZ')
-    multiOffsetRotateR = LaunchConfiguration('multiOffsetRotateR')
-    multiOffsetRotateP = LaunchConfiguration('multiOffsetRotateP')
-    multiOffsetRotateY = LaunchConfiguration('multiOffsetRotateY')
     
     declare_robot_id = DeclareLaunchArgument('robot_id', default_value='0', description='')
     declare_sensorOffsetX = DeclareLaunchArgument('sensorOffsetX', default_value='0.0', description='')
@@ -75,12 +56,6 @@ def generate_launch_description():
     declare_joyToSpeedDelay = DeclareLaunchArgument('joyToSpeedDelay', default_value='2.0', description='')
     declare_goalX = DeclareLaunchArgument('goalX', default_value='0.0', description='')
     declare_goalY = DeclareLaunchArgument('goalY', default_value='0.0', description='')
-    declare_multiOffsetPositionX = DeclareLaunchArgument('multiOffsetPositionX', default_value='0', description='')
-    declare_multiOffsetPositionY = DeclareLaunchArgument('multiOffsetPositionY', default_value='0', description='')
-    declare_multiOffsetPositionZ = DeclareLaunchArgument('multiOffsetPositionZ', default_value='0', description='')
-    declare_multiOffsetRotateR = DeclareLaunchArgument('multiOffsetRotateR', default_value='0', description='')
-    declare_multiOffsetRotateP = DeclareLaunchArgument('multiOffsetRotateP', default_value='0', description='')
-    declare_multiOffsetRotateY = DeclareLaunchArgument('multiOffsetRotateY', default_value='0', description='')
     
     local_planner_node = Node(
         package="local_planner",
@@ -183,18 +158,10 @@ def generate_launch_description():
     ld.add_action(declare_joyToSpeedDelay)
     ld.add_action(declare_goalX)
     ld.add_action(declare_goalY)
-    ld.add_action(declare_multiOffsetPositionX)
-    ld.add_action(declare_multiOffsetPositionY)
-    ld.add_action(declare_multiOffsetPositionZ)
-    ld.add_action(declare_multiOffsetRotateR)
-    ld.add_action(declare_multiOffsetRotateP)
-    ld.add_action(declare_multiOffsetRotateY)
 
     ld.add_action(local_planner_node)
     ld.add_action(path_follower_node)
 
     ld.add_action(OpaqueFunction(function=get_vehicle_trans_publisher, args=[sensorOffsetX, sensorOffsetY, robot_id]))
     ld.add_action(OpaqueFunction(function=get_sensor_trans_publisher, args=[cameraOffsetZ, robot_id]))
-    ld.add_action(OpaqueFunction(function=get_id_map_trans_publisher, 
-                                 args=[[multiOffsetPositionX, multiOffsetPositionY, multiOffsetPositionZ, multiOffsetRotateY, multiOffsetRotateP, multiOffsetRotateR], robot_id]))
     return ld

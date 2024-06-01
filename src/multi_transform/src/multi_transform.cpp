@@ -9,6 +9,7 @@
 #include <rmw/qos_profiles.h>
 #include <rmw/types.h>
 #include <string>
+#include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2/LinearMath/Vector3.h>
 #include <tf2/convert.h>
@@ -26,7 +27,20 @@ MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions& options)
   : Node("multi_transform", options)
 {
   this->declare_parameter<int>("robot_id", 0);
+  this->declare_parameter<double>("multiOffsetPositionX", 0);
+  this->declare_parameter<double>("multiOffsetPositionY", 0);
+  this->declare_parameter<double>("multiOffsetPositionZ", 0);
+  this->declare_parameter<double>("multiOffsetRotateR", 0);
+  this->declare_parameter<double>("multiOffsetRotateP", 0);
+  this->declare_parameter<double>("multiOffsetRotateY", 0);
+
   this->get_parameter("robot_id", robot_id);
+  this->get_parameter("multiOffsetPositionX", multiOffsetPositionX);
+  this->get_parameter("multiOffsetPositionY", multiOffsetPositionY);
+  this->get_parameter("multiOffsetPositionZ", multiOffsetPositionZ);
+  this->get_parameter("multiOffsetRotateR", multiOffsetRotateR);
+  this->get_parameter("multiOffsetRotateP", multiOffsetRotateP);
+  this->get_parameter("multiOffsetRotateY", multiOffsetRotateY);
 
   // terrain_map_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
   //   "terrain_map",
@@ -62,21 +76,24 @@ MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions& options)
   std::string toFrameRel = "map";
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
-  try {
-    transformStamped =
-      std::make_shared<geometry_msgs::msg::TransformStamped>(tf_buffer_->lookupTransform(
-        toFrameRel, fromFrameRel, tf2::TimePointZero, tf2::durationFromSec(10.0)));
-  } catch (const tf2::TransformException& ex) {
-    RCLCPP_INFO(this->get_logger(),
-                "Could not transform %s to %s: %s",
-                toFrameRel.c_str(),
-                fromFrameRel.c_str(),
-                ex.what());
-    return;
-  }
-  fromIdMapToMap = std::make_shared<Eigen::Matrix4d>(
-    tf2::transformToEigen(transformStamped->transform).matrix().cast<double>());
-
+  // try {
+  //   transformStamped =
+  //     std::make_shared<geometry_msgs::msg::TransformStamped>(tf_buffer_->lookupTransform(
+  //       toFrameRel, fromFrameRel, tf2::TimePointZero, tf2::durationFromSec(10.0)));
+  // } catch (const tf2::TransformException& ex) {
+  //   RCLCPP_INFO(this->get_logger(),
+  //               "Could not transform %s to %s: %s",
+  //               toFrameRel.c_str(),
+  //               fromFrameRel.c_str(),
+  //               ex.what());
+  //   return;
+  // }
+  // mapToFromIdMap = std::make_shared<Eigen::Matrix4d>(
+  //   tf2::transformToEigen(transformStamped->transform).matrix().cast<double>());
+  tf2::Quaternion tmp;
+  tmp.setRPY(multiOffsetRotateR, multiOffsetRotateP, multiOffsetRotateY);
+  tf2::Transform transform_tmp = tf2::Transform(tmp, tf2::Vector3(multiOffsetPositionX, multiOffsetPositionY, multiOffsetPositionZ));
+  mapToFromIdMap = std::make_shared<tf2::Transform>(transform_tmp);
   send_thread_ = std::thread(&MultiTransformNode::SendTotalRegisteredScan, this);
 
   RCLCPP_INFO(this->get_logger(), "Finish init multi transform node.");
@@ -109,7 +126,7 @@ void MultiTransformNode::SendTotalRegisteredScan()
 //   pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_result(new pcl::PointCloud<pcl::PointXYZI>());
 //   pcl::fromROSMsg(*terrain_map_msg, *pointcloud_tmp);
 //   try{
-//     pcl::transformPointCloud(*pointcloud_tmp, *pointcloud_result, *fromIdMapToMap);
+//     pcl::transformPointCloud(*pointcloud_tmp, *pointcloud_result, *mapToFromIdMap);
 //   }catch(const tf2::TransformException& ex){
 //     RCLCPP_INFO(this->get_logger(), "%s", ex.what());
 //     return;
@@ -129,7 +146,7 @@ void MultiTransformNode::SendTotalRegisteredScan()
 //   pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_result(new pcl::PointCloud<pcl::PointXYZI>());
 //   pcl::fromROSMsg(*terrain_map_ext_msg, *pointcloud_tmp);
 //   try{
-//     pcl::transformPointCloud(*pointcloud_tmp, *pointcloud_result, *fromIdMapToMap);
+//     pcl::transformPointCloud(*pointcloud_tmp, *pointcloud_result, *mapToFromIdMap);
 //   }catch(const tf2::TransformException& ex){
 //     RCLCPP_INFO(this->get_logger(), "%s", ex.what());
 //     return;
@@ -149,7 +166,7 @@ void MultiTransformNode::RegisteredScanCallBack(
   // pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_result(new pcl::PointCloud<pcl::PointXYZI>());
   // pcl::fromROSMsg(*registered_scan_msg, *pointcloud_tmp);
   // try{
-  //   pcl::transformPointCloud(*pointcloud_tmp, *pointcloud_result, *fromIdMapToMap);
+  //   pcl::transformPointCloud(*pointcloud_tmp, *pointcloud_result, *mapToFromIdMap);
   // }catch(const tf2::TransformException& ex){
   //   RCLCPP_INFO(this->get_logger(), "%s", ex.what());
   //   return;
@@ -186,8 +203,13 @@ void MultiTransformNode::WayPointCallBack(
   const geometry_msgs::msg::PointStamped::ConstSharedPtr way_point_msg)
 {
   std::shared_ptr<geometry_msgs::msg::PointStamped> local_point;
-  local_point = std::make_shared<geometry_msgs::msg::PointStamped>(tf_buffer_->transform(
-    *way_point_msg, "robot_" + std::to_string(robot_id) + "/map", tf2::durationFromSec(10.0)));
+  tf2::Vector3 way_point(way_point_msg->point.x, way_point_msg->point.y, way_point_msg->point.z);
+  tf2::Vector3 point_tmp = mapToFromIdMap->inverse() * way_point;
+  local_point->point.x = point_tmp.x();
+  local_point->point.y = point_tmp.y();
+  local_point->point.z = point_tmp.z();
+  // local_point = std::make_shared<geometry_msgs::msg::PointStamped>(tf_buffer_->transform(
+  //   *way_point_msg, "robot_" + std::to_string(robot_id) + "/map", tf2::durationFromSec(10.0)));
   local_way_point_pub_->publish(*local_point);
 }
 } // namespace multi_transform
