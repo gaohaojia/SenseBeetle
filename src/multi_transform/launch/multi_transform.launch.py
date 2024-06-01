@@ -15,12 +15,12 @@ def generate_launch_description():
     multiOffsetRotateY = LaunchConfiguration('multiOffsetRotateY')
     
     declare_robot_id = DeclareLaunchArgument('robot_id', default_value='0', description='')
-    declare_multiOffsetPositionX = DeclareLaunchArgument('multiOffsetPositionX', default_value='0', description='')
-    declare_multiOffsetPositionY = DeclareLaunchArgument('multiOffsetPositionY', default_value='0', description='')
-    declare_multiOffsetPositionZ = DeclareLaunchArgument('multiOffsetPositionZ', default_value='0', description='')
-    declare_multiOffsetRotateR = DeclareLaunchArgument('multiOffsetRotateR', default_value='0', description='')
-    declare_multiOffsetRotateP = DeclareLaunchArgument('multiOffsetRotateP', default_value='0', description='')
-    declare_multiOffsetRotateY = DeclareLaunchArgument('multiOffsetRotateY', default_value='0', description='')
+    declare_multiOffsetPositionX = DeclareLaunchArgument('multiOffsetPositionX', default_value='0.0', description='')
+    declare_multiOffsetPositionY = DeclareLaunchArgument('multiOffsetPositionY', default_value='0.0', description='')
+    declare_multiOffsetPositionZ = DeclareLaunchArgument('multiOffsetPositionZ', default_value='0.0', description='')
+    declare_multiOffsetRotateR = DeclareLaunchArgument('multiOffsetRotateR', default_value='0.0', description='')
+    declare_multiOffsetRotateP = DeclareLaunchArgument('multiOffsetRotateP', default_value='0.0', description='')
+    declare_multiOffsetRotateY = DeclareLaunchArgument('multiOffsetRotateY', default_value='0.0', description='')
 
     multi_transform_node = Node(
         package='multi_transform',
