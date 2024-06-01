@@ -208,6 +208,8 @@ void MultiTransformNode::WayPointCallBack(
   local_point->point.x = point_tmp.x();
   local_point->point.y = point_tmp.y();
   local_point->point.z = point_tmp.z();
+  local_point->header.frame_id = "robot_" + std::to_string(robot_id) + "/map";
+  local_point->header.stamp = way_point_msg->header.stamp;
   // local_point = std::make_shared<geometry_msgs::msg::PointStamped>(tf_buffer_->transform(
   //   *way_point_msg, "robot_" + std::to_string(robot_id) + "/map", tf2::durationFromSec(10.0)));
   local_way_point_pub_->publish(*local_point);
