@@ -1,5 +1,6 @@
 #include <chrono>
 #include <functional>
+#include <geometry_msgs/msg/detail/point_stamped__struct.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <memory>
 #include <pcl/common/transforms.h>
@@ -202,7 +203,7 @@ void MultiTransformNode::RegisteredScanCallBack(
 void MultiTransformNode::WayPointCallBack(
   const geometry_msgs::msg::PointStamped::ConstSharedPtr way_point_msg)
 {
-  std::shared_ptr<geometry_msgs::msg::PointStamped> local_point;
+  std::shared_ptr<geometry_msgs::msg::PointStamped> local_point(new geometry_msgs::msg::PointStamped());
   tf2::Vector3 way_point(way_point_msg->point.x, way_point_msg->point.y, way_point_msg->point.z);
   tf2::Vector3 point_tmp = mapToFromIdMap->inverse() * way_point;
   local_point->point.x = point_tmp.x();
