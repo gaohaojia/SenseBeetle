@@ -84,11 +84,11 @@ void laserCloudAndOdometryHandler(const nav_msgs::msg::Odometry::ConstSharedPtr 
     laserCLoudInSensorFrame->points.push_back(p1);
   }
   odometryIn.header.stamp = laserCloud2->header.stamp;
-  odometryIn.header.frame_id = "robot_" + std::to_string(robot_id) + "/base_link";
+  odometryIn.header.frame_id = "robot_" + std::to_string(robot_id) + "/map";
   odometryIn.child_frame_id = "robot_" + std::to_string(robot_id) + "/sensor_at_scan";
   pubOdometryPointer->publish(odometryIn);
 
-  transformToMap.frame_id_ = "robot_" + std::to_string(robot_id) + "/base_link";
+  transformToMap.frame_id_ = "robot_" + std::to_string(robot_id) + "/map";
   transformTfGeom = tf2::toMsg(transformToMap);
   transformTfGeom.header.stamp = laserCloud2->header.stamp;
   transformTfGeom.child_frame_id = "robot_" + std::to_string(robot_id) + "/sensor_at_scan";
