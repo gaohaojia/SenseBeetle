@@ -36,7 +36,7 @@ def generate_launch_description():
     checkTerrainConn = LaunchConfiguration('checkTerrainConn')
     
     declare_robot_id = DeclareLaunchArgument('robot_id', default_value='0', description='')
-    declare_lio_mode = DeclareLaunchArgument('lio_mode', default_value='fast_lio', description='')
+    declare_lio_mode = DeclareLaunchArgument('lio_mode', default_value='point_lio', description='')
     declare_cameraOffsetZ = DeclareLaunchArgument('cameraOffsetZ', default_value='0.0', description='')
     declare_vehicleX = DeclareLaunchArgument('vehicleX', default_value='0.0', description='')
     declare_vehicleY = DeclareLaunchArgument('vehicleY', default_value='0.0', description='')

@@ -508,7 +508,7 @@ void publish_frame_world(rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::Share
         pcl::toROSMsg(*laserCloudWorld, laserCloudmsg);
         // laserCloudmsg.header.stamp = ros::Time().fromSec(lidar_end_time);
         laserCloudmsg.header.stamp = get_ros_time(lidar_end_time);
-        laserCloudmsg.header.frame_id = "robot_" + std::to_string(robot_id) + "/odom";
+        laserCloudmsg.header.frame_id = "robot_" + std::to_string(robot_id) + "/map";
         pubLaserCloudFull->publish(laserCloudmsg);
         publish_count -= PUBFRAME_PERIOD;
     }
@@ -577,7 +577,7 @@ void publish_effect_world(rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::Shar
     sensor_msgs::msg::PointCloud2 laserCloudFullRes3;
     pcl::toROSMsg(*laserCloudWorld, laserCloudFullRes3);
     laserCloudFullRes3.header.stamp = get_ros_time(lidar_end_time);
-    laserCloudFullRes3.header.frame_id = "robot_" + std::to_string(robot_id) + "/odom";
+    laserCloudFullRes3.header.frame_id = "robot_" + std::to_string(robot_id) + "/map";
     pubLaserCloudEffect->publish(laserCloudFullRes3);
 }
 
@@ -598,7 +598,7 @@ void publish_map(rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub
     sensor_msgs::msg::PointCloud2 laserCloudmsg;
     pcl::toROSMsg(*pcl_wait_pub, laserCloudmsg);
     laserCloudmsg.header.stamp = get_ros_time(lidar_end_time);
-    laserCloudmsg.header.frame_id = "robot_" + std::to_string(robot_id) + "/odom";
+    laserCloudmsg.header.frame_id = "robot_" + std::to_string(robot_id) + "/map";
     pubLaserCloudMap->publish(laserCloudmsg);
 }
 
@@ -623,7 +623,7 @@ void set_posestamp(T & out)
 
 void publish_odometry(const rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pubOdomAftMapped, std::unique_ptr<tf2_ros::TransformBroadcaster> & tf_br)
 {
-    odomAftMapped.header.frame_id = "robot_" + std::to_string(robot_id) + "/odom";
+    odomAftMapped.header.frame_id = "robot_" + std::to_string(robot_id) + "/map";
     odomAftMapped.child_frame_id = "robot_" + std::to_string(robot_id) + "/base_link";
     odomAftMapped.header.stamp = get_ros_time(lidar_end_time);
     set_posestamp(odomAftMapped.pose);
@@ -641,7 +641,7 @@ void publish_odometry(const rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPt
     }
 
     geometry_msgs::msg::TransformStamped trans;
-    trans.header.frame_id = "robot_" + std::to_string(robot_id) + "/odom";
+    trans.header.frame_id = "robot_" + std::to_string(robot_id) + "/map";
     trans.child_frame_id = "robot_" + std::to_string(robot_id) + "/base_link";
     trans.header.stamp = odomAftMapped.header.stamp; //ADD
     trans.transform.translation.x = odomAftMapped.pose.pose.position.x;
@@ -658,7 +658,7 @@ void publish_path(rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pubPath)
 {
     set_posestamp(msg_body_pose);
     msg_body_pose.header.stamp = get_ros_time(lidar_end_time); // ros::Time().fromSec(lidar_end_time);
-    msg_body_pose.header.frame_id = "robot_" + std::to_string(robot_id) + "/odom";
+    msg_body_pose.header.frame_id = "robot_" + std::to_string(robot_id) + "/map";
 
     /*** if path is too large, the rvis will crash ***/
     static int jjj = 0;
@@ -897,7 +897,7 @@ public:
         RCLCPP_INFO(this->get_logger(), "p_pre->lidar_type %d", p_pre->lidar_type);
 
         path.header.stamp = this->get_clock()->now();
-        path.header.frame_id = "robot_" + std::to_string(robot_id) + "/odom";
+        path.header.frame_id = "robot_" + std::to_string(robot_id) + "/map";
 
         FOV_DEG = (fov_deg + 10.0) > 179.9 ? 179.9 : (fov_deg + 10.0);
         HALF_FOV_COS = cos((FOV_DEG) * 0.5 * PI_M / 180.0);

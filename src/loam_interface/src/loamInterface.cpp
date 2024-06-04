@@ -113,12 +113,12 @@ private:
     }
 
     // publish odometry messages
-    odomData.header.frame_id = "robot_" + std::to_string(robot_id) + "/map";
+    odomData.header.frame_id = "robot_" + std::to_string(robot_id) + "/base_link";
     odomData.child_frame_id = "robot_" + std::to_string(robot_id) + "/sensor";
     pubOdometry->publish(odomData);
 
     // publish tf messages
-    odomTrans.frame_id_ = "robot_" + std::to_string(robot_id) + "/map";
+    odomTrans.frame_id_ = "robot_" + std::to_string(robot_id) + "/base_link";
     odomTrans.setRotation(tf2::Quaternion(geoQuat.x, geoQuat.y, geoQuat.z, geoQuat.w));
     odomTrans.setOrigin(tf2::Vector3(odomData.pose.pose.position.x, odomData.pose.pose.position.y, odomData.pose.pose.position.z));
 
@@ -131,7 +131,7 @@ private:
       } 
       else{
         transformTfGeom.transform = tf2::toMsg(odomTrans.inverse());
-        transformTfGeom.header.frame_id = "robot_" + std::to_string(robot_id) + "/map";
+        transformTfGeom.header.frame_id = "robot_" + std::to_string(robot_id) + "/base_link";
         transformTfGeom.child_frame_id = "robot_" + std::to_string(robot_id) + "/sensor";
         transformTfGeom.header.stamp = odom->header.stamp;
         tfBroadcasterPointer->sendTransform(transformTfGeom);
