@@ -159,13 +159,14 @@ void MultiTransformNode::NetworkRecvThread()
 {
   int n, len = sizeof(server_addr);
   while (rclcpp::ok()) {
+    buffer.resize(BUFFER_SIZE);
     n = recvfrom(sockfd,
                  buffer.data(),
                  BUFFER_SIZE,
                  0,
                  (struct sockaddr *)&server_addr,
                  (socklen_t *)&len);
-    buffer[n] = '\0';
+    buffer.resize(n);
 
     RCLCPP_INFO(this->get_logger(), "%s", buffer.data());
   }
@@ -180,12 +181,12 @@ std::vector<uint8_t> MultiTransformNode::SerializePointCloud2(
   serializer.serialize_message(&pointcloud2_msg, &serialized_msg);
 
   // 将序列化的消息复制到字节数组
-  std::vector<uint8_t> buffer(serialized_msg.size());
-  std::memcpy(buffer.data(),
+  std::vector<uint8_t> buffer_tmp(serialized_msg.size());
+  std::memcpy(buffer_tmp.data(),
               serialized_msg.get_rcl_serialized_message().buffer,
               serialized_msg.size());
 
-  return buffer;
+  return buffer_tmp;
 }
 
 void MultiTransformNode::RegisteredScanCallBack(

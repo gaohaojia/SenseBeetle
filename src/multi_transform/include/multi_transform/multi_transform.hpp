@@ -29,7 +29,7 @@
 #include "tf2_ros/transform_broadcaster.h"
 #include "tf2_ros/transform_listener.h"
 
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 65535
 
 namespace multi_transform
 {
