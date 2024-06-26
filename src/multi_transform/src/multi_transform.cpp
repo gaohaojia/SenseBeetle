@@ -24,7 +24,7 @@
 
 namespace multi_transform
 {
-MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions& options)
+MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions & options)
   : Node("multi_transform", options)
 {
   this->declare_parameter<int>("robot_id", 0);
@@ -43,6 +43,12 @@ MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions& options)
   this->get_parameter("multiOffsetRotateP", multiOffsetRotateP);
   this->get_parameter("multiOffsetRotateY", multiOffsetRotateY);
 
+  registered_scan_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
+    "registered_scan",
+    5,
+    std::bind(&MultiTransformNode::RegisteredScanCallBack, this, std::placeholders::_1));
+  way_point_sub_ = this->create_subscription<geometry_msgs::msg::PointStamped>(
+    "way_point", 2, std::bind(&MultiTransformNode::WayPointCallBack, this, std::placeholders::_1));
   // terrain_map_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
   //   "terrain_map",
   //   2,
@@ -51,27 +57,21 @@ MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions& options)
   //   "terrain_map_ext",
   //   2,
   //   std::bind(&MultiTransformNode::TerrainMapExtCallBack, this, std::placeholders::_1));
-  registered_scan_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
-    "registered_scan",
-    5,
-    std::bind(&MultiTransformNode::RegisteredScanCallBack, this, std::placeholders::_1));
   // state_estimation_at_scan_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
   //   "state_estimation_at_scan",
   //   5,
   //   std::bind(&MultiTransformNode::StateEstimationAtScanCallBack, this, std::placeholders::_1));
-  way_point_sub_ = this->create_subscription<geometry_msgs::msg::PointStamped>(
-    "way_point", 2, std::bind(&MultiTransformNode::WayPointCallBack, this, std::placeholders::_1));
 
+  total_registered_scan_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
+    "total_registered_scan", rclcpp::SensorDataQoS());
+  local_way_point_pub_ =
+    this->create_publisher<geometry_msgs::msg::PointStamped>("local_way_point", 2);
   // total_terrain_map_pub_ =
   //   this->create_publisher<sensor_msgs::msg::PointCloud2>("total_terrain_map", 2);
   // total_terrain_map_ext_pub_ =
   //   this->create_publisher<sensor_msgs::msg::PointCloud2>("total_terrain_map_ext", 2);
-  total_registered_scan_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
-    "total_registered_scan", rclcpp::SensorDataQoS());
   // total_state_estimation_at_scan_pub_ =
   //   this->create_publisher<nav_msgs::msg::Odometry>("total_state_estimation_at_scan", 5);
-  local_way_point_pub_ =
-    this->create_publisher<geometry_msgs::msg::PointStamped>("local_way_point", 2);
 
   std::string fromFrameRel = "robot_" + std::to_string(robot_id) + "/map";
   std::string toFrameRel = "map";
@@ -81,7 +81,7 @@ MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions& options)
     transformStamped =
       std::make_shared<geometry_msgs::msg::TransformStamped>(tf_buffer_->lookupTransform(
         toFrameRel, fromFrameRel, tf2::TimePointZero, tf2::durationFromSec(10.0)));
-  } catch (const tf2::TransformException& ex) {
+  } catch (const tf2::TransformException & ex) {
     RCLCPP_INFO(this->get_logger(),
                 "Could not transform %s to %s: %s",
                 toFrameRel.c_str(),
@@ -114,6 +114,25 @@ void MultiTransformNode::SendTotalRegisteredScan()
       total_registered_scan_pub_->publish(*totalRegisteredScan);
     }
   }
+}
+
+void MultiTransformNode::RegisteredScanCallBack(
+  const sensor_msgs::msg::PointCloud2::ConstSharedPtr registered_scan_msg)
+{
+  if (total_registered_scan_queue.size() >= 5) {
+    total_registered_scan_queue.pop();
+  }
+  total_registered_scan_queue.push(*registered_scan_msg);
+}
+
+void MultiTransformNode::WayPointCallBack(
+  const geometry_msgs::msg::PointStamped::ConstSharedPtr way_point_msg)
+{
+  std::shared_ptr<geometry_msgs::msg::PointStamped> local_point(
+    new geometry_msgs::msg::PointStamped());
+  local_point = std::make_shared<geometry_msgs::msg::PointStamped>(tf_buffer_->transform(
+    *way_point_msg, "robot_" + std::to_string(robot_id) + "/map", tf2::durationFromSec(10.0)));
+  local_way_point_pub_->publish(*local_point);
 }
 
 // void MultiTransformNode::TerrainMapCallBack(
@@ -156,29 +175,6 @@ void MultiTransformNode::SendTotalRegisteredScan()
 //   total_terrain_map_ext_pub_->publish(*totalTerrainExtCloud);
 // }
 
-void MultiTransformNode::RegisteredScanCallBack(
-  const sensor_msgs::msg::PointCloud2::ConstSharedPtr registered_scan_msg)
-{
-  // pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_tmp(new pcl::PointCloud<pcl::PointXYZI>());
-  // pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_result(new pcl::PointCloud<pcl::PointXYZI>());
-  // pcl::fromROSMsg(*registered_scan_msg, *pointcloud_tmp);
-  // try{
-  //   pcl::transformPointCloud(*pointcloud_tmp, *pointcloud_result, *fromIdMapToMap);
-  // }catch(const tf2::TransformException& ex){
-  //   RCLCPP_INFO(this->get_logger(), "%s", ex.what());
-  //   return;
-  // }
-  // std::shared_ptr<sensor_msgs::msg::PointCloud2> registeredScanCloud(
-  //   new sensor_msgs::msg::PointCloud2());
-  // pcl::toROSMsg(*pointcloud_result, *registeredScanCloud);
-  // registeredScanCloud->header.stamp = registered_scan_msg->header.stamp;
-  // registeredScanCloud->header.frame_id = "map";
-  if (total_registered_scan_queue.size() >= 5) {
-    total_registered_scan_queue.pop();
-  }
-  total_registered_scan_queue.push(*registered_scan_msg);
-}
-
 // void MultiTransformNode::StateEstimationAtScanCallBack(
 //   const nav_msgs::msg::Odometry::ConstSharedPtr state_estimation_at_scan_msg)
 // {
@@ -196,14 +192,6 @@ void MultiTransformNode::RegisteredScanCallBack(
 //   total_state_estimation_at_scan_pub_->publish(*total_state_estimation_at_scan_msg);
 // }
 
-void MultiTransformNode::WayPointCallBack(
-  const geometry_msgs::msg::PointStamped::ConstSharedPtr way_point_msg)
-{
-  std::shared_ptr<geometry_msgs::msg::PointStamped> local_point(new geometry_msgs::msg::PointStamped());
-  local_point = std::make_shared<geometry_msgs::msg::PointStamped>(tf_buffer_->transform(
-    *way_point_msg, "robot_" + std::to_string(robot_id) + "/map", tf2::durationFromSec(10.0)));
-  local_way_point_pub_->publish(*local_point);
-}
 } // namespace multi_transform
 
 #include "rclcpp_components/register_node_macro.hpp"
