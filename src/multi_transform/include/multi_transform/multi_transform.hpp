@@ -3,6 +3,7 @@
 
 #include <memory>
 
+#include <netinet/in.h>
 #include <queue>
 #include <rclcpp/node.hpp>
 #include <rclcpp/node_options.hpp>
@@ -27,6 +28,8 @@
 #include "sensor_msgs/msg/point_cloud2.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 
+#define BUFFER_SIZE 1024
+
 namespace multi_transform
 {
 class MultiTransformNode : public rclcpp::Node
@@ -36,6 +39,12 @@ public:
   ~MultiTransformNode() override;
 
 private:
+
+  int port = 12130;
+  int sockfd;
+  char buffer[BUFFER_SIZE];
+  struct sockaddr_in server_addr;
+
   int robot_id;
 
   double multiOffsetPositionX;
@@ -46,6 +55,7 @@ private:
   double multiOffsetRotateY;
 
   std::thread send_thread_;
+  std::thread recv_thread_;
   std::queue<sensor_msgs::msg::PointCloud2> total_registered_scan_queue;
 
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
@@ -54,6 +64,7 @@ private:
   std::shared_ptr<Eigen::Matrix4d> fromIdMapToMap;
 
   void SendTotalRegisteredScan();
+  void NetworkThread();
 
   void TerrainMapCallBack(const sensor_msgs::msg::PointCloud2::ConstSharedPtr terrain_map_msg);
   void TerrainMapExtCallBack(const sensor_msgs::msg::PointCloud2::ConstSharedPtr terrain_map_ext_msg);

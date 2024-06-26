@@ -1,15 +1,19 @@
 #include <chrono>
+#include <cstring>
 #include <functional>
 #include <geometry_msgs/msg/detail/point_stamped__struct.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <memory>
+#include <netinet/in.h>
 #include <pcl/common/transforms.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <rclcpp/qos.hpp>
 #include <rclcpp/utilities.hpp>
 #include <rmw/qos_profiles.h>
+#include <rmw/rmw.h>
 #include <rmw/types.h>
 #include <string>
+#include <sys/socket.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2/LinearMath/Vector3.h>
@@ -91,8 +95,20 @@ MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions & options)
   }
   fromIdMapToMap = std::make_shared<Eigen::Matrix4d>(
     tf2::transformToEigen(transformStamped->transform).matrix().cast<double>());
-  send_thread_ = std::thread(&MultiTransformNode::SendTotalRegisteredScan, this);
 
+  if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
+    RCLCPP_ERROR(this->get_logger(), "Socket creation failed!");
+    return;
+  }
+
+  memset(&server_addr, 0, sizeof(server_addr));
+
+  server_addr.sin_family = AF_INET;
+  server_addr.sin_port = htons(port);
+  server_addr.sin_addr.s_addr = INADDR_ANY;
+
+  send_thread_ = std::thread(&MultiTransformNode::SendTotalRegisteredScan, this);
+  recv_thread_ = std::thread(&MultiTransformNode::NetworkThread, this);
   RCLCPP_INFO(this->get_logger(), "Finish init multi transform node.");
 }
 
@@ -101,18 +117,35 @@ MultiTransformNode::~MultiTransformNode()
   if (send_thread_.joinable()) {
     send_thread_.join();
   }
+  if (recv_thread_.joinable()){
+    recv_thread_.join();
+  }
 }
 
 void MultiTransformNode::SendTotalRegisteredScan()
 {
+  int len = sizeof(server_addr);
   while (rclcpp::ok()) {
-    rclcpp::sleep_for(std::chrono::nanoseconds(10));
+    rclcpp::sleep_for(std::chrono::nanoseconds(100));
     if (!total_registered_scan_queue.empty()) {
       std::shared_ptr<sensor_msgs::msg::PointCloud2> totalRegisteredScan =
         std::make_shared<sensor_msgs::msg::PointCloud2>(total_registered_scan_queue.front());
       total_registered_scan_queue.pop();
-      total_registered_scan_pub_->publish(*totalRegisteredScan);
+      // total_registered_scan_pub_->publish(*totalRegisteredScan);
+
+      sendto(sockfd, buffer, strlen(buffer), MSG_CONFIRM, (const struct sockaddr *)&server_addr, len);
     }
+    sendto(sockfd, "hello world", strlen("hello world"), MSG_WAITALL, (const struct sockaddr *)&server_addr, len);
+  }
+}
+
+void MultiTransformNode::NetworkThread(){
+  int n, len = sizeof(server_addr);
+  while (rclcpp::ok()){
+    n = recvfrom(sockfd, buffer, BUFFER_SIZE, 0, (struct sockaddr *)&server_addr, (socklen_t *)&len);
+    buffer[n] = '\0';
+
+    RCLCPP_INFO(this->get_logger(), "%s", buffer);
   }
 }
 
