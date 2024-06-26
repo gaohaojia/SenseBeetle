@@ -29,8 +29,6 @@
 #include "tf2_ros/transform_broadcaster.h"
 #include "tf2_ros/transform_listener.h"
 
-#define BUFFER_SIZE 65535
-
 namespace multi_transform
 {
 class MultiTransformNode : public rclcpp::Node
@@ -43,7 +41,6 @@ private:
   int port;
   std::string ip;
   int sockfd;
-  std::vector<uint8_t> buffer;
   struct sockaddr_in server_addr;
 
   int robot_id;

@@ -14,6 +14,7 @@
 #include <tf2/transform_datatypes.h>
 
 #include <chrono>
+#include <cstdint>
 #include <cstring>
 #include <functional>
 #include <geometry_msgs/msg/detail/point_stamped__struct.hpp>
@@ -29,6 +30,9 @@
 #include <thread>
 
 #include "multi_transform/multi_transform.hpp"
+
+#define MAX_PACKET_SIZE 64000
+#define BUFFER_SIZE 65535
 
 namespace multi_transform
 {
@@ -140,17 +144,30 @@ void MultiTransformNode::NetworkSendThread()
   while (rclcpp::ok()) {
     rclcpp::sleep_for(std::chrono::nanoseconds(100));
     if (!registered_scan_queue.empty()) {
-      std::shared_ptr<sensor_msgs::msg::PointCloud2> totalRegisteredScan =
-        std::make_shared<sensor_msgs::msg::PointCloud2>(registered_scan_queue.front());
+      std::vector<uint8_t> data_buffer = MultiTransformNode::SerializePointCloud2(registered_scan_queue.front());
       registered_scan_queue.pop();
-
-      buffer = MultiTransformNode::SerializePointCloud2(*totalRegisteredScan);
-      sendto(sockfd,
-             buffer.data(),
-             buffer.size(),
+      RCLCPP_INFO(this->get_logger(), "%ld", data_buffer.size());
+      int total_packet = (data_buffer.size() + MAX_PACKET_SIZE - 1) / MAX_PACKET_SIZE;
+      for (int i = 0; i < total_packet; i++){
+        uint8_t header1 = robot_id; // id
+        uint8_t header2 = 0x00; // 数据类型
+        uint16_t header3 = i; // packet 编号
+        uint8_t header4 = total_packet;
+        std::vector<uint8_t> header(sizeof(header1) + sizeof(header2) + sizeof(header3));
+        std::memcpy(header.data(), &header1, sizeof(header1));
+        std::memcpy(header.data() + sizeof(header1), &header2, sizeof(header2));
+        std::memcpy(header.data() + sizeof(header1) + sizeof(header2), &header3, sizeof(header3));
+        std::memcpy(header.data() + sizeof(header1) + sizeof(header2) + sizeof(header3), &header4, sizeof(header4));
+        std::vector<uint8_t> packet(sizeof(header) + sizeof(data_buffer));
+        packet.insert(packet.end(), header.begin(), header.end());
+        packet.insert(packet.end(), data_buffer.begin(), data_buffer.end());
+        sendto(sockfd,
+             packet.data(),
+             packet.size(),
              MSG_CONFIRM,
              (const struct sockaddr *)&server_addr,
              len);
+      }
     }
   }
 }
@@ -159,7 +176,7 @@ void MultiTransformNode::NetworkRecvThread()
 {
   int n, len = sizeof(server_addr);
   while (rclcpp::ok()) {
-    buffer.resize(BUFFER_SIZE);
+    std::vector<uint8_t> buffer(BUFFER_SIZE);
     n = recvfrom(sockfd,
                  buffer.data(),
                  BUFFER_SIZE,
