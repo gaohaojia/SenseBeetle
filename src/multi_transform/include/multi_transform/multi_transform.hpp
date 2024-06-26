@@ -40,8 +40,8 @@ public:
 
 private:
 
-  int port = 12130;
-  std::string ip = "192.168.31.207";
+  int port;
+  std::string ip;
   int sockfd;
   char buffer[BUFFER_SIZE];
   struct sockaddr_in server_addr;

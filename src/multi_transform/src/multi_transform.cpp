@@ -33,6 +33,8 @@ MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions & options)
   : Node("multi_transform", options)
 {
   this->declare_parameter<int>("robot_id", 0);
+  this->declare_parameter<int>("network_port", 12130);
+  this->declare_parameter<std::string>("network_ip", "192.168.31.207");
   this->declare_parameter<double>("multiOffsetPositionX", 0.0);
   this->declare_parameter<double>("multiOffsetPositionY", 0.0);
   this->declare_parameter<double>("multiOffsetPositionZ", 0.0);
@@ -41,6 +43,8 @@ MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions & options)
   this->declare_parameter<double>("multiOffsetRotateY", 0.0);
 
   this->get_parameter("robot_id", robot_id);
+  this->get_parameter("network_port", port);
+  this->get_parameter("network_ip", ip);
   this->get_parameter("multiOffsetPositionX", multiOffsetPositionX);
   this->get_parameter("multiOffsetPositionY", multiOffsetPositionY);
   this->get_parameter("multiOffsetPositionZ", multiOffsetPositionZ);

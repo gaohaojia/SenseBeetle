@@ -20,6 +20,8 @@ def get_id_map_trans_publisher(context: LaunchContext, offsetList, robot_id):
 
 def generate_launch_description():
     robot_id = LaunchConfiguration('robot_id')
+    network_port = LaunchConfiguration('network_port')
+    network_ip = LaunchConfiguration('network_ip')
     multiOffsetPositionX = LaunchConfiguration('multiOffsetPositionX')
     multiOffsetPositionY = LaunchConfiguration('multiOffsetPositionY')
     multiOffsetPositionZ = LaunchConfiguration('multiOffsetPositionZ')
@@ -28,6 +30,8 @@ def generate_launch_description():
     multiOffsetRotateY = LaunchConfiguration('multiOffsetRotateY')
     
     declare_robot_id = DeclareLaunchArgument('robot_id', default_value='0', description='')
+    declare_network_port = DeclareLaunchArgument('network_port', default_value='12130', description='')
+    declare_network_ip = DeclareLaunchArgument('network_ip', default_value='192.168.31.207', description='')
     declare_multiOffsetPositionX = DeclareLaunchArgument('multiOffsetPositionX', default_value='0.0', description='')
     declare_multiOffsetPositionY = DeclareLaunchArgument('multiOffsetPositionY', default_value='0.0', description='')
     declare_multiOffsetPositionZ = DeclareLaunchArgument('multiOffsetPositionZ', default_value='0.0', description='')
@@ -42,6 +46,8 @@ def generate_launch_description():
         output='screen',
         parameters=[{
             'robot_id': robot_id,
+            'network_port': network_port,
+            'network_ip': network_ip,
             'multiOffsetPositionX': multiOffsetPositionX,
             'multiOffsetPositionY': multiOffsetPositionY,
             'multiOffsetPositionZ': multiOffsetPositionZ,
@@ -54,6 +60,8 @@ def generate_launch_description():
     ld = LaunchDescription()
 
     ld.add_action(declare_robot_id)
+    ld.add_action(declare_network_port)
+    ld.add_action(declare_network_ip)
     ld.add_action(declare_multiOffsetPositionX)
     ld.add_action(declare_multiOffsetPositionY)
     ld.add_action(declare_multiOffsetPositionZ)
