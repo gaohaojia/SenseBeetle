@@ -160,7 +160,7 @@ void MultiTransformNode::NetworkSendThread()
         std::memcpy(header.data() + sizeof(header1) + sizeof(header2) + sizeof(header3), &header4, sizeof(header4));
         std::vector<uint8_t> packet(sizeof(header) + sizeof(data_buffer));
         packet.insert(packet.end(), header.begin(), header.end());
-        packet.insert(packet.end(), data_buffer.begin(), data_buffer.end());
+        packet.insert(packet.end(), data_buffer.begin() + i * MAX_PACKET_SIZE, i == total_packet - 1 ? data_buffer.end() : data_buffer.begin() + (i + 1) * MAX_PACKET_SIZE);
         RCLCPP_INFO(this->get_logger(), "%ld", packet.size());
         sendto(sockfd,
              packet.data(),
