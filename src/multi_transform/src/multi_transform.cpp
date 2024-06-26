@@ -124,7 +124,7 @@ MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions & options)
 
   send_thread_ = std::thread(&MultiTransformNode::NetworkSendThread, this);
   recv_thread_ = std::thread(&MultiTransformNode::NetworkRecvThread, this);
-  RCLCPP_INFO(this->get_logger(), "Finish init multi transform node.");
+  RCLCPP_INFO(this->get_logger(), "Client start at ip: %s, port: %d", ip.c_str(), port);
 }
 
 MultiTransformNode::~MultiTransformNode()
@@ -146,8 +146,8 @@ void MultiTransformNode::NetworkSendThread()
     if (!registered_scan_queue.empty()) {
       std::vector<uint8_t> data_buffer = MultiTransformNode::SerializePointCloud2(registered_scan_queue.front());
       registered_scan_queue.pop();
-      RCLCPP_INFO(this->get_logger(), "%ld", data_buffer.size());
-      int total_packet = (data_buffer.size() + MAX_PACKET_SIZE - 1) / MAX_PACKET_SIZE;
+      // RCLCPP_INFO(this->get_logger(), "%ld", data_buffer.size());
+      const int total_packet = (data_buffer.size() + MAX_PACKET_SIZE - 1) / MAX_PACKET_SIZE;
       for (int i = 0; i < total_packet; i++){
         uint8_t header1 = robot_id; // id
         uint8_t header2 = 0x00; // 数据类型
@@ -161,6 +161,7 @@ void MultiTransformNode::NetworkSendThread()
         std::vector<uint8_t> packet(sizeof(header) + sizeof(data_buffer));
         packet.insert(packet.end(), header.begin(), header.end());
         packet.insert(packet.end(), data_buffer.begin(), data_buffer.end());
+        RCLCPP_INFO(this->get_logger(), "%ld", packet.size());
         sendto(sockfd,
              packet.data(),
              packet.size(),
