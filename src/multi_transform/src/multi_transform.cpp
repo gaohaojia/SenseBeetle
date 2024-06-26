@@ -1,3 +1,4 @@
+#include <arpa/inet.h>
 #include <chrono>
 #include <cstring>
 #include <functional>
@@ -96,6 +97,7 @@ MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions & options)
   fromIdMapToMap = std::make_shared<Eigen::Matrix4d>(
     tf2::transformToEigen(transformStamped->transform).matrix().cast<double>());
 
+  // TCP网络通讯部分
   if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
     RCLCPP_ERROR(this->get_logger(), "Socket creation failed!");
     return;
@@ -105,7 +107,7 @@ MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions & options)
 
   server_addr.sin_family = AF_INET;
   server_addr.sin_port = htons(port);
-  server_addr.sin_addr.s_addr = INADDR_ANY;
+  server_addr.sin_addr.s_addr = inet_addr(ip.c_str());
 
   send_thread_ = std::thread(&MultiTransformNode::SendTotalRegisteredScan, this);
   recv_thread_ = std::thread(&MultiTransformNode::NetworkThread, this);
