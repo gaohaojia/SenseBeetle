@@ -1,19 +1,10 @@
 #include <arpa/inet.h>
-#include <chrono>
-#include <cstring>
-#include <functional>
-#include <geometry_msgs/msg/detail/point_stamped__struct.hpp>
-#include <geometry_msgs/msg/pose_stamped.hpp>
-#include <memory>
 #include <netinet/in.h>
 #include <pcl/common/transforms.h>
 #include <pcl_conversions/pcl_conversions.h>
-#include <rclcpp/qos.hpp>
-#include <rclcpp/utilities.hpp>
 #include <rmw/qos_profiles.h>
 #include <rmw/rmw.h>
 #include <rmw/types.h>
-#include <string>
 #include <sys/socket.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Transform.h>
@@ -21,6 +12,18 @@
 #include <tf2/convert.h>
 #include <tf2/time.h>
 #include <tf2/transform_datatypes.h>
+
+#include <chrono>
+#include <cstring>
+#include <functional>
+#include <geometry_msgs/msg/detail/point_stamped__struct.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <memory>
+#include <rclcpp/qos.hpp>
+#include <rclcpp/serialization.hpp>
+#include <rclcpp/serialized_message.hpp>
+#include <rclcpp/utilities.hpp>
+#include <string>
 #include <tf2_eigen/tf2_eigen.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <thread>
@@ -57,7 +60,9 @@ MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions & options)
     5,
     std::bind(&MultiTransformNode::RegisteredScanCallBack, this, std::placeholders::_1));
   way_point_sub_ = this->create_subscription<geometry_msgs::msg::PointStamped>(
-    "way_point", 2, std::bind(&MultiTransformNode::WayPointCallBack, this, std::placeholders::_1));
+    "way_point",
+    2,
+    std::bind(&MultiTransformNode::WayPointCallBack, this, std::placeholders::_1));
   // terrain_map_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
   //   "terrain_map",
   //   2,
@@ -71,8 +76,6 @@ MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions & options)
   //   5,
   //   std::bind(&MultiTransformNode::StateEstimationAtScanCallBack, this, std::placeholders::_1));
 
-  total_registered_scan_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
-    "total_registered_scan", rclcpp::SensorDataQoS());
   local_way_point_pub_ =
     this->create_publisher<geometry_msgs::msg::PointStamped>("local_way_point", 2);
   // total_terrain_map_pub_ =
@@ -87,9 +90,11 @@ MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions & options)
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
   try {
-    transformStamped =
-      std::make_shared<geometry_msgs::msg::TransformStamped>(tf_buffer_->lookupTransform(
-        toFrameRel, fromFrameRel, tf2::TimePointZero, tf2::durationFromSec(10.0)));
+    transformStamped = std::make_shared<geometry_msgs::msg::TransformStamped>(
+      tf_buffer_->lookupTransform(toFrameRel,
+                                  fromFrameRel,
+                                  tf2::TimePointZero,
+                                  tf2::durationFromSec(10.0)));
   } catch (const tf2::TransformException & ex) {
     RCLCPP_INFO(this->get_logger(),
                 "Could not transform %s to %s: %s",
@@ -102,7 +107,7 @@ MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions & options)
     tf2::transformToEigen(transformStamped->transform).matrix().cast<double>());
 
   // TCP网络通讯部分
-  if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
+  if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
     RCLCPP_ERROR(this->get_logger(), "Socket creation failed!");
     return;
   }
@@ -113,8 +118,8 @@ MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions & options)
   server_addr.sin_port = htons(port);
   server_addr.sin_addr.s_addr = inet_addr(ip.c_str());
 
-  send_thread_ = std::thread(&MultiTransformNode::SendTotalRegisteredScan, this);
-  recv_thread_ = std::thread(&MultiTransformNode::NetworkThread, this);
+  send_thread_ = std::thread(&MultiTransformNode::NetworkSendThread, this);
+  recv_thread_ = std::thread(&MultiTransformNode::NetworkRecvThread, this);
   RCLCPP_INFO(this->get_logger(), "Finish init multi transform node.");
 }
 
@@ -123,46 +128,73 @@ MultiTransformNode::~MultiTransformNode()
   if (send_thread_.joinable()) {
     send_thread_.join();
   }
-  if (recv_thread_.joinable()){
+  if (recv_thread_.joinable()) {
     recv_thread_.join();
   }
   close(sockfd);
 }
 
-void MultiTransformNode::SendTotalRegisteredScan()
+void MultiTransformNode::NetworkSendThread()
 {
   int len = sizeof(server_addr);
   while (rclcpp::ok()) {
     rclcpp::sleep_for(std::chrono::nanoseconds(100));
-    if (!total_registered_scan_queue.empty()) {
+    if (!registered_scan_queue.empty()) {
       std::shared_ptr<sensor_msgs::msg::PointCloud2> totalRegisteredScan =
-        std::make_shared<sensor_msgs::msg::PointCloud2>(total_registered_scan_queue.front());
-      total_registered_scan_queue.pop();
-      // total_registered_scan_pub_->publish(*totalRegisteredScan);
+        std::make_shared<sensor_msgs::msg::PointCloud2>(registered_scan_queue.front());
+      registered_scan_queue.pop();
 
-      sendto(sockfd, buffer, strlen(buffer), MSG_CONFIRM, (const struct sockaddr *)&server_addr, len);
+      buffer = MultiTransformNode::SerializePointCloud2(*totalRegisteredScan);
+      sendto(sockfd,
+             buffer.data(),
+             buffer.size(),
+             MSG_CONFIRM,
+             (const struct sockaddr *)&server_addr,
+             len);
     }
-    sendto(sockfd, "hello world", strlen("hello world"), MSG_WAITALL, (const struct sockaddr *)&server_addr, len);
   }
 }
 
-void MultiTransformNode::NetworkThread(){
+void MultiTransformNode::NetworkRecvThread()
+{
   int n, len = sizeof(server_addr);
-  while (rclcpp::ok()){
-    n = recvfrom(sockfd, buffer, BUFFER_SIZE, 0, (struct sockaddr *)&server_addr, (socklen_t *)&len);
+  while (rclcpp::ok()) {
+    n = recvfrom(sockfd,
+                 buffer.data(),
+                 BUFFER_SIZE,
+                 0,
+                 (struct sockaddr *)&server_addr,
+                 (socklen_t *)&len);
     buffer[n] = '\0';
 
-    RCLCPP_INFO(this->get_logger(), "%s", buffer);
+    RCLCPP_INFO(this->get_logger(), "%s", buffer.data());
   }
+}
+
+// PointCloud2 序列化
+std::vector<uint8_t> MultiTransformNode::SerializePointCloud2(
+  const sensor_msgs::msg::PointCloud2 & pointcloud2_msg)
+{
+  rclcpp::SerializedMessage serialized_msg;
+  rclcpp::Serialization<sensor_msgs::msg::PointCloud2> serializer;
+  serializer.serialize_message(&pointcloud2_msg, &serialized_msg);
+
+  // 将序列化的消息复制到字节数组
+  std::vector<uint8_t> buffer(serialized_msg.size());
+  std::memcpy(buffer.data(),
+              serialized_msg.get_rcl_serialized_message().buffer,
+              serialized_msg.size());
+
+  return buffer;
 }
 
 void MultiTransformNode::RegisteredScanCallBack(
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr registered_scan_msg)
 {
-  if (total_registered_scan_queue.size() >= 5) {
-    total_registered_scan_queue.pop();
+  if (registered_scan_queue.size() >= 5) {
+    registered_scan_queue.pop();
   }
-  total_registered_scan_queue.push(*registered_scan_msg);
+  registered_scan_queue.push(*registered_scan_msg);
 }
 
 void MultiTransformNode::WayPointCallBack(
@@ -170,8 +202,10 @@ void MultiTransformNode::WayPointCallBack(
 {
   std::shared_ptr<geometry_msgs::msg::PointStamped> local_point(
     new geometry_msgs::msg::PointStamped());
-  local_point = std::make_shared<geometry_msgs::msg::PointStamped>(tf_buffer_->transform(
-    *way_point_msg, "robot_" + std::to_string(robot_id) + "/map", tf2::durationFromSec(10.0)));
+  local_point = std::make_shared<geometry_msgs::msg::PointStamped>(
+    tf_buffer_->transform(*way_point_msg,
+                          "robot_" + std::to_string(robot_id) + "/map",
+                          tf2::durationFromSec(10.0)));
   local_way_point_pub_->publish(*local_point);
 }
 
@@ -232,7 +266,7 @@ void MultiTransformNode::WayPointCallBack(
 //   total_state_estimation_at_scan_pub_->publish(*total_state_estimation_at_scan_msg);
 // }
 
-} // namespace multi_transform
+}  // namespace multi_transform
 
 #include "rclcpp_components/register_node_macro.hpp"
 
