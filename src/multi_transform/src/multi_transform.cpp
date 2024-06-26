@@ -122,6 +122,7 @@ MultiTransformNode::~MultiTransformNode()
   if (recv_thread_.joinable()){
     recv_thread_.join();
   }
+  close(sockfd);
 }
 
 void MultiTransformNode::SendTotalRegisteredScan()
