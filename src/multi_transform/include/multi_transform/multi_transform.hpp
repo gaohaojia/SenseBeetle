@@ -51,7 +51,7 @@ private:
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
   std::shared_ptr<geometry_msgs::msg::TransformStamped> transformStamped;
-  std::shared_ptr<tf2::Transform> mapToFromIdMap;
+  std::shared_ptr<Eigen::Matrix4d> fromIdMapToMap;
 
   void SendTotalRegisteredScan();
 
