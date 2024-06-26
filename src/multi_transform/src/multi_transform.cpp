@@ -153,7 +153,7 @@ void MultiTransformNode::NetworkSendThread()
         uint8_t header2 = 0x00; // 数据类型
         uint16_t header3 = i; // packet 编号
         uint8_t header4 = total_packet;
-        std::vector<uint8_t> header(sizeof(header1) + sizeof(header2) + sizeof(header3));
+        std::vector<uint8_t> header(sizeof(header1) + sizeof(header2) + sizeof(header3) + sizeof(header4));
         std::memcpy(header.data(), &header1, sizeof(header1));
         std::memcpy(header.data() + sizeof(header1), &header2, sizeof(header2));
         std::memcpy(header.data() + sizeof(header1) + sizeof(header2), &header3, sizeof(header3));
