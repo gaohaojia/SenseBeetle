@@ -10,13 +10,13 @@ def get_id_map_trans_publisher(context: LaunchContext, offsetList, robot_id):
     offsetList_str = []
     for idx in offsetList:
         offsetList_str.append(context.perform_substitution(idx))
-    sensor_trans_publisher = Node(
+    map_trans_publisher = Node(
         package="tf2_ros",
         executable="static_transform_publisher",
         name="idMapTransPublisher",
         arguments=[*offsetList_str, 'map', robot_id_str + '/map']
     )
-    return [sensor_trans_publisher]
+    return [map_trans_publisher]
 
 def generate_launch_description():
     robot_id = LaunchConfiguration('robot_id')
