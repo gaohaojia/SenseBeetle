@@ -142,7 +142,7 @@ void MultiTransformNode::NetworkSendThread()
 {
   int len = sizeof(server_addr);
   while (rclcpp::ok()) {
-    rclcpp::sleep_for(std::chrono::nanoseconds(100));
+    rclcpp::sleep_for(std::chrono::nanoseconds(10));
     if (!registered_scan_queue.empty()) {
       std::vector<uint8_t> data_buffer = MultiTransformNode::SerializePointCloud2(registered_scan_queue.front());
       registered_scan_queue.pop();
@@ -207,10 +207,24 @@ std::vector<uint8_t> MultiTransformNode::SerializePointCloud2(
 void MultiTransformNode::RegisteredScanCallBack(
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr registered_scan_msg)
 {
+  pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_tmp(new pcl::PointCloud<pcl::PointXYZI>());
+  pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_result(new pcl::PointCloud<pcl::PointXYZI>());
+  pcl::fromROSMsg(*registered_scan_msg, *pointcloud_tmp);
+  try{
+    pcl::transformPointCloud(*pointcloud_tmp, *pointcloud_result, *fromIdMapToMap);
+  }catch(const tf2::TransformException& ex){
+    RCLCPP_INFO(this->get_logger(), "%s", ex.what());
+    return;
+  }
+  std::shared_ptr<sensor_msgs::msg::PointCloud2> totalRegisteredScan(
+    new sensor_msgs::msg::PointCloud2());
+  pcl::toROSMsg(*pointcloud_result, *totalRegisteredScan);
+  totalRegisteredScan->header.stamp = registered_scan_msg->header.stamp;
+  totalRegisteredScan->header.frame_id = "map";
   if (registered_scan_queue.size() >= 5) {
     registered_scan_queue.pop();
   }
-  registered_scan_queue.push(*registered_scan_msg);
+  registered_scan_queue.push(*totalRegisteredScan);
 }
 
 void MultiTransformNode::WayPointCallBack(
