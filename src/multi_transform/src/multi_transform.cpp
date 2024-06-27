@@ -142,8 +142,6 @@ MultiTransformNode::~MultiTransformNode()
 void MultiTransformNode::NetworkSendThread()
 {
   while (rclcpp::ok()) {
-    rclcpp::sleep_for(std::chrono::nanoseconds(10));
-
     // PointCloud2
     if (!registered_scan_queue.empty()) {
       std::vector<uint8_t> data_buffer =
@@ -211,6 +209,7 @@ void MultiTransformNode::SendData(const std::vector<uint8_t> & data_buffer, cons
            (const struct sockaddr *)&server_addr,
            sizeof(server_addr));
   }
+  rclcpp::sleep_for(std::chrono::nanoseconds(10));
 }
 
 // PointCloud2 Serialization
