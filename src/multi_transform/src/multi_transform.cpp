@@ -209,7 +209,7 @@ void MultiTransformNode::SendData(const std::vector<uint8_t> & data_buffer, cons
            (const struct sockaddr *)&server_addr,
            sizeof(server_addr));
   }
-  rclcpp::sleep_for(std::chrono::nanoseconds(10));
+  rclcpp::sleep_for(std::chrono::nanoseconds(100));
 }
 
 // PointCloud2 Serialization
@@ -260,7 +260,7 @@ void MultiTransformNode::RegisteredScanCallBack(
   pcl::toROSMsg(*pointcloud_result, *totalRegisteredScan);
   totalRegisteredScan->header.stamp = registered_scan_msg->header.stamp;
   totalRegisteredScan->header.frame_id = "map";
-  if (registered_scan_queue.size() >= 5) {
+  if (registered_scan_queue.size() >= 2) {
     registered_scan_queue.pop();
   }
   registered_scan_queue.push(*totalRegisteredScan);
