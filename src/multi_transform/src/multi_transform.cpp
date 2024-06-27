@@ -146,7 +146,6 @@ void MultiTransformNode::NetworkSendThread()
     if (!registered_scan_queue.empty()) {
       std::vector<uint8_t> data_buffer = MultiTransformNode::SerializePointCloud2(registered_scan_queue.front());
       registered_scan_queue.pop();
-      // RCLCPP_INFO(this->get_logger(), "%ld", data_buffer.size());
       const int total_packet = (data_buffer.size() + MAX_PACKET_SIZE - 1) / MAX_PACKET_SIZE;
       for (int i = 0; i < total_packet; i++){
         uint8_t header1 = robot_id; // id
@@ -158,10 +157,9 @@ void MultiTransformNode::NetworkSendThread()
         std::memcpy(header.data() + sizeof(header1), &header2, sizeof(header2));
         std::memcpy(header.data() + sizeof(header1) + sizeof(header2), &header3, sizeof(header3));
         std::memcpy(header.data() + sizeof(header1) + sizeof(header2) + sizeof(header3), &header4, sizeof(header4));
-        std::vector<uint8_t> packet(sizeof(header) + sizeof(data_buffer));
-        packet.insert(packet.begin(), header.begin(), header.end());
+        std::vector<uint8_t> packet;
+        packet.insert(packet.end(), header.begin(), header.end());
         packet.insert(packet.end(), data_buffer.begin() + i * MAX_PACKET_SIZE, i == total_packet - 1 ? data_buffer.end() : data_buffer.begin() + (i + 1) * MAX_PACKET_SIZE);
-        RCLCPP_INFO(this->get_logger(), "%ld", packet.size());
         sendto(sockfd,
              packet.data(),
              packet.size(),
@@ -202,7 +200,7 @@ std::vector<uint8_t> MultiTransformNode::SerializePointCloud2(
   std::vector<uint8_t> buffer_tmp(serialized_msg.size());
   std::memcpy(buffer_tmp.data(),
               serialized_msg.get_rcl_serialized_message().buffer,
-              serialized_msg.size());
+              serialized_msg.get_rcl_serialized_message().buffer_length);
 
   return buffer_tmp;
 }
