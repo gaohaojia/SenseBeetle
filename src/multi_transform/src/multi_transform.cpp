@@ -110,7 +110,7 @@ MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions & options)
   fromIdMapToMap = std::make_shared<Eigen::Matrix4d>(
     tf2::transformToEigen(transformStamped->transform).matrix().cast<double>());
 
-  // TCP网络通讯部分
+  // UDP
   if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
     RCLCPP_ERROR(this->get_logger(), "Socket creation failed!");
     return;
@@ -148,15 +148,15 @@ void MultiTransformNode::NetworkSendThread()
       registered_scan_queue.pop();
       const int total_packet = (data_buffer.size() + MAX_PACKET_SIZE - 1) / MAX_PACKET_SIZE;
       for (int i = 0; i < total_packet; i++){
-        uint8_t header1 = robot_id; // id
-        uint8_t header2 = 0x00; // 数据类型
-        uint16_t header3 = i; // packet 编号
-        uint8_t header4 = total_packet;
-        std::vector<uint8_t> header(sizeof(header1) + sizeof(header2) + sizeof(header3) + sizeof(header4));
-        std::memcpy(header.data(), &header1, sizeof(header1));
-        std::memcpy(header.data() + sizeof(header1), &header2, sizeof(header2));
-        std::memcpy(header.data() + sizeof(header1) + sizeof(header2), &header3, sizeof(header3));
-        std::memcpy(header.data() + sizeof(header1) + sizeof(header2) + sizeof(header3), &header4, sizeof(header4));
+        uint8_t id = robot_id;
+        uint8_t type = 0x00;
+        uint16_t idx = i;
+        uint8_t max_idx = total_packet;
+        std::vector<uint8_t> header(sizeof(uint32_t) + sizeof(uint8_t));
+        std::memcpy(header.data(), &id, sizeof(id));
+        std::memcpy(header.data() + sizeof(uint8_t), &type, sizeof(type));
+        std::memcpy(header.data() + sizeof(uint16_t), &idx, sizeof(idx));
+        std::memcpy(header.data() + sizeof(uint32_t), &max_idx, sizeof(max_idx));
         std::vector<uint8_t> packet;
         packet.insert(packet.end(), header.begin(), header.end());
         packet.insert(packet.end(), data_buffer.begin() + i * MAX_PACKET_SIZE, i == total_packet - 1 ? data_buffer.end() : data_buffer.begin() + (i + 1) * MAX_PACKET_SIZE);
@@ -188,7 +188,7 @@ void MultiTransformNode::NetworkRecvThread()
   }
 }
 
-// PointCloud2 序列化
+// PointCloud2 Serialization
 std::vector<uint8_t> MultiTransformNode::SerializePointCloud2(
   const sensor_msgs::msg::PointCloud2 & pointcloud2_msg)
 {
@@ -196,7 +196,6 @@ std::vector<uint8_t> MultiTransformNode::SerializePointCloud2(
   rclcpp::Serialization<sensor_msgs::msg::PointCloud2> serializer;
   serializer.serialize_message(&pointcloud2_msg, &serialized_msg);
 
-  // 将序列化的消息复制到字节数组
   std::vector<uint8_t> buffer_tmp(serialized_msg.size());
   std::memcpy(buffer_tmp.data(),
               serialized_msg.get_rcl_serialized_message().buffer,
