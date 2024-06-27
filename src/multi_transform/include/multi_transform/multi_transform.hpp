@@ -79,6 +79,7 @@ private:
   std::vector<uint8_t> SerializePointCloud2(const sensor_msgs::msg::PointCloud2 & pointcloud2_msg);
   std::vector<uint8_t> SerializeTransform(
     const geometry_msgs::msg::TransformStamped & transform_msg);
+  geometry_msgs::msg::PointStamped DeserializeWayPoint(const std::vector<uint8_t>& data);
 
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr terrain_map_sub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr terrain_map_ext_sub_;

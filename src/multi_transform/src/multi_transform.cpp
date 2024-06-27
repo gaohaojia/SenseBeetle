@@ -169,17 +169,74 @@ void MultiTransformNode::NetworkSendThread()
 void MultiTransformNode::NetworkRecvThread()
 {
   int n, len = sizeof(server_addr);
+  int packet_idx = 0;
+  int packet_type = -1;
+  std::vector<uint8_t> buffer;
   while (rclcpp::ok()) {
-    std::vector<uint8_t> buffer(BUFFER_SIZE);
+    std::vector<uint8_t> buffer_tmp(BUFFER_SIZE);
     n = recvfrom(sockfd,
-                 buffer.data(),
+                 buffer_tmp.data(),
                  BUFFER_SIZE,
-                 0,
+                 MSG_WAITALL,
                  (struct sockaddr *)&server_addr,
                  (socklen_t *)&len);
-    buffer.resize(n);
+    if (n < 0) {
+      continue;
+    }
+    buffer_tmp.resize(n);
+    uint8_t id, type, max_idx;
+    uint16_t idx;
+    std::memcpy(&id, buffer_tmp.data(), sizeof(id));
+    std::memcpy(&type, buffer_tmp.data() + sizeof(uint8_t), sizeof(type));
+    std::memcpy(&idx, buffer_tmp.data() + sizeof(uint16_t), sizeof(idx));
+    std::memcpy(&max_idx, buffer_tmp.data() + sizeof(uint32_t), sizeof(max_idx));
 
-    RCLCPP_INFO(this->get_logger(), "%s", buffer.data());
+    if (packet_type == -1){
+      packet_type = type;
+    }else if (packet_type < type){
+      continue;
+    }else if (packet_type > type){
+      packet_type = type;
+      packet_idx = 0;
+      buffer = std::vector<uint8_t>(0);
+    }
+    if (idx == 0){
+      packet_idx = 0;
+      buffer = std::vector<uint8_t>(0);
+    }else if (packet_idx != idx) {
+      packet_idx = 0;
+      packet_type = -1;
+      buffer = std::vector<uint8_t>(0);
+      continue;
+    }
+
+    packet_idx++;
+    if (packet_idx == 1) {
+      buffer.insert(buffer.begin(),
+                        buffer_tmp.begin() + sizeof(uint32_t) + sizeof(uint8_t),
+                        buffer_tmp.end());
+    } else {
+      buffer.insert(buffer.end(),
+                        buffer_tmp.begin() + sizeof(uint32_t) + sizeof(uint8_t),
+                        buffer_tmp.end());
+    }
+
+    if (packet_idx != max_idx) {
+      continue;
+    }
+    try {
+      if (type == 0) { // Way Point
+        std::shared_ptr<geometry_msgs::msg::PointStamped> way_point =
+          std::make_shared<geometry_msgs::msg::PointStamped>(
+            MultiTransformNode::DeserializeWayPoint(buffer));
+        MultiTransformNode::WayPointCallBack(way_point);
+      }
+    } catch (...) {
+    }
+
+    packet_idx = 0;
+    packet_type = -1;
+    buffer = std::vector<uint8_t>(0);
   }
 }
 
@@ -241,6 +298,23 @@ std::vector<uint8_t> MultiTransformNode::SerializeTransform(const geometry_msgs:
               serialized_msg.size());
 
   return buffer_tmp;
+}
+
+// Way Point Deserialization
+geometry_msgs::msg::PointStamped
+MultiTransformNode::DeserializeWayPoint(const std::vector<uint8_t> & data)
+{
+  rclcpp::SerializedMessage serialized_msg;
+  rclcpp::Serialization<geometry_msgs::msg::PointStamped> serializer;
+
+  serialized_msg.reserve(data.size());
+  std::memcpy(serialized_msg.get_rcl_serialized_message().buffer, data.data(), data.size());
+  serialized_msg.get_rcl_serialized_message().buffer_length = data.size();
+
+  geometry_msgs::msg::PointStamped point_msg;
+  serializer.deserialize_message(&serialized_msg, &point_msg);
+
+  return point_msg;
 }
 
 void MultiTransformNode::RegisteredScanCallBack(
