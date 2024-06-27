@@ -76,8 +76,9 @@ private:
 
   void SendData(const std::vector<uint8_t> & data_buffer, const int msg_type);
 
-  std::vector<uint8_t> SerializePointCloud2(const sensor_msgs::msg::PointCloud2& pointcloud2_msg);
-  std::vector<uint8_t> SerializeTransform(const geometry_msgs::msg::TransformStamped& transform_msg);
+  std::vector<uint8_t> SerializePointCloud2(const sensor_msgs::msg::PointCloud2 & pointcloud2_msg);
+  std::vector<uint8_t> SerializeTransform(
+    const geometry_msgs::msg::TransformStamped & transform_msg);
 
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr terrain_map_sub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr terrain_map_ext_sub_;
