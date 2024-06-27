@@ -93,6 +93,7 @@ MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions & options)
   std::string toFrameRel = "map";
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
+  std::shared_ptr<geometry_msgs::msg::TransformStamped> transformStamped;
   try {
     transformStamped = std::make_shared<geometry_msgs::msg::TransformStamped>(
       tf_buffer_->lookupTransform(toFrameRel,
@@ -140,34 +141,29 @@ MultiTransformNode::~MultiTransformNode()
 
 void MultiTransformNode::NetworkSendThread()
 {
-  int len = sizeof(server_addr);
   while (rclcpp::ok()) {
     rclcpp::sleep_for(std::chrono::nanoseconds(10));
+
+    // PointCloud2
     if (!registered_scan_queue.empty()) {
       std::vector<uint8_t> data_buffer = MultiTransformNode::SerializePointCloud2(registered_scan_queue.front());
       registered_scan_queue.pop();
-      const int total_packet = (data_buffer.size() + MAX_PACKET_SIZE - 1) / MAX_PACKET_SIZE;
-      for (int i = 0; i < total_packet; i++){
-        uint8_t id = robot_id;
-        uint8_t type = 0x00;
-        uint16_t idx = i;
-        uint8_t max_idx = total_packet;
-        std::vector<uint8_t> header(sizeof(uint32_t) + sizeof(uint8_t));
-        std::memcpy(header.data(), &id, sizeof(id));
-        std::memcpy(header.data() + sizeof(uint8_t), &type, sizeof(type));
-        std::memcpy(header.data() + sizeof(uint16_t), &idx, sizeof(idx));
-        std::memcpy(header.data() + sizeof(uint32_t), &max_idx, sizeof(max_idx));
-        std::vector<uint8_t> packet;
-        packet.insert(packet.end(), header.begin(), header.end());
-        packet.insert(packet.end(), data_buffer.begin() + i * MAX_PACKET_SIZE, i == total_packet - 1 ? data_buffer.end() : data_buffer.begin() + (i + 1) * MAX_PACKET_SIZE);
-        sendto(sockfd,
-             packet.data(),
-             packet.size(),
-             MSG_CONFIRM,
-             (const struct sockaddr *)&server_addr,
-             len);
-      }
+      SendData(data_buffer, 0);
     }
+
+    // Transform
+    std::shared_ptr<geometry_msgs::msg::TransformStamped> transformStamped;
+    try {
+      transformStamped = std::make_shared<geometry_msgs::msg::TransformStamped>(
+        tf_buffer_->lookupTransform("map",
+                                    "robot_" + std::to_string(robot_id) + "/vehicle",
+                                    tf2::TimePointZero,
+                                    tf2::durationFromSec(10.0)));
+    } catch (...) {
+      continue;
+    }
+    std::vector<uint8_t> data_buffer = MultiTransformNode::SerializeTransform(*transformStamped);
+    SendData(data_buffer, 1);
   }
 }
 
@@ -188,6 +184,30 @@ void MultiTransformNode::NetworkRecvThread()
   }
 }
 
+void MultiTransformNode::SendData(const std::vector<uint8_t> & data_buffer, const int msg_type){
+  const int total_packet = (data_buffer.size() + MAX_PACKET_SIZE - 1) / MAX_PACKET_SIZE;
+  for (int i = 0; i < total_packet; i++){
+    uint8_t id = robot_id;
+    uint8_t type = msg_type;
+    uint16_t idx = i;
+    uint8_t max_idx = total_packet;
+    std::vector<uint8_t> header(sizeof(uint32_t) + sizeof(uint8_t));
+    std::memcpy(header.data(), &id, sizeof(id));
+    std::memcpy(header.data() + sizeof(uint8_t), &type, sizeof(type));
+    std::memcpy(header.data() + sizeof(uint16_t), &idx, sizeof(idx));
+    std::memcpy(header.data() + sizeof(uint32_t), &max_idx, sizeof(max_idx));
+    std::vector<uint8_t> packet;
+    packet.insert(packet.end(), header.begin(), header.end());
+    packet.insert(packet.end(), data_buffer.begin() + i * MAX_PACKET_SIZE, i == total_packet - 1 ? data_buffer.end() : data_buffer.begin() + (i + 1) * MAX_PACKET_SIZE);
+    sendto(sockfd,
+         packet.data(),
+         packet.size(),
+         MSG_CONFIRM,
+         (const struct sockaddr *)&server_addr,
+         sizeof(server_addr));
+  }
+}
+
 // PointCloud2 Serialization
 std::vector<uint8_t> MultiTransformNode::SerializePointCloud2(
   const sensor_msgs::msg::PointCloud2 & pointcloud2_msg)
@@ -195,6 +215,21 @@ std::vector<uint8_t> MultiTransformNode::SerializePointCloud2(
   rclcpp::SerializedMessage serialized_msg;
   rclcpp::Serialization<sensor_msgs::msg::PointCloud2> serializer;
   serializer.serialize_message(&pointcloud2_msg, &serialized_msg);
+
+  std::vector<uint8_t> buffer_tmp(serialized_msg.size());
+  std::memcpy(buffer_tmp.data(),
+              serialized_msg.get_rcl_serialized_message().buffer,
+              serialized_msg.get_rcl_serialized_message().buffer_length);
+
+  return buffer_tmp;
+}
+
+// Transform Serialization
+std::vector<uint8_t> SerializeTransform(const geometry_msgs::msg::TransformStamped& transform_msg)
+{
+  rclcpp::SerializedMessage serialized_msg;
+  rclcpp::Serialization<geometry_msgs::msg::TransformStamped> serializer;
+  serializer.serialize_message(&transform_msg, &serialized_msg);
 
   std::vector<uint8_t> buffer_tmp(serialized_msg.size());
   std::memcpy(buffer_tmp.data(),

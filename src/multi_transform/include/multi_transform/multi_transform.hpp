@@ -10,6 +10,7 @@
 #include <tf2/LinearMath/Transform.h>
 
 #include <cstdint>
+#include <geometry_msgs/msg/detail/transform_stamped__struct.hpp>
 #include <memory>
 #include <pcl/impl/point_types.hpp>
 #include <queue>
@@ -59,7 +60,6 @@ private:
 
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
-  std::shared_ptr<geometry_msgs::msg::TransformStamped> transformStamped;
   std::shared_ptr<Eigen::Matrix4d> fromIdMapToMap;
 
   void NetworkSendThread();
@@ -74,7 +74,10 @@ private:
     const nav_msgs::msg::Odometry::ConstSharedPtr state_estimation_at_scan_msg);
   void WayPointCallBack(const geometry_msgs::msg::PointStamped::ConstSharedPtr way_point_msg);
 
+  void SendData(const std::vector<uint8_t> & data_buffer, const int msg_type);
+
   std::vector<uint8_t> SerializePointCloud2(const sensor_msgs::msg::PointCloud2& pointcloud2_msg);
+  std::vector<uint8_t> SerializeTransform(const geometry_msgs::msg::TransformStamped& transform_msg);
 
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr terrain_map_sub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr terrain_map_ext_sub_;
