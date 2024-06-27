@@ -191,18 +191,21 @@ void MultiTransformNode::NetworkRecvThread()
 }
 
 // PointCloud2 序列化
-std::vector<uint8_t> SerializePointCloud2(const sensor_msgs::msg::PointCloud2 & pointcloud2_msg)
+std::vector<uint8_t> MultiTransformNode::SerializePointCloud2(
+  const sensor_msgs::msg::PointCloud2 & pointcloud2_msg)
 {
-    std::stringstream ss;
-    rclcpp::Serialization<sensor_msgs::msg::PointCloud2> serializer;
-    rclcpp::SerializedMessage serialized_msg;
+  rclcpp::SerializedMessage serialized_msg;
+  rclcpp::Serialization<sensor_msgs::msg::PointCloud2> serializer;
+  serializer.serialize_message(&pointcloud2_msg, &serialized_msg);
 
-    serializer.serialize_message(&pointcloud2_msg, &serialized_msg);
-    ss.write(reinterpret_cast<char*>(serialized_msg.get_rcl_serialized_message().buffer), serialized_msg.get_rcl_serialized_message().buffer_length);
+  // 将序列化的消息复制到字节数组
+  std::vector<uint8_t> buffer_tmp(serialized_msg.size());
+  std::memcpy(buffer_tmp.data(),
+              serialized_msg.get_rcl_serialized_message().buffer,
+              serialized_msg.size());
 
-    return std::vector<uint8_t>(ss.str().begin(), ss.str().end());
+  return buffer_tmp;
 }
-
 
 void MultiTransformNode::RegisteredScanCallBack(
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr registered_scan_msg)
