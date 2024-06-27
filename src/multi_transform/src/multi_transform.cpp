@@ -146,7 +146,8 @@ void MultiTransformNode::NetworkSendThread()
 
     // PointCloud2
     if (!registered_scan_queue.empty()) {
-      std::vector<uint8_t> data_buffer = MultiTransformNode::SerializePointCloud2(registered_scan_queue.front());
+      std::vector<uint8_t> data_buffer =
+        MultiTransformNode::SerializePointCloud2(registered_scan_queue.front());
       registered_scan_queue.pop();
       SendData(data_buffer, 0);
     }
@@ -184,9 +185,10 @@ void MultiTransformNode::NetworkRecvThread()
   }
 }
 
-void MultiTransformNode::SendData(const std::vector<uint8_t> & data_buffer, const int msg_type){
+void MultiTransformNode::SendData(const std::vector<uint8_t> & data_buffer, const int msg_type)
+{
   const int total_packet = (data_buffer.size() + MAX_PACKET_SIZE - 1) / MAX_PACKET_SIZE;
-  for (int i = 0; i < total_packet; i++){
+  for (int i = 0; i < total_packet; i++) {
     uint8_t id = robot_id;
     uint8_t type = msg_type;
     uint16_t idx = i;
@@ -198,13 +200,16 @@ void MultiTransformNode::SendData(const std::vector<uint8_t> & data_buffer, cons
     std::memcpy(header.data() + sizeof(uint32_t), &max_idx, sizeof(max_idx));
     std::vector<uint8_t> packet;
     packet.insert(packet.end(), header.begin(), header.end());
-    packet.insert(packet.end(), data_buffer.begin() + i * MAX_PACKET_SIZE, i == total_packet - 1 ? data_buffer.end() : data_buffer.begin() + (i + 1) * MAX_PACKET_SIZE);
+    packet.insert(
+      packet.end(),
+      data_buffer.begin() + i * MAX_PACKET_SIZE,
+      i == total_packet - 1 ? data_buffer.end() : data_buffer.begin() + (i + 1) * MAX_PACKET_SIZE);
     sendto(sockfd,
-         packet.data(),
-         packet.size(),
-         MSG_CONFIRM,
-         (const struct sockaddr *)&server_addr,
-         sizeof(server_addr));
+           packet.data(),
+           packet.size(),
+           MSG_CONFIRM,
+           (const struct sockaddr *)&server_addr,
+           sizeof(server_addr));
   }
 }
 
@@ -219,13 +224,13 @@ std::vector<uint8_t> MultiTransformNode::SerializePointCloud2(
   std::vector<uint8_t> buffer_tmp(serialized_msg.size());
   std::memcpy(buffer_tmp.data(),
               serialized_msg.get_rcl_serialized_message().buffer,
-              serialized_msg.get_rcl_serialized_message().buffer_length);
+              serialized_msg.size());
 
   return buffer_tmp;
 }
 
 // Transform Serialization
-std::vector<uint8_t> SerializeTransform(const geometry_msgs::msg::TransformStamped& transform_msg)
+std::vector<uint8_t> MultiTransformNode::SerializeTransform(const geometry_msgs::msg::TransformStamped & transform_msg)
 {
   rclcpp::SerializedMessage serialized_msg;
   rclcpp::Serialization<geometry_msgs::msg::TransformStamped> serializer;
@@ -234,7 +239,7 @@ std::vector<uint8_t> SerializeTransform(const geometry_msgs::msg::TransformStamp
   std::vector<uint8_t> buffer_tmp(serialized_msg.size());
   std::memcpy(buffer_tmp.data(),
               serialized_msg.get_rcl_serialized_message().buffer,
-              serialized_msg.get_rcl_serialized_message().buffer_length);
+              serialized_msg.size());
 
   return buffer_tmp;
 }
@@ -245,9 +250,9 @@ void MultiTransformNode::RegisteredScanCallBack(
   pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_tmp(new pcl::PointCloud<pcl::PointXYZI>());
   pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_result(new pcl::PointCloud<pcl::PointXYZI>());
   pcl::fromROSMsg(*registered_scan_msg, *pointcloud_tmp);
-  try{
+  try {
     pcl::transformPointCloud(*pointcloud_tmp, *pointcloud_result, *fromIdMapToMap);
-  }catch(const tf2::TransformException& ex){
+  } catch (const tf2::TransformException & ex) {
     RCLCPP_INFO(this->get_logger(), "%s", ex.what());
     return;
   }
