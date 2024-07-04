@@ -46,6 +46,7 @@ def generate_launch_description():
         executable='multi_transform_node',
         name='multi_transform',
         output='screen',
+        respawn=True,
         parameters=[{
             'robot_id': robot_id,
             'network_port': network_port,
@@ -57,22 +58,6 @@ def generate_launch_description():
             'multiOffsetRotateP': multiOffsetRotateP,
             'multiOffsetRotateY': multiOffsetRotateY,
         }]
-    )
-
-    handle = RegisterEventHandler(
-        event_handler=OnProcessExit(
-            target_action=Node(
-                package='multi_transform',
-                executable='multi_transform_node',
-                name=LaunchConfiguration('multi_transform'),
-            ),
-            on_exit=[
-                LogInfo(
-                    condition=IfCondition(LaunchConfiguration('multi_transform')),
-                    msg='Process for node has exited, restarting...',
-                ),
-            ],
-        ),
     )
 
     ld = LaunchDescription()
@@ -87,7 +72,6 @@ def generate_launch_description():
     ld.add_action(declare_multiOffsetRotateP)
     ld.add_action(declare_multiOffsetRotateY)
     ld.add_action(multi_transform_node)
-    ld.add_action(handle)
 
     ld.add_action(OpaqueFunction(function=get_id_map_trans_publisher, 
                                  args=[[multiOffsetPositionX, multiOffsetPositionY, multiOffsetPositionZ, multiOffsetRotateY, multiOffsetRotateP, multiOffsetRotateR], robot_id]))

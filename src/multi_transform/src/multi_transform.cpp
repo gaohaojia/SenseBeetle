@@ -127,7 +127,7 @@ MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions &options)
 
   send_thread_ = std::thread(&MultiTransformNode::NetworkSendThread, this);
   recv_thread_ = std::thread(&MultiTransformNode::NetworkRecvThread, this);
-  RCLCPP_INFO(this->get_logger(), "Client start at ip: %s, port: %d",
+  RCLCPP_INFO(this->get_logger(), "Client start! Target ip: %s, port: %d",
               ip.c_str(), port);
 }
 
