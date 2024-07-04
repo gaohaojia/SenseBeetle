@@ -14,7 +14,7 @@ def push_namespace(context: LaunchContext, robot_id):
 
 def launch_rviz_node(context: LaunchContext, robot_id):
     id_str = context.perform_substitution(robot_id)
-    rviz_config_file = os.path.join(get_package_share_directory('vehicle_simulator'), 'rviz', 'multi_' + id_str + '.rviz')
+    rviz_config_file = os.path.join(get_package_share_directory('bringup'), 'rviz', 'multi_' + id_str + '.rviz')
     start_rviz = Node(
         package='rviz2',
         executable='rviz2',
@@ -45,6 +45,12 @@ def generate_launch_description():
     start_livox_mid360 = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
             get_package_share_directory('livox_ros_driver2'), 'launch', 'msg_MID360_launch.py')
+        )
+    )
+
+    start_realsense = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(
+            get_package_share_directory('realsense2_camera'), 'launch', 'rs_launch.py')
         )
     )
 
@@ -126,12 +132,6 @@ def generate_launch_description():
         }.items()
     )
 
-    start_joy = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(
-            get_package_share_directory('joy'), 'launch', 'joy-launch.py')
-        )
-    )
-
     ld = LaunchDescription()
 
     # Add the actions
@@ -145,6 +145,7 @@ def generate_launch_description():
     ld.add_action(OpaqueFunction(function=push_namespace, args=[robot_id]))
 
     ld.add_action(start_livox_mid360)
+    ld.add_action(start_realsense)
     ld.add_action(start_fast_lio)
     ld.add_action(start_point_lio)
     ld.add_action(TimerAction(period=10.0, actions=[start_multi_transform]))
@@ -153,7 +154,6 @@ def generate_launch_description():
     ld.add_action(start_terrain_analysis_ext)
     ld.add_action(start_sensor_scan_generation)
     ld.add_action(start_loam_interface)
-    ld.add_action(start_joy)
     ld.add_action(OpaqueFunction(function=launch_rviz_node, args=[robot_id]))
 
     return ld

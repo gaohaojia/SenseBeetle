@@ -6,6 +6,7 @@
 #include <rmw/qos_profiles.h>
 #include <rmw/rmw.h>
 #include <rmw/types.h>
+#include <sensor_msgs/msg/detail/image__struct.hpp>
 #include <sensor_msgs/msg/detail/point_cloud2__struct.hpp>
 #include <sys/socket.h>
 #include <tf2/LinearMath/Quaternion.h>
@@ -42,22 +43,10 @@ MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions &options)
   this->declare_parameter<int>("robot_id", 0);
   this->declare_parameter<int>("network_port", 12130);
   this->declare_parameter<std::string>("network_ip", "192.168.31.207");
-  this->declare_parameter<double>("multiOffsetPositionX", 0.0);
-  this->declare_parameter<double>("multiOffsetPositionY", 0.0);
-  this->declare_parameter<double>("multiOffsetPositionZ", 0.0);
-  this->declare_parameter<double>("multiOffsetRotateR", 0.0);
-  this->declare_parameter<double>("multiOffsetRotateP", 0.0);
-  this->declare_parameter<double>("multiOffsetRotateY", 0.0);
 
   this->get_parameter("robot_id", robot_id);
   this->get_parameter("network_port", port);
   this->get_parameter("network_ip", ip);
-  this->get_parameter("multiOffsetPositionX", multiOffsetPositionX);
-  this->get_parameter("multiOffsetPositionY", multiOffsetPositionY);
-  this->get_parameter("multiOffsetPositionZ", multiOffsetPositionZ);
-  this->get_parameter("multiOffsetRotateR", multiOffsetRotateR);
-  this->get_parameter("multiOffsetRotateP", multiOffsetRotateP);
-  this->get_parameter("multiOffsetRotateY", multiOffsetRotateY);
 
   registered_scan_sub_ =
       this->create_subscription<sensor_msgs::msg::PointCloud2>(
@@ -67,6 +56,10 @@ MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions &options)
   way_point_sub_ = this->create_subscription<geometry_msgs::msg::PointStamped>(
       "way_point", 2,
       std::bind(&MultiTransformNode::WayPointCallBack, this,
+                std::placeholders::_1));
+  realsense_image_sub_ = this->create_subscription<sensor_msgs::msg::Image>(
+      "camera/camera/color/image_raw", 2,
+      std::bind(&MultiTransformNode::RealsenseImageCallBack, this,
                 std::placeholders::_1));
   // terrain_map_sub_ =
   // this->create_subscription<sensor_msgs::msg::PointCloud2>(
@@ -157,6 +150,15 @@ void MultiTransformNode::NetworkSendThread() {
               registered_scan_queue.front());
       registered_scan_queue.pop();
       SendData(data_buffer, 0);
+    }
+
+    // Image
+    if (!realsense_image_queue.empty()){
+      std::vector<uint8_t> data_buffer =
+          MultiTransformNode::SerializeMsg<sensor_msgs::msg::Image>(
+              realsense_image_queue.front());
+      realsense_image_queue.pop();
+      SendData(data_buffer, 2);
     }
 
     // Transform
@@ -341,6 +343,13 @@ void MultiTransformNode::WayPointCallBack(
   local_way_point_pub_->publish(*local_point);
 }
 
+void MultiTransformNode::RealsenseImageCallBack(
+    const sensor_msgs::msg::Image::ConstSharedPtr image_msg) {
+  if (realsense_image_queue.size() >= 2) {
+    realsense_image_queue.pop();
+  }
+  realsense_image_queue.push(*image_msg);
+}
 // void MultiTransformNode::TerrainMapCallBack(
 //   const sensor_msgs::msg::PointCloud2::ConstSharedPtr terrain_map_msg)
 // {

@@ -7,6 +7,8 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
+#include <rclcpp/subscription.hpp>
+#include <sensor_msgs/msg/detail/image__struct.hpp>
 #include <tf2/LinearMath/Transform.h>
 
 #include <cstdint>
@@ -44,17 +46,11 @@ private:
 
   int robot_id;
 
-  double multiOffsetPositionX;
-  double multiOffsetPositionY;
-  double multiOffsetPositionZ;
-  double multiOffsetRotateR;
-  double multiOffsetRotateP;
-  double multiOffsetRotateY;
-
   std::thread send_thread_;
   std::thread recv_thread_;
 
   std::queue<sensor_msgs::msg::PointCloud2> registered_scan_queue;
+  std::queue<sensor_msgs::msg::Image> realsense_image_queue;
 
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
@@ -72,6 +68,8 @@ private:
   void
   StateEstimationAtScanCallBack(const nav_msgs::msg::Odometry::ConstSharedPtr
                                     state_estimation_at_scan_msg);
+  void RealsenseImageCallBack(const sensor_msgs::msg::Image::ConstSharedPtr image_msg);
+
   void WayPointCallBack(
       const geometry_msgs::msg::PointStamped::ConstSharedPtr way_point_msg);
 
@@ -90,6 +88,7 @@ private:
       state_estimation_at_scan_sub_;
   rclcpp::Subscription<geometry_msgs::msg::PointStamped>::SharedPtr
       way_point_sub_;
+  rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr realsense_image_sub_;
 
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr
       total_terrain_map_pub_;
