@@ -44,7 +44,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /robot_4/camera/camera/image_raw
+        Value: /robot_4/camera/camera/color/image_raw
       Value: false
     - Alpha: 0.20000000298023224
       Autocompute Intensity Bounds: true
