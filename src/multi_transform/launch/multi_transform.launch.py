@@ -1,9 +1,11 @@
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription, LaunchContext
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction, OpaqueFunction
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction, OpaqueFunction, RegisterEventHandler, LogInfo
+from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource, FrontendLaunchDescriptionSource
 from launch_ros.actions import Node, PushRosNamespace
 from launch.substitutions import LaunchConfiguration
+from launch.event_handlers import OnProcessExit
 
 def get_id_map_trans_publisher(context: LaunchContext, offsetList, robot_id):
     robot_id_str = 'robot_' + context.perform_substitution(robot_id)
@@ -57,6 +59,22 @@ def generate_launch_description():
         }]
     )
 
+    handle = RegisterEventHandler(
+        event_handler=OnProcessExit(
+            target_action=Node(
+                package='multi_transform',
+                executable='multi_transform_node',
+                name=LaunchConfiguration('multi_transform'),
+            ),
+            on_exit=[
+                LogInfo(
+                    condition=IfCondition(LaunchConfiguration('multi_transform')),
+                    msg='Process for node has exited, restarting...',
+                ),
+            ],
+        ),
+    )
+
     ld = LaunchDescription()
 
     ld.add_action(declare_robot_id)
@@ -69,6 +87,7 @@ def generate_launch_description():
     ld.add_action(declare_multiOffsetRotateP)
     ld.add_action(declare_multiOffsetRotateY)
     ld.add_action(multi_transform_node)
+    ld.add_action(handle)
 
     ld.add_action(OpaqueFunction(function=get_id_map_trans_publisher, 
                                  args=[[multiOffsetPositionX, multiOffsetPositionY, multiOffsetPositionZ, multiOffsetRotateY, multiOffsetRotateP, multiOffsetRotateR], robot_id]))
