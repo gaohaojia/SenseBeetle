@@ -142,23 +142,24 @@ MultiTransformNode::~MultiTransformNode() {
 }
 
 void MultiTransformNode::NetworkSendThread() {
+  std::shared_ptr<std::vector<uint8_t>> data_buffer;
   while (rclcpp::ok()) {
     // PointCloud2
     if (!registered_scan_queue.empty()) {
-      std::vector<uint8_t> data_buffer0 =
+      data_buffer = std::make_shared<std::vector<uint8_t>>(
           MultiTransformNode::SerializeMsg<sensor_msgs::msg::PointCloud2>(
-              registered_scan_queue.front());
+              registered_scan_queue.front()));
       registered_scan_queue.pop();
-      SendData(data_buffer0, 0);
+      SendData(*data_buffer, 0);
     }
 
     // Image
     if (!realsense_image_queue.empty()) {
-      std::vector<uint8_t> data_buffer1 =
+      data_buffer = std::make_shared<std::vector<uint8_t>>(
           MultiTransformNode::SerializeMsg<sensor_msgs::msg::Image>(
-              realsense_image_queue.front());
+              realsense_image_queue.front()));
       realsense_image_queue.pop();
-      SendData(data_buffer1, 1);
+      SendData(*data_buffer, 1);
     }
 
     // Transform
@@ -171,10 +172,10 @@ void MultiTransformNode::NetworkSendThread() {
     } catch (...) {
       continue;
     }
-    std::vector<uint8_t> data_buffer2 =
+    data_buffer = std::make_shared<std::vector<uint8_t>>(
         MultiTransformNode::SerializeMsg<geometry_msgs::msg::TransformStamped>(
-            *transformStamped);
-    SendData(data_buffer2, 2);
+            *transformStamped));
+    SendData(*data_buffer, 2);
   }
 }
 
