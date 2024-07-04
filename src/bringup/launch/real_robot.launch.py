@@ -51,7 +51,10 @@ def generate_launch_description():
     start_realsense = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
             get_package_share_directory('realsense2_camera'), 'launch', 'rs_launch.py')
-        )
+        ),
+        launch_arguments={
+            'rgb_camera.color_profile': '640x480x30'
+        }.items()
     )
 
     start_fast_lio = IncludeLaunchDescription(
