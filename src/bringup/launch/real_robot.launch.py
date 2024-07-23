@@ -38,7 +38,7 @@ def generate_launch_description():
     
     declare_robot_id = DeclareLaunchArgument('robot_id', default_value='0', description='')
     declare_lio_mode = DeclareLaunchArgument('lio_mode', default_value='fast_lio', description='')
-    declare_planner_mode = DeclareLaunchArgument('planner_mode', default_value='Tare_planner', description='')
+    declare_planner_mode = DeclareLaunchArgument('planner_mode', default_value='tare_planner', description='')
     declare_cameraOffsetZ = DeclareLaunchArgument('cameraOffsetZ', default_value='0.0', description='')
     declare_vehicleX = DeclareLaunchArgument('vehicleX', default_value='0.0', description='')
     declare_vehicleY = DeclareLaunchArgument('vehicleY', default_value='0.0', description='')
@@ -144,7 +144,7 @@ def generate_launch_description():
         launch_arguments={
             'robot_id': robot_id,
         }.items(),
-        condition=LaunchConfigurationEquals('planner_mode', 'Tare_planner')
+        condition=LaunchConfigurationEquals('planner_mode', 'tare_planner')
     )
 
     ld = LaunchDescription()
