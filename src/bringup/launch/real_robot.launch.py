@@ -30,6 +30,7 @@ def launch_rviz_node(context: LaunchContext, robot_id):
 def generate_launch_description():
     robot_id = LaunchConfiguration('robot_id')
     lio_mode = LaunchConfiguration('lio_mode')
+    planner_mode = LaunchConfiguration('planner_mode')
     cameraOffsetZ = LaunchConfiguration('cameraOffsetZ')
     vehicleX = LaunchConfiguration('vehicleX')
     vehicleY = LaunchConfiguration('vehicleY')
@@ -37,6 +38,7 @@ def generate_launch_description():
     
     declare_robot_id = DeclareLaunchArgument('robot_id', default_value='0', description='')
     declare_lio_mode = DeclareLaunchArgument('lio_mode', default_value='fast_lio', description='')
+    declare_planner_mode = DeclareLaunchArgument('planner_mode', default_value='Tare_planner', description='')
     declare_cameraOffsetZ = DeclareLaunchArgument('cameraOffsetZ', default_value='0.0', description='')
     declare_vehicleX = DeclareLaunchArgument('vehicleX', default_value='0.0', description='')
     declare_vehicleY = DeclareLaunchArgument('vehicleY', default_value='0.0', description='')
@@ -135,11 +137,22 @@ def generate_launch_description():
         }.items()
     )
 
+    start_tare_planner = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(
+            get_package_share_directory('tare_planner'), 'launch', 'multi_explore.launch.py')
+        ),
+        launch_arguments={
+            'robot_id': robot_id,
+        }.items(),
+        condition=LaunchConfigurationEquals('planner_mode', 'Tare_planner')
+    )
+
     ld = LaunchDescription()
 
     # Add the actions
     ld.add_action(declare_robot_id)
     ld.add_action(declare_lio_mode)
+    ld.add_action(declare_planner_mode)
     ld.add_action(declare_cameraOffsetZ)
     ld.add_action(declare_vehicleX)
     ld.add_action(declare_vehicleY)
@@ -157,6 +170,7 @@ def generate_launch_description():
     ld.add_action(start_terrain_analysis_ext)
     ld.add_action(start_sensor_scan_generation)
     ld.add_action(start_loam_interface)
+    ld.add_action(start_tare_planner)
     ld.add_action(OpaqueFunction(function=launch_rviz_node, args=[robot_id]))
 
     return ld

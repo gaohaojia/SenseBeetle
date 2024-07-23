@@ -1,0 +1,3 @@
+[submodule "src/tare_planner"]
+	path = src/tare_planner
+	url = https://github.com/gaohaojia/Sensebeetle_Client-Tare_planner.git
