@@ -7,8 +7,7 @@ from launch_ros.actions import Node, PushRosNamespace
 from launch.substitutions import LaunchConfiguration
 from launch.event_handlers import OnProcessExit
 
-def get_id_map_trans_publisher(context: LaunchContext, offsetList, robot_id):
-    robot_id_str = 'robot_' + context.perform_substitution(robot_id)
+def get_id_map_trans_publisher(context: LaunchContext, offsetList):
     offsetList_str = []
     for idx in offsetList:
         offsetList_str.append(context.perform_substitution(idx))
@@ -16,7 +15,7 @@ def get_id_map_trans_publisher(context: LaunchContext, offsetList, robot_id):
         package="tf2_ros",
         executable="static_transform_publisher",
         name="idMapTransPublisher",
-        arguments=[*offsetList_str, 'map', robot_id_str + '/map']
+        arguments=[*offsetList_str, 'map', 'local_map']
     )
     return [map_trans_publisher]
 
@@ -74,6 +73,6 @@ def generate_launch_description():
     ld.add_action(multi_transform_node)
 
     ld.add_action(OpaqueFunction(function=get_id_map_trans_publisher, 
-                                 args=[[multiOffsetPositionX, multiOffsetPositionY, multiOffsetPositionZ, multiOffsetRotateY, multiOffsetRotateP, multiOffsetRotateR], robot_id]))
+                                 args=[[multiOffsetPositionX, multiOffsetPositionY, multiOffsetPositionZ, multiOffsetRotateY, multiOffsetRotateP, multiOffsetRotateR]]))
     
     return ld

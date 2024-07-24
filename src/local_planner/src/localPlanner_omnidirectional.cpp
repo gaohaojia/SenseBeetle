@@ -43,7 +43,6 @@ const double PI = 3.1415926;
 
 #define PLOTPATHSET 1
 
-int robot_id = 0;
 string pathFolder;
 double vehicleLength = 0.6;
 double vehicleWidth = 0.6;
@@ -503,7 +502,6 @@ int main(int argc, char** argv)
   rclcpp::init(argc, argv);
   nh = rclcpp::Node::make_shared("localPlanner");
 
-  nh->declare_parameter<int>("robot_id", robot_id);
   nh->declare_parameter<std::string>("pathFolder", pathFolder);
   nh->declare_parameter<double>("vehicleLength", vehicleLength);
   nh->declare_parameter<double>("vehicleWidth", vehicleWidth);
@@ -544,7 +542,6 @@ int main(int argc, char** argv)
   nh->declare_parameter<double>("goalX", goalX);
   nh->declare_parameter<double>("goalY", goalY);
 
-  nh->get_parameter("robot_id", robot_id);
   nh->get_parameter("pathFolder", pathFolder);
   nh->get_parameter("vehicleLength", vehicleLength);
   nh->get_parameter("vehicleWidth", vehicleWidth);
@@ -898,7 +895,7 @@ int main(int argc, char** argv)
           }
 
           path.header.stamp = rclcpp::Time(static_cast<uint64_t>(odomTime * 1e9));
-          path.header.frame_id = "robot_" + std::to_string(robot_id) + "/vehicle";
+          path.header.frame_id = "vehicle";
           pubPath->publish(path);
 
           #if PLOTPATHSET == 1
@@ -944,7 +941,7 @@ int main(int argc, char** argv)
           sensor_msgs::msg::PointCloud2 freePaths2;
           pcl::toROSMsg(*freePaths, freePaths2);
           freePaths2.header.stamp = rclcpp::Time(static_cast<uint64_t>(odomTime * 1e9));
-          freePaths2.header.frame_id = "robot_" + std::to_string(robot_id) + "/vehicle";
+          freePaths2.header.frame_id = "vehicle";
           pubFreePaths->publish(freePaths2);
           #endif
         }
@@ -970,7 +967,7 @@ int main(int argc, char** argv)
         path.poses[0].pose.position.z = 0;
 
         path.header.stamp = rclcpp::Time(static_cast<uint64_t>(odomTime * 1e9));
-        path.header.frame_id = "robot_" + std::to_string(robot_id) + "/vehicle";
+        path.header.frame_id = "vehicle";
         pubPath->publish(path);
 
         #if PLOTPATHSET == 1
@@ -978,7 +975,7 @@ int main(int argc, char** argv)
         sensor_msgs::msg::PointCloud2 freePaths2;
         pcl::toROSMsg(*freePaths, freePaths2);
         freePaths2.header.stamp = rclcpp::Time(static_cast<uint64_t>(odomTime * 1e9));
-        freePaths2.header.frame_id = "robot_" + std::to_string(robot_id) + "/vehicle";
+        freePaths2.header.frame_id = "vehicle";
         pubFreePaths->publish(freePaths2);
         #endif
       }
@@ -986,7 +983,7 @@ int main(int argc, char** argv)
       /*sensor_msgs::msg::PointCloud2 plannerCloud2;
       pcl::toROSMsg(*plannerCloudCrop, plannerCloud2);
       plannerCloud2.header.stamp = rclcpp::Time(static_cast<uint64_t>(odomTime * 1e9));
-      plannerCloud2.header.frame_id = "robot_" + std::to_string(robot_id) + "/vehicle";
+      plannerCloud2.header.frame_id = "vehicle";
       pubLaserCloud->publish(plannerCloud2);*/
     }
 

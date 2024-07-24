@@ -93,7 +93,7 @@ MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions &options)
   //   this->create_publisher<nav_msgs::msg::Odometry>("total_state_estimation_at_scan",
   //   5);
 
-  std::string fromFrameRel = "robot_" + std::to_string(robot_id) + "/map";
+  std::string fromFrameRel = "local_map";
   std::string toFrameRel = "map";
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
@@ -167,7 +167,7 @@ void MultiTransformNode::NetworkSendThread() {
     try {
       transformStamped = std::make_shared<geometry_msgs::msg::TransformStamped>(
           tf_buffer_->lookupTransform(
-              "map", "robot_" + std::to_string(robot_id) + "/vehicle",
+              "map", "vehicle",
               tf2::TimePointZero, tf2::durationFromSec(10.0)));
     } catch (...) {
       continue;
@@ -339,7 +339,7 @@ void MultiTransformNode::WayPointCallBack(
       new geometry_msgs::msg::PointStamped());
   local_point =
       std::make_shared<geometry_msgs::msg::PointStamped>(tf_buffer_->transform(
-          *way_point_msg, "robot_" + std::to_string(robot_id) + "/map",
+          *way_point_msg, "local_map",
           tf2::durationFromSec(10.0)));
   local_way_point_pub_->publish(*local_point);
 }

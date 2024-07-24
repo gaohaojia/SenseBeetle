@@ -30,7 +30,7 @@ Visualization Manager:
       Length: 1
       Name: Vehicle
       Radius: 0.1
-      Reference Frame: robot_3/vehicle
+      Reference Frame: vehicle
       Value: true
     - Class: rviz_default_plugins/Image
       Enabled: false
@@ -44,7 +44,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /robot_3/camera/camera/color/image_raw
+        Value: /camera/camera/color/image_raw
       Value: false
     - Alpha: 0.20000000298023224
       Autocompute Intensity Bounds: true
@@ -76,7 +76,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /robot_3/registered_scan
+        Value: /registered_scan
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
@@ -110,7 +110,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /robot_3/sensor_scan
+        Value: /sensor_scan
       Use Fixed Frame: true
       Use rainbow: true
       Value: false
@@ -144,7 +144,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /robot_3/terrain_map
+        Value: /terrain_map
       Use Fixed Frame: true
       Use rainbow: true
       Value: false
@@ -178,7 +178,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /robot_3/terrain_map_ext
+        Value: /terrain_map_ext
       Use Fixed Frame: true
       Use rainbow: true
       Value: false
@@ -208,7 +208,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /robot_3/path
+        Value: /path
       Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: false
@@ -240,7 +240,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /robot_3/free_paths
+        Value: /free_paths
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
@@ -257,7 +257,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /robot_3/local_way_point
+        Value: /local_way_point
       Value: true
     - Alpha: 1
       Class: rviz_default_plugins/Polygon
@@ -270,7 +270,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /robot_3/navigation_boundary
+        Value: /navigation_boundary
       Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
@@ -302,7 +302,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /robot_3/added_obstacles
+        Value: /added_obstacles
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
@@ -404,14 +404,14 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /robot_3/trajectory
+        Value: /trajectory
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
   Enabled: true
   Global Options:
     Background Color: 0; 0; 0
-    Fixed Frame: robot_3/map
+    Fixed Frame: local_map
     Frame Rate: 15
   Name: root
   Tools:
@@ -446,7 +446,7 @@ Visualization Manager:
       Name: Current View
       Near Clip Distance: 0.009999999776482582
       Pitch: 1.5697963237762451
-      Target Frame: robot_3/vehicle
+      Target Frame: vehicle
       Value: Orbit (rviz)
       Yaw: 3.1404049396514893
     Saved: ~

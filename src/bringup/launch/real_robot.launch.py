@@ -4,28 +4,9 @@ from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription, LaunchContext
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction, OpaqueFunction, GroupAction
 from launch.launch_description_sources import PythonLaunchDescriptionSource, FrontendLaunchDescriptionSource
-from launch_ros.actions import Node, PushRosNamespace
+from launch_ros.actions import Node
 from launch.substitutions import LaunchConfiguration
 from launch.conditions import LaunchConfigurationEquals
-
-def push_namespace(context: LaunchContext, robot_id):
-    id_str = context.perform_substitution(robot_id)
-    return [PushRosNamespace('robot_' + str(id_str))]
-
-def launch_rviz_node(context: LaunchContext, robot_id):
-    id_str = context.perform_substitution(robot_id)
-    rviz_config_file = os.path.join(get_package_share_directory('bringup'), 'rviz', 'multi_' + id_str + '.rviz')
-    start_rviz = Node(
-        package='rviz2',
-        executable='rviz2',
-        arguments=['-d', rviz_config_file],
-        output='screen'
-    )
-    delayed_start_rviz = TimerAction(
-        period=8.0,
-        actions=[start_rviz]
-    )
-    return [delayed_start_rviz]
 
 def generate_launch_description():
     robot_id = LaunchConfiguration('robot_id')
@@ -63,9 +44,6 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(os.path.join(
             get_package_share_directory('fast_lio'), 'launch', 'mapping_mid360.launch.py')
         ),
-        launch_arguments={
-            'robot_id': robot_id,
-        }.items(),
         condition=LaunchConfigurationEquals('lio_mode', 'fast_lio')
     )
 
@@ -73,9 +51,6 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(os.path.join(
             get_package_share_directory('point_lio'), 'launch', 'mapping_mid360.launch.py')
         ),
-        launch_arguments={
-            'robot_id': robot_id,
-        }.items(),
         condition=LaunchConfigurationEquals('lio_mode', 'point_lio')
     )
 
@@ -93,7 +68,6 @@ def generate_launch_description():
             get_package_share_directory('local_planner'), 'launch', 'local_planner.launch.py')
         ),
         launch_arguments={
-            'robot_id': robot_id,
             'cameraOffsetZ': cameraOffsetZ,
             'goalX': vehicleX,
             'goalY': vehicleY,
@@ -104,9 +78,6 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(os.path.join(
             get_package_share_directory('terrain_analysis'), 'launch', 'terrain_analysis.launch.py')
         ),
-        launch_arguments={
-            'robot_id': robot_id,
-        }.items()
     )
 
     start_terrain_analysis_ext = IncludeLaunchDescription(
@@ -114,7 +85,6 @@ def generate_launch_description():
             get_package_share_directory('terrain_analysis_ext'), 'launch', 'terrain_analysis_ext.launch.py')
         ),
         launch_arguments={
-            'robot_id': robot_id,
             'checkTerrainConn': checkTerrainConn,
         }.items()
     )
@@ -123,28 +93,26 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(os.path.join(
             get_package_share_directory('sensor_scan_generation'), 'launch', 'sensor_scan_generation.launch.py')
         ),
-        launch_arguments={
-            'robot_id': robot_id,
-        }.items()
     )
 
     start_loam_interface = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
             get_package_share_directory('loam_interface'), 'launch', 'loam_interface.launch.py')
         ),
-        launch_arguments={
-            'robot_id': robot_id,
-        }.items()
     )
 
     start_tare_planner = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
             get_package_share_directory('tare_planner'), 'launch', 'multi_explore.launch.py')
         ),
-        launch_arguments={
-            'robot_id': robot_id,
-        }.items(),
         condition=LaunchConfigurationEquals('planner_mode', 'tare_planner')
+    )
+
+    start_rviz = Node(
+        package='rviz2',
+        executable='rviz2',
+        arguments=['-d', os.path.join(get_package_share_directory('bringup'), 'rviz', 'real_robot.rviz')],
+        output='screen'
     )
 
     ld = LaunchDescription()
@@ -158,8 +126,6 @@ def generate_launch_description():
     ld.add_action(declare_vehicleY)
     ld.add_action(declare_checkTerrainConn)
 
-    ld.add_action(OpaqueFunction(function=push_namespace, args=[robot_id]))
-
     ld.add_action(start_livox_mid360)
     ld.add_action(start_realsense)
     ld.add_action(start_fast_lio)
@@ -171,6 +137,6 @@ def generate_launch_description():
     ld.add_action(start_sensor_scan_generation)
     ld.add_action(start_loam_interface)
     ld.add_action(start_tare_planner)
-    ld.add_action(OpaqueFunction(function=launch_rviz_node, args=[robot_id]))
+    ld.add_action(TimerAction(period=8.0, actions=[start_rviz]))
 
     return ld

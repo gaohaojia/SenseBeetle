@@ -14,8 +14,5 @@ def generate_launch_description():
             executable="sensorScanGeneration",
             name="sensorScanGeneration",
             output="screen",
-            parameters=[{
-                'robot_id': LaunchConfiguration('robot_id'),
-            }]
         )
     ])

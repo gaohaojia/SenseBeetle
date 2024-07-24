@@ -7,8 +7,7 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource, Fro
 from launch_ros.actions import Node, PushRosNamespace
 from launch.substitutions import LaunchConfiguration
 
-def get_vehicle_trans_publisher(context: LaunchContext, sensorOffsetX, sensorOffsetY, robot_id):
-    robot_id_str = 'robot_' + context.perform_substitution(robot_id)
+def get_vehicle_trans_publisher(context: LaunchContext, sensorOffsetX, sensorOffsetY):
     sensorOffsetX_str = context.perform_substitution(sensorOffsetX)
     sensorOffsetY_str = context.perform_substitution(sensorOffsetY)
     sensorOffsetX_str = str(-float(sensorOffsetX_str))
@@ -17,23 +16,21 @@ def get_vehicle_trans_publisher(context: LaunchContext, sensorOffsetX, sensorOff
         package="tf2_ros",
         executable="static_transform_publisher",
         name="vehicleTransPublisher",
-        arguments=[sensorOffsetX_str, sensorOffsetY_str, '0', '0', '0', '0', robot_id_str + '/sensor', robot_id_str + '/vehicle']
+        arguments=[sensorOffsetX_str, sensorOffsetY_str, '0', '0', '0', '0', 'sensor', 'vehicle']
     )
     return [vehicle_trans_publisher]
 
-def get_sensor_trans_publisher(context: LaunchContext, cameraOffsetZ, robot_id):
-    robot_id_str = 'robot_' + context.perform_substitution(robot_id)
+def get_sensor_trans_publisher(context: LaunchContext, cameraOffsetZ):
     cameraOffsetZ_str = context.perform_substitution(cameraOffsetZ)
     sensor_trans_publisher = Node(
         package="tf2_ros",
         executable="static_transform_publisher",
         name="sensorTransPublisher",
-        arguments=['0', '0', cameraOffsetZ_str, '-1.5707963', '0', '-1.5707963', robot_id_str + '/sensor', robot_id_str + '/camera']
+        arguments=['0', '0', cameraOffsetZ_str, '-1.5707963', '0', '-1.5707963', 'sensor', 'camera']
     )
     return [sensor_trans_publisher]
 
 def generate_launch_description():
-    robot_id = LaunchConfiguration('robot_id')
     sensorOffsetX = LaunchConfiguration('sensorOffsetX')
     sensorOffsetY = LaunchConfiguration('sensorOffsetY')
     cameraOffsetZ = LaunchConfiguration('cameraOffsetZ')
@@ -45,7 +42,6 @@ def generate_launch_description():
     goalX = LaunchConfiguration('goalX')
     goalY = LaunchConfiguration('goalY')
     
-    declare_robot_id = DeclareLaunchArgument('robot_id', default_value='0', description='')
     declare_sensorOffsetX = DeclareLaunchArgument('sensorOffsetX', default_value='0.0', description='')
     declare_sensorOffsetY = DeclareLaunchArgument('sensorOffsetY', default_value='0.0', description='')
     declare_cameraOffsetZ = DeclareLaunchArgument('cameraOffsetZ', default_value='0.0', description='')
@@ -63,7 +59,6 @@ def generate_launch_description():
         name="localPlanner",
         output="screen",
         parameters=[{
-            'robot_id': robot_id,
             "pathFolder" : os.path.join(get_package_share_directory('local_planner'), 'paths'),
             "vehicleLength" : 0.6,
             "vehicleWidth" : 0.6,
@@ -112,7 +107,6 @@ def generate_launch_description():
         name="pathFollower",
         output="screen",
         parameters=[{
-            'robot_id': robot_id,
             "sensorOffsetX" : LaunchConfiguration('sensorOffsetX'),
             "sensorOffsetY" : LaunchConfiguration('sensorOffsetY'),
             "pubSkipNum" : 1,
@@ -147,7 +141,6 @@ def generate_launch_description():
     ld = LaunchDescription()
 
     # Add the actions
-    ld.add_action(declare_robot_id)
     ld.add_action(declare_sensorOffsetX)
     ld.add_action(declare_sensorOffsetY)
     ld.add_action(declare_cameraOffsetZ)
@@ -162,6 +155,6 @@ def generate_launch_description():
     ld.add_action(local_planner_node)
     ld.add_action(path_follower_node)
 
-    ld.add_action(OpaqueFunction(function=get_vehicle_trans_publisher, args=[sensorOffsetX, sensorOffsetY, robot_id]))
-    ld.add_action(OpaqueFunction(function=get_sensor_trans_publisher, args=[cameraOffsetZ, robot_id]))
+    ld.add_action(OpaqueFunction(function=get_vehicle_trans_publisher, args=[sensorOffsetX, sensorOffsetY]))
+    ld.add_action(OpaqueFunction(function=get_sensor_trans_publisher, args=[cameraOffsetZ]))
     return ld
