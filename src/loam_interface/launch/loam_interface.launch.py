@@ -15,7 +15,6 @@ def generate_launch_description():
             name="loamInterface",
             output="screen",
             parameters=[{
-                'robot_id': LaunchConfiguration('robot_id'),
                 "stateEstimationTopic" : "Odometry",
                 "registeredScanTopic" : "cloud_registered",
                 "flipStateEstimation" : False,

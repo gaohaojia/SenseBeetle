@@ -11,7 +11,6 @@ def generate_launch_description():
     rviz_arg = DeclareLaunchArgument(
         'rviz', default_value='false',
         description='Flag to launch RViz.')
-    robot_id = DeclareLaunchArgument('robot_id', default_value='0', description='')
 
     # Node parameters, including those from the YAML configuration file
     laser_mapping_params = [
@@ -20,7 +19,6 @@ def generate_launch_description():
             'config', 'mid360.yaml'
         ]),
         {
-            'robot_id': LaunchConfiguration('robot_id'),
             'use_imu_as_input': False,  # Change to True to use IMU as input of Point-LIO
             'prop_at_freq_of_imu': True,
             'check_satu': True,
@@ -60,7 +58,6 @@ def generate_launch_description():
     # Assemble the launch description
     ld = LaunchDescription([
         rviz_arg,
-        robot_id,
         laser_mapping_node,
         GroupAction(
             actions=[rviz_node],

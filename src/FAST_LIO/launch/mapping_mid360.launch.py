@@ -14,7 +14,6 @@ def generate_launch_description():
     package_path = get_package_share_directory('fast_lio')
 
     # Create LaunchConfigurations for the parameters with default values (not in config file)
-    robot_id = LaunchConfiguration('robot_id', default='0')
     feature_extract_enable_param = LaunchConfiguration('feature_extract_enable', default='false') # bool
     point_filter_num_param = LaunchConfiguration('point_filter_num', default='3')                 # int
     max_iteration_param = LaunchConfiguration('max_iteration', default='3')                       # int
@@ -33,10 +32,6 @@ def generate_launch_description():
     rviz_use = LaunchConfiguration('rviz')
     rviz_cfg = LaunchConfiguration('rviz_cfg')
 
-    declare_robot_id = DeclareLaunchArgument(
-        'robot_id', default_value='0',
-        description='Robot ID'
-    )
     declare_use_sim_time_cmd = DeclareLaunchArgument(
         'use_sim_time', default_value='false',
         description='Use simulation (Gazebo) clock if true'
@@ -58,8 +53,7 @@ def generate_launch_description():
         package='fast_lio',
         executable='fastlio_mapping',
         parameters=[config_path,
-                    {'robot_id': robot_id,
-                    'use_sim_time': use_sim_time,
+                    {'use_sim_time': use_sim_time,
                     'feature_extract_enable': feature_extract_enable_param,
                     'point_filter_num': point_filter_num_param,
                     'max_iteration': max_iteration_param,
@@ -77,7 +71,6 @@ def generate_launch_description():
     )
 
     ld = LaunchDescription()
-    ld.add_action(declare_robot_id)
     ld.add_action(declare_use_sim_time_cmd)
     ld.add_action(declare_config_path_cmd)
     ld.add_action(declare_rviz_cmd)

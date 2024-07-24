@@ -15,7 +15,6 @@ def generate_launch_description():
             name="terrainAnalysis",
             output="screen",
             parameters=[{
-                'robot_id': LaunchConfiguration('robot_id'),
                 "scanVoxelSize" : 0.05,
                 "decayTime" : 2.0,
                 "noDecayDis" : 4.0,

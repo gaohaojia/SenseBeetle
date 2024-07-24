@@ -38,7 +38,6 @@ using namespace std;
 
 const double PI = 3.1415926;
 
-int robot_id = 0;
 double sensorOffsetX = 0;
 double sensorOffsetY = 0;
 int pubSkipNum = 1;
@@ -190,7 +189,6 @@ int main(int argc, char** argv)
   rclcpp::init(argc, argv);
   nh = rclcpp::Node::make_shared("pathFollower");
 
-  nh->declare_parameter<int>("robot_id", robot_id);
   nh->declare_parameter<double>("sensorOffsetX", sensorOffsetX);
   nh->declare_parameter<double>("sensorOffsetY", sensorOffsetY);
   nh->declare_parameter<int>("pubSkipNum", pubSkipNum);
@@ -220,7 +218,6 @@ int main(int argc, char** argv)
   nh->declare_parameter<double>("autonomySpeed", autonomySpeed);
   nh->declare_parameter<double>("joyToSpeedDelay", joyToSpeedDelay);
 
-  nh->get_parameter("robot_id", robot_id);
   nh->get_parameter("sensorOffsetX", sensorOffsetX);
   nh->get_parameter("sensorOffsetY", sensorOffsetY);
   nh->get_parameter("pubSkipNum", pubSkipNum);
@@ -263,7 +260,7 @@ int main(int argc, char** argv)
   auto pubSpeed = nh->create_publisher<geometry_msgs::msg::TwistStamped>("cmd_vel", 5);
 
   geometry_msgs::msg::TwistStamped cmd_vel;
-  cmd_vel.header.frame_id = "robot_" + std::to_string(robot_id) + "/vehicle";
+  cmd_vel.header.frame_id = "vehicle";
 
   if (autonomyMode) {
     joySpeed = autonomySpeed / maxSpeed;

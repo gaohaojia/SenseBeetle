@@ -34,7 +34,6 @@ using namespace std;
 
 const double PI = 3.1415926;
 
-int robot_id = 0;
 double scanVoxelSize = 0.05;
 double decayTime = 2.0;
 double noDecayDis = 4.0;
@@ -202,7 +201,6 @@ int main(int argc, char** argv)
   rclcpp::init(argc, argv);
   auto nh = rclcpp::Node::make_shared("terrainAnalysis");
 
-  nh->declare_parameter<int>("robot_id", robot_id);
   nh->declare_parameter<double>("scanVoxelSize", scanVoxelSize);
   nh->declare_parameter<double>("decayTime", decayTime);
   nh->declare_parameter<double>("noDecayDis", noDecayDis);
@@ -230,7 +228,6 @@ int main(int argc, char** argv)
   nh->declare_parameter<double>("maxRelZ", maxRelZ);
   nh->declare_parameter<double>("disRatioZ", disRatioZ);
 
-  nh->get_parameter("robot_id", robot_id);
   nh->get_parameter("scanVoxelSize", scanVoxelSize);
   nh->get_parameter("decayTime", decayTime);
   nh->get_parameter("noDecayDis", noDecayDis);
@@ -633,7 +630,7 @@ int main(int argc, char** argv)
       sensor_msgs::msg::PointCloud2 terrainCloud2;
       pcl::toROSMsg(*terrainCloudElev, terrainCloud2);
       terrainCloud2.header.stamp = rclcpp::Time(static_cast<uint64_t>(laserCloudTime * 1e9));
-      terrainCloud2.header.frame_id = "robot_" + std::to_string(robot_id) + "/map";
+      terrainCloud2.header.frame_id = "local_map";
       pubLaserCloud->publish(terrainCloud2);
     }
 
