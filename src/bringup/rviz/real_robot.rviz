@@ -5,7 +5,7 @@ Panels:
     Property Tree Widget:
       Expanded: ~
       Splitter Ratio: 0.729411780834198
-    Tree Height: 443
+    Tree Height: 408
   - Class: rviz_common/Selection
     Name: Selection
   - Class: rviz_common/Tool Properties
@@ -29,11 +29,11 @@ Visualization Manager:
       Enabled: true
       Length: 1
       Name: Vehicle
-      Radius: 0.1
+      Radius: 0.10000000149011612
       Reference Frame: vehicle
       Value: true
     - Class: rviz_default_plugins/Image
-      Enabled: false
+      Enabled: true
       Max Value: 1
       Median window: 5
       Min Value: 0
@@ -45,7 +45,7 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /camera/camera/color/image_raw
-      Value: false
+      Value: true
     - Alpha: 0.20000000298023224
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -250,7 +250,7 @@ Visualization Manager:
       Enabled: true
       History Length: 1
       Name: Waypoint
-      Radius: 0.3
+      Radius: 0.30000001192092896
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -430,16 +430,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 65.2210693359375
+      Distance: 30.288930892944336
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0
-        Y: 0
-        Z: 0
+        X: 3.3676164150238037
+        Y: 0.517084002494812
+        Z: 0.0033670125994831324
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
@@ -468,5 +468,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1447
-  X: 733
-  Y: 142
+  X: 2054
+  Y: 429
