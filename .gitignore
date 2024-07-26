@@ -16,4 +16,3 @@ src/FAST_LIO/Log/*
 !readme.txt
 .cache
 .vscode
-.clang-format
