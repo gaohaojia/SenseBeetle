@@ -111,7 +111,7 @@ def generate_launch_description():
     start_rviz = Node(
         package='rviz2',
         executable='rviz2',
-        arguments=['-d', os.path.join(get_package_share_directory('bringup'), 'rviz', 'real_robot.rviz')],
+        arguments=['-d', os.path.join(get_package_share_directory('local_bringup'), 'rviz', 'real_robot.rviz')],
         output='screen'
     )
 
