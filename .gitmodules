@@ -1,3 +1,6 @@
 [submodule "src/tare_planner"]
 	path = src/tare_planner
 	url = https://github.com/gaohaojia/Sensebeetle_Client-Tare_planner.git
+[submodule "src/FAST_LIO"]
+	path = src/FAST_LIO
+	url = https://github.com/gaohaojia/Sensebeetle_Client-FAST_LIO
