@@ -25,8 +25,8 @@ def generate_launch_description():
             'init_map_size': 10,
             'point_filter_num': 3,  # Options: 1, 3
             'space_down_sample': True,
-            'filter_size_surf': 0.5,  # Options: 0.5, 0.3, 0.2, 0.15, 0.1
-            'filter_size_map': 0.5,  # Options: 0.5, 0.3, 0.15, 0.1
+            'filter_size_surf': 0.1,  # Options: 0.5, 0.3, 0.2, 0.15, 0.1
+            'filter_size_map': 0.1,  # Options: 0.5, 0.3, 0.15, 0.1
             'ivox_nearby_type': 6,   # Options: 0, 6, 18, 26
             'runtime_pos_log_enable': False,  # Option: True
         }
