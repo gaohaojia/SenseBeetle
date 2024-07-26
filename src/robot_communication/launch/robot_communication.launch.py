@@ -40,10 +40,10 @@ def generate_launch_description():
     declare_multiOffsetRotateP = DeclareLaunchArgument('multiOffsetRotateP', default_value='0.0', description='')
     declare_multiOffsetRotateY = DeclareLaunchArgument('multiOffsetRotateY', default_value='0.0', description='')
 
-    multi_transform_node = Node(
-        package='multi_transform',
-        executable='multi_transform_node',
-        name='multi_transform',
+    robot_communication_node = Node(
+        package='robot_communication',
+        executable='robot_communication_node',
+        name='robot_communication',
         output='screen',
         respawn=True,
         parameters=[{
@@ -70,7 +70,7 @@ def generate_launch_description():
     ld.add_action(declare_multiOffsetRotateR)
     ld.add_action(declare_multiOffsetRotateP)
     ld.add_action(declare_multiOffsetRotateY)
-    ld.add_action(multi_transform_node)
+    ld.add_action(robot_communication_node)
 
     ld.add_action(OpaqueFunction(function=get_id_map_trans_publisher, 
                                  args=[[multiOffsetPositionX, multiOffsetPositionY, multiOffsetPositionZ, multiOffsetRotateY, multiOffsetRotateP, multiOffsetRotateR]]))

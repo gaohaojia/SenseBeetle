@@ -32,14 +32,14 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <thread>
 
-#include "multi_transform/multi_transform.hpp"
+#include "robot_communication/robot_communication.hpp"
 
 #define MAX_PACKET_SIZE 64000
 #define BUFFER_SIZE 65535
 
-namespace multi_transform {
-MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions &options)
-    : Node("multi_transform", options) {
+namespace robot_communication {
+RobotCommunicationNode::RobotCommunicationNode(const rclcpp::NodeOptions &options)
+    : Node("robot_communication", options) {
   this->declare_parameter<int>("robot_id", 0);
   this->declare_parameter<int>("network_port", 12130);
   this->declare_parameter<std::string>("network_ip", "192.168.31.207");
@@ -51,33 +51,33 @@ MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions &options)
   registered_scan_sub_ =
       this->create_subscription<sensor_msgs::msg::PointCloud2>(
           "registered_scan", 5,
-          std::bind(&MultiTransformNode::RegisteredScanCallBack, this,
+          std::bind(&RobotCommunicationNode::RegisteredScanCallBack, this,
                     std::placeholders::_1));
   way_point_sub_ = this->create_subscription<geometry_msgs::msg::PointStamped>(
       "way_point", 2,
-      std::bind(&MultiTransformNode::WayPointCallBack, this,
+      std::bind(&RobotCommunicationNode::WayPointCallBack, this,
                 std::placeholders::_1));
   realsense_image_sub_ = this->create_subscription<sensor_msgs::msg::Image>(
       "camera/camera/color/image_raw", 2,
-      std::bind(&MultiTransformNode::RealsenseImageCallBack, this,
+      std::bind(&RobotCommunicationNode::RealsenseImageCallBack, this,
                 std::placeholders::_1));
   // terrain_map_sub_ =
   // this->create_subscription<sensor_msgs::msg::PointCloud2>(
   //   "terrain_map",
   //   2,
-  //   std::bind(&MultiTransformNode::TerrainMapCallBack, this,
+  //   std::bind(&RobotCommunicationNode::TerrainMapCallBack, this,
   //   std::placeholders::_1));
   // terrain_map_ext_sub_ =
   // this->create_subscription<sensor_msgs::msg::PointCloud2>(
   //   "terrain_map_ext",
   //   2,
-  //   std::bind(&MultiTransformNode::TerrainMapExtCallBack, this,
+  //   std::bind(&RobotCommunicationNode::TerrainMapExtCallBack, this,
   //   std::placeholders::_1));
   // state_estimation_at_scan_sub_ =
   // this->create_subscription<nav_msgs::msg::Odometry>(
   //   "state_estimation_at_scan",
   //   5,
-  //   std::bind(&MultiTransformNode::StateEstimationAtScanCallBack, this,
+  //   std::bind(&RobotCommunicationNode::StateEstimationAtScanCallBack, this,
   //   std::placeholders::_1));
 
   local_way_point_pub_ =
@@ -125,13 +125,13 @@ MultiTransformNode::MultiTransformNode(const rclcpp::NodeOptions &options)
   server_addr.sin_port = htons(port);
   server_addr.sin_addr.s_addr = inet_addr(ip.c_str());
 
-  send_thread_ = std::thread(&MultiTransformNode::NetworkSendThread, this);
-  recv_thread_ = std::thread(&MultiTransformNode::NetworkRecvThread, this);
+  send_thread_ = std::thread(&RobotCommunicationNode::NetworkSendThread, this);
+  recv_thread_ = std::thread(&RobotCommunicationNode::NetworkRecvThread, this);
   RCLCPP_INFO(this->get_logger(), "Client start! Target ip: %s, port: %d",
               ip.c_str(), port);
 }
 
-MultiTransformNode::~MultiTransformNode() {
+RobotCommunicationNode::~RobotCommunicationNode() {
   if (send_thread_.joinable()) {
     send_thread_.join();
   }
@@ -141,13 +141,13 @@ MultiTransformNode::~MultiTransformNode() {
   close(sockfd);
 }
 
-void MultiTransformNode::NetworkSendThread() {
+void RobotCommunicationNode::NetworkSendThread() {
   std::shared_ptr<std::vector<uint8_t>> data_buffer;
   while (rclcpp::ok()) {
     // PointCloud2
     if (!registered_scan_queue.empty()) {
       data_buffer = std::make_shared<std::vector<uint8_t>>(
-          MultiTransformNode::SerializeMsg<sensor_msgs::msg::PointCloud2>(
+          RobotCommunicationNode::SerializeMsg<sensor_msgs::msg::PointCloud2>(
               registered_scan_queue.front()));
       registered_scan_queue.pop();
       SendData(*data_buffer, 0);
@@ -156,7 +156,7 @@ void MultiTransformNode::NetworkSendThread() {
     // Image
     if (!realsense_image_queue.empty()) {
       data_buffer = std::make_shared<std::vector<uint8_t>>(
-          MultiTransformNode::SerializeMsg<sensor_msgs::msg::Image>(
+          RobotCommunicationNode::SerializeMsg<sensor_msgs::msg::Image>(
               realsense_image_queue.front()));
       realsense_image_queue.pop();
       SendData(*data_buffer, 1);
@@ -173,13 +173,13 @@ void MultiTransformNode::NetworkSendThread() {
       continue;
     }
     data_buffer = std::make_shared<std::vector<uint8_t>>(
-        MultiTransformNode::SerializeMsg<geometry_msgs::msg::TransformStamped>(
+        RobotCommunicationNode::SerializeMsg<geometry_msgs::msg::TransformStamped>(
             *transformStamped));
     SendData(*data_buffer, 2);
   }
 }
 
-void MultiTransformNode::NetworkRecvThread() {
+void RobotCommunicationNode::NetworkRecvThread() {
   int n, len = sizeof(server_addr);
   int packet_idx = 0;
   int packet_type = -1;
@@ -237,9 +237,9 @@ void MultiTransformNode::NetworkRecvThread() {
       if (type == 0) { // Way Point
         std::shared_ptr<geometry_msgs::msg::PointStamped> way_point =
             std::make_shared<geometry_msgs::msg::PointStamped>(
-                MultiTransformNode::DeserializeMsg<
+                RobotCommunicationNode::DeserializeMsg<
                     geometry_msgs::msg::PointStamped>(buffer));
-        MultiTransformNode::WayPointCallBack(way_point);
+        RobotCommunicationNode::WayPointCallBack(way_point);
       }
     } catch (...) {
     }
@@ -250,7 +250,7 @@ void MultiTransformNode::NetworkRecvThread() {
   }
 }
 
-void MultiTransformNode::SendData(const std::vector<uint8_t> &data_buffer,
+void RobotCommunicationNode::SendData(const std::vector<uint8_t> &data_buffer,
                                   const int msg_type) {
   const int total_packet =
       (data_buffer.size() + MAX_PACKET_SIZE - 1) / MAX_PACKET_SIZE;
@@ -278,7 +278,7 @@ void MultiTransformNode::SendData(const std::vector<uint8_t> &data_buffer,
 
 // Serialization
 template <class T>
-std::vector<uint8_t> MultiTransformNode::SerializeMsg(const T &msg) {
+std::vector<uint8_t> RobotCommunicationNode::SerializeMsg(const T &msg) {
   rclcpp::SerializedMessage serialized_msg;
   rclcpp::Serialization<T> serializer;
   serializer.serialize_message(&msg, &serialized_msg);
@@ -293,7 +293,7 @@ std::vector<uint8_t> MultiTransformNode::SerializeMsg(const T &msg) {
 
 // Deserialization
 template <class T>
-T MultiTransformNode::DeserializeMsg(const std::vector<uint8_t> &data) {
+T RobotCommunicationNode::DeserializeMsg(const std::vector<uint8_t> &data) {
   rclcpp::SerializedMessage serialized_msg;
   rclcpp::Serialization<T> serializer;
 
@@ -308,7 +308,7 @@ T MultiTransformNode::DeserializeMsg(const std::vector<uint8_t> &data) {
   return msg;
 }
 
-void MultiTransformNode::RegisteredScanCallBack(
+void RobotCommunicationNode::RegisteredScanCallBack(
     const sensor_msgs::msg::PointCloud2::ConstSharedPtr registered_scan_msg) {
   pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_tmp(
       new pcl::PointCloud<pcl::PointXYZI>());
@@ -333,7 +333,7 @@ void MultiTransformNode::RegisteredScanCallBack(
   registered_scan_queue.push(*totalRegisteredScan);
 }
 
-void MultiTransformNode::WayPointCallBack(
+void RobotCommunicationNode::WayPointCallBack(
     const geometry_msgs::msg::PointStamped::ConstSharedPtr way_point_msg) {
   std::shared_ptr<geometry_msgs::msg::PointStamped> local_point(
       new geometry_msgs::msg::PointStamped());
@@ -344,14 +344,14 @@ void MultiTransformNode::WayPointCallBack(
   local_way_point_pub_->publish(*local_point);
 }
 
-void MultiTransformNode::RealsenseImageCallBack(
+void RobotCommunicationNode::RealsenseImageCallBack(
     const sensor_msgs::msg::Image::ConstSharedPtr image_msg) {
   if (realsense_image_queue.size() >= 2) {
     realsense_image_queue.pop();
   }
   realsense_image_queue.push(*image_msg);
 }
-// void MultiTransformNode::TerrainMapCallBack(
+// void RobotCommunicationNode::TerrainMapCallBack(
 //   const sensor_msgs::msg::PointCloud2::ConstSharedPtr terrain_map_msg)
 // {
 //   pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_tmp(new
@@ -373,7 +373,7 @@ void MultiTransformNode::RealsenseImageCallBack(
 //   total_terrain_map_pub_->publish(*totalTerrainCloud);
 // }
 
-// void MultiTransformNode::TerrainMapExtCallBack(
+// void RobotCommunicationNode::TerrainMapExtCallBack(
 //   const sensor_msgs::msg::PointCloud2::ConstSharedPtr terrain_map_ext_msg)
 // {
 //   pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_tmp(new
@@ -395,7 +395,7 @@ void MultiTransformNode::RealsenseImageCallBack(
 //   total_terrain_map_ext_pub_->publish(*totalTerrainExtCloud);
 // }
 
-// void MultiTransformNode::StateEstimationAtScanCallBack(
+// void RobotCommunicationNode::StateEstimationAtScanCallBack(
 //   const nav_msgs::msg::Odometry::ConstSharedPtr state_estimation_at_scan_msg)
 // {
 //   std::shared_ptr<geometry_msgs::msg::PoseStamped> local_state(new
@@ -413,11 +413,11 @@ void MultiTransformNode::RealsenseImageCallBack(
 //   total_state_estimation_at_scan_pub_->publish(*total_state_estimation_at_scan_msg);
 // }
 
-} // namespace multi_transform
+} // namespace robot_communication
 
 #include "rclcpp_components/register_node_macro.hpp"
 
 // Register the component with class_loader.
 // This acts as a sort of entry point, allowing the component to be discoverable
 // when its library is being loaded into a running process.
-RCLCPP_COMPONENTS_REGISTER_NODE(multi_transform::MultiTransformNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(robot_communication::RobotCommunicationNode)

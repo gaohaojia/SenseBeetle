@@ -1,5 +1,5 @@
-#ifndef MULTI_TRANSFORM
-#define MULTI_TRANSFORM
+#ifndef ROBOT_COMMUNICATION
+#define ROBOT_COMMUNICATION
 
 #include <netinet/in.h>
 #include <pcl/filters/voxel_grid.h>
@@ -32,11 +32,11 @@
 #include "tf2_ros/transform_broadcaster.h"
 #include "tf2_ros/transform_listener.h"
 
-namespace multi_transform {
-class MultiTransformNode : public rclcpp::Node {
+namespace robot_communication {
+class RobotCommunicationNode : public rclcpp::Node {
 public:
-  MultiTransformNode(const rclcpp::NodeOptions &options);
-  ~MultiTransformNode() override;
+  RobotCommunicationNode(const rclcpp::NodeOptions &options);
+  ~RobotCommunicationNode() override;
 
 private:
   int port;
@@ -99,6 +99,6 @@ private:
   rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr
       local_way_point_pub_;
 };
-} // namespace multi_transform
+} // namespace robot_communication
 
 #endif

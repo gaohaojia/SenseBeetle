@@ -54,9 +54,9 @@ def generate_launch_description():
         condition=LaunchConfigurationEquals('lio_mode', 'point_lio')
     )
 
-    start_multi_transform = IncludeLaunchDescription(
+    start_robot_communication = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
-            get_package_share_directory('multi_transform'), 'launch', 'multi_transform.launch.py')
+            get_package_share_directory('robot_communication'), 'launch', 'robot_communication.launch.py')
         ),
         launch_arguments={
             'robot_id': robot_id
@@ -130,7 +130,7 @@ def generate_launch_description():
     ld.add_action(start_realsense)
     ld.add_action(start_fast_lio)
     ld.add_action(start_point_lio)
-    ld.add_action(TimerAction(period=10.0, actions=[start_multi_transform]))
+    ld.add_action(TimerAction(period=10.0, actions=[start_robot_communication]))
     ld.add_action(start_local_planner)
     ld.add_action(start_terrain_analysis)
     ld.add_action(start_terrain_analysis_ext)
