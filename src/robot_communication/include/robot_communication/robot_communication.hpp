@@ -7,8 +7,6 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
-#include <rclcpp/subscription.hpp>
-#include <sensor_msgs/msg/detail/image__struct.hpp>
 #include <tf2/LinearMath/Transform.h>
 
 #include <cstdint>
@@ -19,6 +17,8 @@
 #include <rclcpp/node.hpp>
 #include <rclcpp/node_options.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <rclcpp/subscription.hpp>
+#include <sensor_msgs/msg/detail/image__struct.hpp>
 #include <sensor_msgs/msg/detail/point_cloud2__struct.hpp>
 #include <thread>
 #include <vector>
@@ -32,10 +32,12 @@
 #include "tf2_ros/transform_broadcaster.h"
 #include "tf2_ros/transform_listener.h"
 
-namespace robot_communication {
-class RobotCommunicationNode : public rclcpp::Node {
+namespace robot_communication
+{
+class RobotCommunicationNode : public rclcpp::Node
+{
 public:
-  RobotCommunicationNode(const rclcpp::NodeOptions &options);
+  RobotCommunicationNode(const rclcpp::NodeOptions & options);
   ~RobotCommunicationNode() override;
 
 private:
@@ -59,45 +61,33 @@ private:
   void NetworkSendThread();
   void NetworkRecvThread();
 
-  void TerrainMapCallBack(
-      const sensor_msgs::msg::PointCloud2::ConstSharedPtr terrain_map_msg);
-  void TerrainMapExtCallBack(
-      const sensor_msgs::msg::PointCloud2::ConstSharedPtr terrain_map_ext_msg);
-  void RegisteredScanCallBack(
-      const sensor_msgs::msg::PointCloud2::ConstSharedPtr registered_scan_msg);
+  void init_map_tf();
+  void init_client();
+
+  void TerrainMapCallBack(const sensor_msgs::msg::PointCloud2::ConstSharedPtr terrain_map_msg);
   void
-  StateEstimationAtScanCallBack(const nav_msgs::msg::Odometry::ConstSharedPtr
-                                    state_estimation_at_scan_msg);
+  TerrainMapExtCallBack(const sensor_msgs::msg::PointCloud2::ConstSharedPtr terrain_map_ext_msg);
+  void
+  RegisteredScanCallBack(const sensor_msgs::msg::PointCloud2::ConstSharedPtr registered_scan_msg);
+  void StateEstimationAtScanCallBack(
+    const nav_msgs::msg::Odometry::ConstSharedPtr state_estimation_at_scan_msg);
   void RealsenseImageCallBack(const sensor_msgs::msg::Image::ConstSharedPtr image_msg);
 
-  void WayPointCallBack(
-      const geometry_msgs::msg::PointStamped::ConstSharedPtr way_point_msg);
+  void WayPointCallBack(const geometry_msgs::msg::PointStamped::ConstSharedPtr way_point_msg);
 
-  void SendData(const std::vector<uint8_t> &data_buffer, const int msg_type);
+  void SendData(const std::vector<uint8_t> & data_buffer, const int msg_type);
 
-  template <class T> std::vector<uint8_t> SerializeMsg(const T &msg);
-  template <class T> T DeserializeMsg(const std::vector<uint8_t> &data);
+  template <class T> std::vector<uint8_t> SerializeMsg(const T & msg);
+  template <class T> T DeserializeMsg(const std::vector<uint8_t> & data);
 
-  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr
-      terrain_map_sub_;
-  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr
-      terrain_map_ext_sub_;
-  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr
-      registered_scan_sub_;
-  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr
-      state_estimation_at_scan_sub_;
-  rclcpp::Subscription<geometry_msgs::msg::PointStamped>::SharedPtr
-      way_point_sub_;
+  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr terrain_map_sub_;
+  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr terrain_map_ext_sub_;
+  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr registered_scan_sub_;
+  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr state_estimation_at_scan_sub_;
+  rclcpp::Subscription<geometry_msgs::msg::PointStamped>::SharedPtr way_point_sub_;
   rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr realsense_image_sub_;
 
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr
-      total_terrain_map_pub_;
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr
-      total_terrain_map_ext_pub_;
-  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr
-      total_state_estimation_at_scan_pub_;
-  rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr
-      local_way_point_pub_;
+  rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr local_way_point_pub_;
 };
 } // namespace robot_communication
 
