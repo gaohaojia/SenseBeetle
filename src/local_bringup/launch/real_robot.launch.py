@@ -12,17 +12,11 @@ def generate_launch_description():
     robot_id = LaunchConfiguration('robot_id')
     lio_mode = LaunchConfiguration('lio_mode')
     planner_mode = LaunchConfiguration('planner_mode')
-    cameraOffsetZ = LaunchConfiguration('cameraOffsetZ')
-    vehicleX = LaunchConfiguration('vehicleX')
-    vehicleY = LaunchConfiguration('vehicleY')
     checkTerrainConn = LaunchConfiguration('checkTerrainConn')
     
     declare_robot_id = DeclareLaunchArgument('robot_id', default_value='0', description='')
     declare_lio_mode = DeclareLaunchArgument('lio_mode', default_value='point_lio', description='')
     declare_planner_mode = DeclareLaunchArgument('planner_mode', default_value='tare_planner', description='')
-    declare_cameraOffsetZ = DeclareLaunchArgument('cameraOffsetZ', default_value='0.0', description='')
-    declare_vehicleX = DeclareLaunchArgument('vehicleX', default_value='0.0', description='')
-    declare_vehicleY = DeclareLaunchArgument('vehicleY', default_value='0.0', description='')
     declare_checkTerrainConn = DeclareLaunchArgument('checkTerrainConn', default_value='true', description='')
 
     start_livox_mid360 = IncludeLaunchDescription(
@@ -66,12 +60,7 @@ def generate_launch_description():
     start_local_planner = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
             get_package_share_directory('local_planner'), 'launch', 'local_planner.launch.py')
-        ),
-        launch_arguments={
-            'cameraOffsetZ': cameraOffsetZ,
-            'goalX': vehicleX,
-            'goalY': vehicleY,
-        }.items()
+        )
     )
 
     start_terrain_analysis = IncludeLaunchDescription(
@@ -121,9 +110,6 @@ def generate_launch_description():
     ld.add_action(declare_robot_id)
     ld.add_action(declare_lio_mode)
     ld.add_action(declare_planner_mode)
-    ld.add_action(declare_cameraOffsetZ)
-    ld.add_action(declare_vehicleX)
-    ld.add_action(declare_vehicleY)
     ld.add_action(declare_checkTerrainConn)
 
     ld.add_action(start_livox_mid360)

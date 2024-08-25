@@ -1,4 +1,5 @@
 import os
+import yaml
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription, LaunchContext
@@ -31,6 +32,10 @@ def get_sensor_trans_publisher(context: LaunchContext, cameraOffsetZ):
     return [sensor_trans_publisher]
 
 def generate_launch_description():
+    common_params_file = os.path.join(get_package_share_directory('local_planner'), 'config', 'common_params.yaml')
+    with open(common_params_file, 'r') as file:
+        params = yaml.safe_load(file)
+
     sensorOffsetX = LaunchConfiguration('sensorOffsetX')
     sensorOffsetY = LaunchConfiguration('sensorOffsetY')
     cameraOffsetZ = LaunchConfiguration('cameraOffsetZ')
@@ -42,14 +47,14 @@ def generate_launch_description():
     goalX = LaunchConfiguration('goalX')
     goalY = LaunchConfiguration('goalY')
     
-    declare_sensorOffsetX = DeclareLaunchArgument('sensorOffsetX', default_value='0.0', description='')
-    declare_sensorOffsetY = DeclareLaunchArgument('sensorOffsetY', default_value='0.0', description='')
-    declare_cameraOffsetZ = DeclareLaunchArgument('cameraOffsetZ', default_value='0.0', description='')
-    declare_twoWayDrive = DeclareLaunchArgument('twoWayDrive', default_value='true', description='')
-    declare_maxSpeed = DeclareLaunchArgument('maxSpeed', default_value='2.0', description='')
-    declare_autonomyMode = DeclareLaunchArgument('autonomyMode', default_value='true', description='')
-    delcare_autonomySpeed = DeclareLaunchArgument('autonomySpeed', default_value='2.0', description='')
-    declare_joyToSpeedDelay = DeclareLaunchArgument('joyToSpeedDelay', default_value='2.0', description='')
+    declare_sensorOffsetX = DeclareLaunchArgument('sensorOffsetX', default_value=str(params['sensorOffsetX']), description='')
+    declare_sensorOffsetY = DeclareLaunchArgument('sensorOffsetY', default_value=str(params['sensorOffsetY']), description='')
+    declare_cameraOffsetZ = DeclareLaunchArgument('cameraOffsetZ', default_value=str(params['cameraOffsetZ']), description='')
+    declare_twoWayDrive = DeclareLaunchArgument('twoWayDrive', default_value=str(params['twoWayDrive']), description='')
+    declare_maxSpeed = DeclareLaunchArgument('maxSpeed', default_value=str(params['maxSpeed']), description='')
+    declare_autonomyMode = DeclareLaunchArgument('autonomyMode', default_value=str(params['autonomyMode']), description='')
+    delcare_autonomySpeed = DeclareLaunchArgument('autonomySpeed', default_value=str(params['autonomySpeed']), description='')
+    declare_joyToSpeedDelay = DeclareLaunchArgument('joyToSpeedDelay', default_value=str(params['joyToSpeedDelay']), description='')
     declare_goalX = DeclareLaunchArgument('goalX', default_value='0.0', description='')
     declare_goalY = DeclareLaunchArgument('goalY', default_value='0.0', description='')
     
@@ -60,45 +65,16 @@ def generate_launch_description():
         output="screen",
         parameters=[{
             "pathFolder" : os.path.join(get_package_share_directory('local_planner'), 'paths'),
-            "vehicleLength" : 0.6,
-            "vehicleWidth" : 0.6,
-            "sensorOffsetX" : LaunchConfiguration('sensorOffsetX'),
-            "sensorOffsetY" : LaunchConfiguration('sensorOffsetY'),
-            "twoWayDrive" : LaunchConfiguration('twoWayDrive'),
-            "laserVoxelSize" : 0.05,
-            "terrainVoxelSize" : 0.2,
-            "useTerrainAnalysis" : True,
-            "checkObstacle" : True,
-            "checkRotObstacle" : False,
-            "adjacentRange" : 4.25,
-            "obstacleHeightThre" : 0.15,
-            "groundHeightThre" : 0.1,
-            "costHeightThre" : 0.1,
-            "costScore" : 0.02,
-            "useCost" : False,
-            "pointPerPathThre" : 2,
-            "minRelZ" : -0.5,
-            "maxRelZ" : 0.25,
-            "maxSpeed" : LaunchConfiguration('maxSpeed'),
-            "dirWeight" : 0.02,
-            "dirThre" : 90.0,
-            "dirToVehicle" : False,
-            "pathScale" : 1.25,
-            "minPathScale" : 0.75,
-            "pathScaleStep" : 0.25,
-            "pathScaleBySpeed" : True,
-            "minPathRange" : 1.0,
-            "pathRangeStep" : 0.5,
-            "pathRangeBySpeed" : True,
-            "pathCropByGoal" : True,
-            "autonomyMode" : LaunchConfiguration('autonomyMode'),
-            "autonomySpeed" : LaunchConfiguration('autonomySpeed'),
-            "joyToSpeedDelay" : LaunchConfiguration('autonomySpeed'),
-            "joyToCheckObstacleDelay" : 5.0,
-            "goalClearRange" : 0.5,
-            "goalX" : LaunchConfiguration('goalX'),
-            "goalY" : LaunchConfiguration('goalY')
-        }]
+            "sensorOffsetX" : sensorOffsetX,
+            "sensorOffsetY" : sensorOffsetY,
+            "twoWayDrive" : twoWayDrive,
+            "maxSpeed" : maxSpeed,
+            "autonomyMode" : autonomyMode,
+            "autonomySpeed" : autonomySpeed,
+            "joyToSpeedDelay" : joyToSpeedDelay,
+            "goalX" : goalX,
+            "goalY" : goalY,
+        }, os.path.join(get_package_share_directory('local_planner'), 'config', 'local_planner.yaml')]
     )
 
     path_follower_node = Node(
@@ -107,35 +83,14 @@ def generate_launch_description():
         name="pathFollower",
         output="screen",
         parameters=[{
-            "sensorOffsetX" : LaunchConfiguration('sensorOffsetX'),
-            "sensorOffsetY" : LaunchConfiguration('sensorOffsetY'),
-            "pubSkipNum" : 1,
-            "twoWayDrive" : LaunchConfiguration('twoWayDrive'),
-            "lookAheadDis" : 0.5,
-            "yawRateGain" : 7.5,
-            "stopYawRateGain" : 7.5,
-            "maxYawRate" : 90.0,
-            "maxSpeed" : LaunchConfiguration('maxSpeed'),
-            "maxAccel" : 2.5,
-            "switchTimeThre" : 1.0,
-            "dirDiffThre" : 0.1,
-            "stopDisThre" : 0.2,
-            "slowDwnDisThre" : 0.85,
-            "useInclRateToSlow" : False,
-            "inclRateThre" : 120.0,
-            "slowRate1" : 0.25,
-            "slowRate2" : 0.5,
-            "slowTime1" : 2.0,
-            "slowTime2" : 2.0,
-            "useInclToStop" : False,
-            "inclThre" : 45.0,
-            "stopTime" : 5.0,
-            "noRotAtStop" : False,
-            "noRotAtGoal" : True,
-            "autonomyMode" : LaunchConfiguration('autonomyMode'),
-            "autonomySpeed" : LaunchConfiguration('autonomySpeed'),
-            "joyToSpeedDelay" : LaunchConfiguration('autonomySpeed')
-        }]
+            "sensorOffsetX" : sensorOffsetX,
+            "sensorOffsetY" : sensorOffsetY,
+            "twoWayDrive" : twoWayDrive,
+            "maxSpeed" : maxSpeed,
+            "autonomyMode" : autonomyMode,
+            "autonomySpeed" : autonomySpeed,
+            "joyToSpeedDelay" : joyToSpeedDelay,
+        }, os.path.join(get_package_share_directory('local_planner'), 'config', 'local_planner.yaml')]
     )
 
     ld = LaunchDescription()
