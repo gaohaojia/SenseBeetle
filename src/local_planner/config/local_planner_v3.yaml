@@ -1,0 +1,57 @@
+localPlanner:
+  ros__parameters:
+    vehicleLength: 0.25
+    vehicleWidth: 0.25
+    laserVoxelSize: 0.05
+    terrainVoxelSize: 0.05
+    useTerrainAnalysis: true
+    checkObstacle: true
+    checkRotObstacle: false
+    adjacentRange: 4.25
+    obstacleHeightThre: 0.05
+    groundHeightThre: 0.05
+    costHeightThre: 0.1
+    costScore: 0.02
+    useCost: false
+    pointPerPathThre: 2
+    minRelZ: -0.25
+    maxRelZ: 1.0
+    dirWeight: 0.02
+    dirThre: 90.0
+    dirToVehicle: false
+    pathScale: 1.25
+    minPathScale: 0.25
+    pathScaleStep: 0.25
+    pathScaleBySpeed: true
+    minPathRange: 1.0
+    pathRangeStep: 0.5
+    pathRangeBySpeed: true
+    pathCropByGoal: true
+    joyToCheckObstacleDelay: 5.0
+    goalClearRange: 0.5
+    goalX: 0.0
+    goalY: 0.0
+
+pathFollower:
+  ros__parameters:
+    pubSkipNum: 1
+    lookAheadDis: 0.5
+    yawRateGain: 7.5
+    stopYawRateGain: 0.5
+    maxYawRate: 90.0
+    maxAccel: 2.5
+    switchTimeThre: 1.0
+    dirDiffThre: 0.11
+    stopDisThre: 0.2
+    slowDwnDisThre: 0.85
+    useInclRateToSlow: false
+    inclRateThre: 120.0
+    slowRate1: 0.25
+    slowRate2: 0.5
+    slowTime1: 2.0
+    slowTime2: 2.0
+    useInclToStop: false
+    inclThre: 45.0
+    stopTime: 5.0
+    noRotAtStop: false
+    noRotAtGoal: true
