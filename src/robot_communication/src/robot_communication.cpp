@@ -93,7 +93,7 @@ RobotCommunicationNode::~RobotCommunicationNode()
   if (recv_thread_.joinable()) {
     recv_thread_.join();
   }
-  if (tf_update_thread_.joinable()){
+  if (tf_update_thread_.joinable()) {
     tf_update_thread_.join();
   }
   close(sockfd);
@@ -108,9 +108,8 @@ void RobotCommunicationNode::InitMapTF()
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
   geometry_msgs::msg::TransformStamped transformStamped;
   try {
-    transformStamped =
-      tf_buffer_->lookupTransform(
-        toFrameRel, fromFrameRel, tf2::TimePointZero, tf2::durationFromSec(10.0));
+    transformStamped = tf_buffer_->lookupTransform(
+      toFrameRel, fromFrameRel, tf2::TimePointZero, tf2::durationFromSec(10.0));
   } catch (const tf2::TransformException & ex) {
     RCLCPP_INFO(this->get_logger(),
                 "Could not transform %s to %s: %s",
@@ -119,8 +118,7 @@ void RobotCommunicationNode::InitMapTF()
                 ex.what());
     return;
   }
-  local_to_global = 
-    tf2::transformToEigen(transformStamped.transform).matrix().cast<double>();
+  local_to_global = tf2::transformToEigen(transformStamped.transform).matrix().cast<double>();
   tf_update_thread_ = std::thread(&RobotCommunicationNode::TFUpdateThread, this);
 }
 
@@ -146,7 +144,7 @@ void RobotCommunicationNode::InitClient()
 void RobotCommunicationNode::WayPointCallBack(
   const geometry_msgs::msg::PointStamped::ConstSharedPtr way_point_msg)
 {
-  geometry_msgs::msg::PointStamped local_point = 
+  geometry_msgs::msg::PointStamped local_point =
     tf_buffer_->transform(*way_point_msg, "local_map", tf2::durationFromSec(10.0));
   local_way_point_pub_->publish(local_point);
 }
@@ -184,11 +182,11 @@ void RobotCommunicationNode::TFUpdateThread()
 {
   geometry_msgs::msg::TransformStamped transformStamped;
   std::vector<uint8_t> data_buffer;
-  while (rclcpp::ok()){
+  while (rclcpp::ok()) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     try {
       transformStamped = tf_buffer_->lookupTransform(
-          "map", "vehicle", tf2::TimePointZero, tf2::durationFromSec(10.0));
+        "map", "vehicle", tf2::TimePointZero, tf2::durationFromSec(10.0));
     } catch (...) {
       continue;
     }
@@ -277,7 +275,7 @@ void RobotCommunicationNode::NetworkRecvThread()
     try {
       if (type == 0) { // Way Point
         geometry_msgs::msg::PointStamped way_point =
-            DeserializeMsg<geometry_msgs::msg::PointStamped>(buffer);
+          DeserializeMsg<geometry_msgs::msg::PointStamped>(buffer);
         WayPointCallBack(std::make_shared<geometry_msgs::msg::PointStamped>(way_point));
       }
     } catch (...) {
