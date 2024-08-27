@@ -51,12 +51,23 @@ private:
   std::thread send_thread_;
   std::thread recv_thread_;
   std::thread tf_update_thread_;
+  std::thread prepare_buffer_thread_;
+  std::thread parse_buffer_thread_;
 
-  struct send_buffer
+  struct SendBuffer
   {
     std::vector<uint8_t> buffer;
   };
-  std::queue<send_buffer> buffer_queue;
+  std::queue<SendBuffer> buffer_queue;
+
+  struct PrepareBuffer
+  {
+    int id;
+    std::vector<uint8_t> buffer;
+    int msg_type;
+  };
+  std::queue<PrepareBuffer> prepare_buffer_queue;
+  std::queue<std::vector<uint8_t>> parse_buffer_queue;
 
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
@@ -68,7 +79,8 @@ private:
   void NetworkSendThread();
   void NetworkRecvThread();
   void TFUpdateThread();
-  void PrepareBuffer(const std::vector<uint8_t> & data_buffer, const int msg_type);
+  void PrepareBufferThread();
+  void ParseBufferThread();
 
   void TerrainMapCallBack(const sensor_msgs::msg::PointCloud2::ConstSharedPtr terrain_map_msg);
   void
