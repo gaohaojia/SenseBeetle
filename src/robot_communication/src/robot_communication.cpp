@@ -31,11 +31,13 @@
 #include <tf2_eigen/tf2_eigen.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <thread>
+#include <vector>
 
 #include "robot_communication/robot_communication.hpp"
 
 #define MAX_PACKET_SIZE 64000
 #define BUFFER_SIZE 65535
+#define MAX_BUFFER_QUEUE_SIZE 5
 
 namespace robot_communication
 {
@@ -73,13 +75,14 @@ RobotCommunicationNode::RobotCommunicationNode(const rclcpp::NodeOptions & optio
   // state_estimation_at_scan_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
   //   "state_estimation_at_scan",
   //   5,
-  //   std::bind(&RobotCommunicationNode::StateEstimationAtScanCallBack, this, std::placeholders::_1));
+  //   std::bind(&RobotCommunicationNode::StateEstimationAtScanCallBack, this,
+  //   std::placeholders::_1));
 
   local_way_point_pub_ =
     this->create_publisher<geometry_msgs::msg::PointStamped>("local_way_point", 2);
 
-  RobotCommunicationNode::init_map_tf();
-  RobotCommunicationNode::init_client();
+  InitMapTF();
+  InitClient();
 }
 
 RobotCommunicationNode::~RobotCommunicationNode()
@@ -90,21 +93,24 @@ RobotCommunicationNode::~RobotCommunicationNode()
   if (recv_thread_.joinable()) {
     recv_thread_.join();
   }
+  if (tf_update_thread_.joinable()){
+    tf_update_thread_.join();
+  }
   close(sockfd);
 }
 
 // initialize the tf from local_map to map
-void RobotCommunicationNode::init_map_tf()
+void RobotCommunicationNode::InitMapTF()
 {
   std::string fromFrameRel = "local_map";
   std::string toFrameRel = "map";
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
-  std::shared_ptr<geometry_msgs::msg::TransformStamped> transformStamped;
+  geometry_msgs::msg::TransformStamped transformStamped;
   try {
     transformStamped =
-      std::make_shared<geometry_msgs::msg::TransformStamped>(tf_buffer_->lookupTransform(
-        toFrameRel, fromFrameRel, tf2::TimePointZero, tf2::durationFromSec(10.0)));
+      tf_buffer_->lookupTransform(
+        toFrameRel, fromFrameRel, tf2::TimePointZero, tf2::durationFromSec(10.0));
   } catch (const tf2::TransformException & ex) {
     RCLCPP_INFO(this->get_logger(),
                 "Could not transform %s to %s: %s",
@@ -113,12 +119,13 @@ void RobotCommunicationNode::init_map_tf()
                 ex.what());
     return;
   }
-  fromIdMapToMap = std::make_shared<Eigen::Matrix4d>(
-    tf2::transformToEigen(transformStamped->transform).matrix().cast<double>());
+  local_to_global = 
+    tf2::transformToEigen(transformStamped.transform).matrix().cast<double>();
+  tf_update_thread_ = std::thread(&RobotCommunicationNode::TFUpdateThread, this);
 }
 
 // initialize the socket client
-void RobotCommunicationNode::init_client()
+void RobotCommunicationNode::InitClient()
 {
   if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
     RCLCPP_ERROR(this->get_logger(), "Socket creation failed!");
@@ -136,41 +143,78 @@ void RobotCommunicationNode::init_client()
   RCLCPP_INFO(this->get_logger(), "Client start! Target ip: %s, port: %d", ip.c_str(), port);
 }
 
-void RobotCommunicationNode::NetworkSendThread()
+void RobotCommunicationNode::WayPointCallBack(
+  const geometry_msgs::msg::PointStamped::ConstSharedPtr way_point_msg)
 {
-  std::shared_ptr<std::vector<uint8_t>> data_buffer;
-  while (rclcpp::ok()) {
-    // PointCloud2
-    if (!registered_scan_queue.empty()) {
-      data_buffer = std::make_shared<std::vector<uint8_t>>(
-        RobotCommunicationNode::SerializeMsg<sensor_msgs::msg::PointCloud2>(
-          registered_scan_queue.front()));
-      registered_scan_queue.pop();
-      SendData(*data_buffer, 0);
-    }
+  geometry_msgs::msg::PointStamped local_point = 
+    tf_buffer_->transform(*way_point_msg, "local_map", tf2::durationFromSec(10.0));
+  local_way_point_pub_->publish(local_point);
+}
 
-    // Image
-    if (!realsense_image_queue.empty()) {
-      data_buffer = std::make_shared<std::vector<uint8_t>>(
-        RobotCommunicationNode::SerializeMsg<sensor_msgs::msg::Image>(
-          realsense_image_queue.front()));
-      realsense_image_queue.pop();
-      SendData(*data_buffer, 1);
-    }
+void RobotCommunicationNode::RegisteredScanCallBack(
+  const sensor_msgs::msg::PointCloud2::ConstSharedPtr registered_scan_msg)
+{
+  pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_tmp(new pcl::PointCloud<pcl::PointXYZI>());
+  pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_result(new pcl::PointCloud<pcl::PointXYZI>());
+  pcl::fromROSMsg(*registered_scan_msg, *pointcloud_tmp);
+  try {
+    pcl::transformPointCloud(*pointcloud_tmp, *pointcloud_result, local_to_global);
+  } catch (const tf2::TransformException & ex) {
+    RCLCPP_INFO(this->get_logger(), "%s", ex.what());
+    return;
+  }
+  sensor_msgs::msg::PointCloud2 totalRegisteredScan;
+  pcl::toROSMsg(*pointcloud_result, totalRegisteredScan);
+  totalRegisteredScan.header.stamp = registered_scan_msg->header.stamp;
+  totalRegisteredScan.header.frame_id = "map";
 
-    // Transform
-    std::shared_ptr<geometry_msgs::msg::TransformStamped> transformStamped;
+  std::vector<uint8_t> data_buffer =
+    SerializeMsg<sensor_msgs::msg::PointCloud2>(totalRegisteredScan);
+  PrepareBuffer(data_buffer, 0);
+}
+
+void RobotCommunicationNode::RealsenseImageCallBack(
+  const sensor_msgs::msg::Image::ConstSharedPtr image_msg)
+{
+  std::vector<uint8_t> data_buffer = SerializeMsg<sensor_msgs::msg::Image>(*image_msg);
+  PrepareBuffer(data_buffer, 1);
+}
+
+void RobotCommunicationNode::TFUpdateThread()
+{
+  geometry_msgs::msg::TransformStamped transformStamped;
+  std::vector<uint8_t> data_buffer;
+  while (rclcpp::ok()){
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     try {
-      transformStamped =
-        std::make_shared<geometry_msgs::msg::TransformStamped>(tf_buffer_->lookupTransform(
-          "map", "vehicle", tf2::TimePointZero, tf2::durationFromSec(10.0)));
+      transformStamped = tf_buffer_->lookupTransform(
+          "map", "vehicle", tf2::TimePointZero, tf2::durationFromSec(10.0));
     } catch (...) {
       continue;
     }
-    data_buffer = std::make_shared<std::vector<uint8_t>>(
-      RobotCommunicationNode::SerializeMsg<geometry_msgs::msg::TransformStamped>(
-        *transformStamped));
-    SendData(*data_buffer, 2);
+    transformStamped.child_frame_id = "robot_" + std::to_string(robot_id) + "/vehicle";
+    data_buffer = SerializeMsg<geometry_msgs::msg::TransformStamped>(transformStamped);
+    PrepareBuffer(data_buffer, 2);
+  }
+}
+
+void RobotCommunicationNode::NetworkSendThread()
+{
+  while (rclcpp::ok()) {
+    if (buffer_queue.empty()) {
+      std::this_thread::sleep_for(std::chrono::nanoseconds(10));
+      continue;
+    }
+    send_buffer s_buffer = buffer_queue.front();
+    buffer_queue.pop();
+    if (sendto(sockfd,
+               s_buffer.buffer.data(),
+               s_buffer.buffer.size(),
+               0,
+               (struct sockaddr *)&server_addr,
+               sizeof(server_addr)) < 0) {
+      RCLCPP_ERROR(this->get_logger(), "Send failed!");
+    }
   }
 }
 
@@ -232,10 +276,9 @@ void RobotCommunicationNode::NetworkRecvThread()
     }
     try {
       if (type == 0) { // Way Point
-        std::shared_ptr<geometry_msgs::msg::PointStamped> way_point =
-          std::make_shared<geometry_msgs::msg::PointStamped>(
-            RobotCommunicationNode::DeserializeMsg<geometry_msgs::msg::PointStamped>(buffer));
-        RobotCommunicationNode::WayPointCallBack(way_point);
+        geometry_msgs::msg::PointStamped way_point =
+            DeserializeMsg<geometry_msgs::msg::PointStamped>(buffer);
+        WayPointCallBack(std::make_shared<geometry_msgs::msg::PointStamped>(way_point));
       }
     } catch (...) {
     }
@@ -246,7 +289,8 @@ void RobotCommunicationNode::NetworkRecvThread()
   }
 }
 
-void RobotCommunicationNode::SendData(const std::vector<uint8_t> & data_buffer, const int msg_type)
+void RobotCommunicationNode::PrepareBuffer(const std::vector<uint8_t> & data_buffer,
+                                           const int msg_type)
 {
   const int total_packet = (data_buffer.size() + MAX_PACKET_SIZE - 1) / MAX_PACKET_SIZE;
   for (int i = 0; i < total_packet; i++) {
@@ -265,14 +309,13 @@ void RobotCommunicationNode::SendData(const std::vector<uint8_t> & data_buffer, 
                   data_buffer.begin() + i * MAX_PACKET_SIZE,
                   i == total_packet - 1 ? data_buffer.end()
                                         : data_buffer.begin() + (i + 1) * MAX_PACKET_SIZE);
-    sendto(sockfd,
-           packet.data(),
-           packet.size(),
-           MSG_CONFIRM,
-           (const struct sockaddr *)&server_addr,
-           sizeof(server_addr));
+    send_buffer s_buffer;
+    s_buffer.buffer = packet;
+    if (buffer_queue.size() >= MAX_BUFFER_QUEUE_SIZE) {
+      buffer_queue.pop();
+    }
+    buffer_queue.push(s_buffer);
   }
-  rclcpp::sleep_for(std::chrono::nanoseconds(100));
 }
 
 // Serialization
@@ -303,48 +346,6 @@ template <class T> T RobotCommunicationNode::DeserializeMsg(const std::vector<ui
   serializer.deserialize_message(&serialized_msg, &msg);
 
   return msg;
-}
-
-void RobotCommunicationNode::RegisteredScanCallBack(
-  const sensor_msgs::msg::PointCloud2::ConstSharedPtr registered_scan_msg)
-{
-  pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_tmp(new pcl::PointCloud<pcl::PointXYZI>());
-  pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_result(new pcl::PointCloud<pcl::PointXYZI>());
-  pcl::fromROSMsg(*registered_scan_msg, *pointcloud_tmp);
-  try {
-    pcl::transformPointCloud(*pointcloud_tmp, *pointcloud_result, *fromIdMapToMap);
-  } catch (const tf2::TransformException & ex) {
-    RCLCPP_INFO(this->get_logger(), "%s", ex.what());
-    return;
-  }
-  std::shared_ptr<sensor_msgs::msg::PointCloud2> totalRegisteredScan(
-    new sensor_msgs::msg::PointCloud2());
-  pcl::toROSMsg(*pointcloud_result, *totalRegisteredScan);
-  totalRegisteredScan->header.stamp = registered_scan_msg->header.stamp;
-  totalRegisteredScan->header.frame_id = "map";
-  if (registered_scan_queue.size() >= 2) {
-    registered_scan_queue.pop();
-  }
-  registered_scan_queue.push(*totalRegisteredScan);
-}
-
-void RobotCommunicationNode::WayPointCallBack(
-  const geometry_msgs::msg::PointStamped::ConstSharedPtr way_point_msg)
-{
-  std::shared_ptr<geometry_msgs::msg::PointStamped> local_point(
-    new geometry_msgs::msg::PointStamped());
-  local_point = std::make_shared<geometry_msgs::msg::PointStamped>(
-    tf_buffer_->transform(*way_point_msg, "local_map", tf2::durationFromSec(10.0)));
-  local_way_point_pub_->publish(*local_point);
-}
-
-void RobotCommunicationNode::RealsenseImageCallBack(
-  const sensor_msgs::msg::Image::ConstSharedPtr image_msg)
-{
-  if (realsense_image_queue.size() >= 2) {
-    realsense_image_queue.pop();
-  }
-  realsense_image_queue.push(*image_msg);
 }
 
 // void RobotCommunicationNode::TerrainMapCallBack(

@@ -50,19 +50,25 @@ private:
 
   std::thread send_thread_;
   std::thread recv_thread_;
+  std::thread tf_update_thread_;
 
-  std::queue<sensor_msgs::msg::PointCloud2> registered_scan_queue;
-  std::queue<sensor_msgs::msg::Image> realsense_image_queue;
+  struct send_buffer
+  {
+    std::vector<uint8_t> buffer;
+  };
+  std::queue<send_buffer> buffer_queue;
 
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
-  std::shared_ptr<Eigen::Matrix4d> fromIdMapToMap;
+  Eigen::Matrix4d local_to_global;
+
+  void InitMapTF();
+  void InitClient();
 
   void NetworkSendThread();
   void NetworkRecvThread();
-
-  void init_map_tf();
-  void init_client();
+  void TFUpdateThread();
+  void PrepareBuffer(const std::vector<uint8_t> & data_buffer, const int msg_type);
 
   void TerrainMapCallBack(const sensor_msgs::msg::PointCloud2::ConstSharedPtr terrain_map_msg);
   void
@@ -74,8 +80,6 @@ private:
   void RealsenseImageCallBack(const sensor_msgs::msg::Image::ConstSharedPtr image_msg);
 
   void WayPointCallBack(const geometry_msgs::msg::PointStamped::ConstSharedPtr way_point_msg);
-
-  void SendData(const std::vector<uint8_t> & data_buffer, const int msg_type);
 
   template <class T> std::vector<uint8_t> SerializeMsg(const T & msg);
   template <class T> T DeserializeMsg(const std::vector<uint8_t> & data);
