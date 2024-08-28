@@ -268,7 +268,7 @@ void RobotCommunicationNode::PrepareBufferThread()
     PrepareBuffer pthread_buffer = prepare_buffer_queue.front();
     prepare_buffer_queue.pop();
     const int total_packet = (pthread_buffer.buffer.size() + MAX_PACKET_SIZE - 1) / MAX_PACKET_SIZE;
-    if (buffer_queue.size() >= MAX_BUFFER_QUEUE_SIZE) {
+    if (prepare_buffer_queue.size() >= MAX_BUFFER_QUEUE_SIZE) {
       return;
     }
     for (int i = 0; i < total_packet; i++) {
