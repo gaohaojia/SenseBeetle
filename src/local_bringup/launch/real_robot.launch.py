@@ -13,11 +13,23 @@ def generate_launch_description():
     lio_mode = LaunchConfiguration('lio_mode')
     planner_mode = LaunchConfiguration('planner_mode')
     checkTerrainConn = LaunchConfiguration('checkTerrainConn')
+    multiOffsetPositionX = LaunchConfiguration('multiOffsetPositionX')
+    multiOffsetPositionY = LaunchConfiguration('multiOffsetPositionY')
+    multiOffsetPositionZ = LaunchConfiguration('multiOffsetPositionZ')
+    multiOffsetRotateR = LaunchConfiguration('multiOffsetRotateR')
+    multiOffsetRotateP = LaunchConfiguration('multiOffsetRotateP')
+    multiOffsetRotateY = LaunchConfiguration('multiOffsetRotateY')
     
     declare_robot_id = DeclareLaunchArgument('robot_id', default_value='0', description='')
     declare_lio_mode = DeclareLaunchArgument('lio_mode', default_value='point_lio', description='')
     declare_planner_mode = DeclareLaunchArgument('planner_mode', default_value='tare_planner', description='')
     declare_checkTerrainConn = DeclareLaunchArgument('checkTerrainConn', default_value='true', description='')
+    declare_multiOffsetPositionX = DeclareLaunchArgument('multiOffsetPositionX', default_value='0.0', description='')
+    declare_multiOffsetPositionY = DeclareLaunchArgument('multiOffsetPositionY', default_value='0.0', description='')
+    declare_multiOffsetPositionZ = DeclareLaunchArgument('multiOffsetPositionZ', default_value='0.0', description='')
+    declare_multiOffsetRotateR = DeclareLaunchArgument('multiOffsetRotateR', default_value='0.0', description='')
+    declare_multiOffsetRotateP = DeclareLaunchArgument('multiOffsetRotateP', default_value='0.0', description='')
+    declare_multiOffsetRotateY = DeclareLaunchArgument('multiOffsetRotateY', default_value='0.0', description='')
 
     start_livox_mid360 = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
@@ -53,7 +65,13 @@ def generate_launch_description():
             get_package_share_directory('robot_communication'), 'launch', 'robot_communication.launch.py')
         ),
         launch_arguments={
-            'robot_id': robot_id
+            'robot_id': robot_id,
+            'multiOffsetPositionX': multiOffsetPositionX,
+            'multiOffsetPositionY': multiOffsetPositionY,
+            'multiOffsetPositionZ': multiOffsetPositionZ,
+            'multiOffsetRotateR': multiOffsetRotateR,
+            'multiOffsetRotateP': multiOffsetRotateP,
+            'multiOffsetRotateY': multiOffsetRotateY,
         }.items()
     )
     
@@ -111,6 +129,12 @@ def generate_launch_description():
     ld.add_action(declare_lio_mode)
     ld.add_action(declare_planner_mode)
     ld.add_action(declare_checkTerrainConn)
+    ld.add_action(declare_multiOffsetPositionX)
+    ld.add_action(declare_multiOffsetPositionY)
+    ld.add_action(declare_multiOffsetPositionZ)
+    ld.add_action(declare_multiOffsetRotateR)
+    ld.add_action(declare_multiOffsetRotateP)
+    ld.add_action(declare_multiOffsetRotateY)
 
     ld.add_action(start_livox_mid360)
     ld.add_action(start_realsense)
