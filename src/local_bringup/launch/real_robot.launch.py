@@ -11,8 +11,6 @@ from launch.conditions import LaunchConfigurationEquals
 
 def generate_launch_description():
     robot_id = LaunchConfiguration("robot_id")
-    lio_mode = LaunchConfiguration("lio_mode")
-    planner_mode = LaunchConfiguration("planner_mode")
     checkTerrainConn = LaunchConfiguration("checkTerrainConn")
     multiOffsetPositionX = LaunchConfiguration("multiOffsetPositionX")
     multiOffsetPositionY = LaunchConfiguration("multiOffsetPositionY")
