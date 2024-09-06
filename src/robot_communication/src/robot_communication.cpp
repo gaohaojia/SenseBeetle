@@ -93,9 +93,6 @@ RobotCommunicationNode::~RobotCommunicationNode()
   if (recv_thread_.joinable()) {
     recv_thread_.join();
   }
-  if (heart_beat_thread_.joinable()) {
-    heart_beat_thread_.join();
-  }
   if (prepare_buffer_thread_.joinable()) {
     prepare_buffer_thread_.join();
   }
