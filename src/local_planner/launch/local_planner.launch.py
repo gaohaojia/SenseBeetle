@@ -3,10 +3,10 @@ import yaml
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription, LaunchContext
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction, OpaqueFunction
-from launch.launch_description_sources import PythonLaunchDescriptionSource, FrontendLaunchDescriptionSource
-from launch_ros.actions import Node, PushRosNamespace
+from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from launch_ros.actions import Node
 from launch.substitutions import LaunchConfiguration
+
 
 def get_vehicle_trans_publisher(context: LaunchContext, sensorOffsetX, sensorOffsetY):
     sensorOffsetX_str = context.perform_substitution(sensorOffsetX)
@@ -17,9 +17,19 @@ def get_vehicle_trans_publisher(context: LaunchContext, sensorOffsetX, sensorOff
         package="tf2_ros",
         executable="static_transform_publisher",
         name="vehicleTransPublisher",
-        arguments=[sensorOffsetX_str, sensorOffsetY_str, '0', '0', '0', '0', 'sensor', 'vehicle']
+        arguments=[
+            sensorOffsetX_str,
+            sensorOffsetY_str,
+            "0",
+            "0",
+            "0",
+            "0",
+            "sensor",
+            "vehicle",
+        ],
     )
     return [vehicle_trans_publisher]
+
 
 def get_sensor_trans_publisher(context: LaunchContext, cameraOffsetZ):
     cameraOffsetZ_str = context.perform_substitution(cameraOffsetZ)
@@ -27,54 +37,91 @@ def get_sensor_trans_publisher(context: LaunchContext, cameraOffsetZ):
         package="tf2_ros",
         executable="static_transform_publisher",
         name="sensorTransPublisher",
-        arguments=['0', '0', cameraOffsetZ_str, '-1.5707963', '0', '-1.5707963', 'sensor', 'camera']
+        arguments=[
+            "0",
+            "0",
+            cameraOffsetZ_str,
+            "-1.5707963",
+            "0",
+            "-1.5707963",
+            "sensor",
+            "camera",
+        ],
     )
     return [sensor_trans_publisher]
 
+
 def generate_launch_description():
-    common_params_file = os.path.join(get_package_share_directory('local_planner'), 'config', 'common_params.yaml')
-    with open(common_params_file, 'r') as file:
+    common_params_file = os.path.join(
+        get_package_share_directory("local_planner"), "config", "common_params.yaml"
+    )
+    with open(common_params_file, "r") as file:
         params = yaml.safe_load(file)
 
-    sensorOffsetX = LaunchConfiguration('sensorOffsetX')
-    sensorOffsetY = LaunchConfiguration('sensorOffsetY')
-    cameraOffsetZ = LaunchConfiguration('cameraOffsetZ')
-    twoWayDrive = LaunchConfiguration('twoWayDrive')
-    maxSpeed = LaunchConfiguration('maxSpeed')
-    autonomyMode = LaunchConfiguration('autonomyMode')
-    autonomySpeed = LaunchConfiguration('autonomySpeed')
-    joyToSpeedDelay = LaunchConfiguration('joyToSpeedDelay')
-    goalX = LaunchConfiguration('goalX')
-    goalY = LaunchConfiguration('goalY')
-    
-    declare_sensorOffsetX = DeclareLaunchArgument('sensorOffsetX', default_value=str(params['sensorOffsetX']), description='')
-    declare_sensorOffsetY = DeclareLaunchArgument('sensorOffsetY', default_value=str(params['sensorOffsetY']), description='')
-    declare_cameraOffsetZ = DeclareLaunchArgument('cameraOffsetZ', default_value=str(params['cameraOffsetZ']), description='')
-    declare_twoWayDrive = DeclareLaunchArgument('twoWayDrive', default_value=str(params['twoWayDrive']), description='')
-    declare_maxSpeed = DeclareLaunchArgument('maxSpeed', default_value=str(params['maxSpeed']), description='')
-    declare_autonomyMode = DeclareLaunchArgument('autonomyMode', default_value=str(params['autonomyMode']), description='')
-    delcare_autonomySpeed = DeclareLaunchArgument('autonomySpeed', default_value=str(params['autonomySpeed']), description='')
-    declare_joyToSpeedDelay = DeclareLaunchArgument('joyToSpeedDelay', default_value=str(params['joyToSpeedDelay']), description='')
-    declare_goalX = DeclareLaunchArgument('goalX', default_value='0.0', description='')
-    declare_goalY = DeclareLaunchArgument('goalY', default_value='0.0', description='')
-    
+    sensorOffsetX = LaunchConfiguration("sensorOffsetX")
+    sensorOffsetY = LaunchConfiguration("sensorOffsetY")
+    cameraOffsetZ = LaunchConfiguration("cameraOffsetZ")
+    twoWayDrive = LaunchConfiguration("twoWayDrive")
+    maxSpeed = LaunchConfiguration("maxSpeed")
+    autonomyMode = LaunchConfiguration("autonomyMode")
+    autonomySpeed = LaunchConfiguration("autonomySpeed")
+    joyToSpeedDelay = LaunchConfiguration("joyToSpeedDelay")
+    goalX = LaunchConfiguration("goalX")
+    goalY = LaunchConfiguration("goalY")
+
+    declare_sensorOffsetX = DeclareLaunchArgument(
+        "sensorOffsetX", default_value=str(params["sensorOffsetX"]), description=""
+    )
+    declare_sensorOffsetY = DeclareLaunchArgument(
+        "sensorOffsetY", default_value=str(params["sensorOffsetY"]), description=""
+    )
+    declare_cameraOffsetZ = DeclareLaunchArgument(
+        "cameraOffsetZ", default_value=str(params["cameraOffsetZ"]), description=""
+    )
+    declare_twoWayDrive = DeclareLaunchArgument(
+        "twoWayDrive", default_value=str(params["twoWayDrive"]), description=""
+    )
+    declare_maxSpeed = DeclareLaunchArgument(
+        "maxSpeed", default_value=str(params["maxSpeed"]), description=""
+    )
+    declare_autonomyMode = DeclareLaunchArgument(
+        "autonomyMode", default_value=str(params["autonomyMode"]), description=""
+    )
+    delcare_autonomySpeed = DeclareLaunchArgument(
+        "autonomySpeed", default_value=str(params["autonomySpeed"]), description=""
+    )
+    declare_joyToSpeedDelay = DeclareLaunchArgument(
+        "joyToSpeedDelay", default_value=str(params["joyToSpeedDelay"]), description=""
+    )
+    declare_goalX = DeclareLaunchArgument("goalX", default_value="0.0", description="")
+    declare_goalY = DeclareLaunchArgument("goalY", default_value="0.0", description="")
+
     local_planner_node = Node(
         package="local_planner",
         executable="localPlanner",
         name="localPlanner",
         output="screen",
-        parameters=[{
-            "pathFolder" : os.path.join(get_package_share_directory('local_planner'), 'paths'),
-            "sensorOffsetX" : sensorOffsetX,
-            "sensorOffsetY" : sensorOffsetY,
-            "twoWayDrive" : twoWayDrive,
-            "maxSpeed" : maxSpeed,
-            "autonomyMode" : autonomyMode,
-            "autonomySpeed" : autonomySpeed,
-            "joyToSpeedDelay" : joyToSpeedDelay,
-            "goalX" : goalX,
-            "goalY" : goalY,
-        }, os.path.join(get_package_share_directory('local_planner'), 'config', 'local_planner.yaml')]
+        parameters=[
+            {
+                "pathFolder": os.path.join(
+                    get_package_share_directory("local_planner"), "paths"
+                ),
+                "sensorOffsetX": sensorOffsetX,
+                "sensorOffsetY": sensorOffsetY,
+                "twoWayDrive": twoWayDrive,
+                "maxSpeed": maxSpeed,
+                "autonomyMode": autonomyMode,
+                "autonomySpeed": autonomySpeed,
+                "joyToSpeedDelay": joyToSpeedDelay,
+                "goalX": goalX,
+                "goalY": goalY,
+            },
+            os.path.join(
+                get_package_share_directory("local_planner"),
+                "config",
+                "local_planner.yaml",
+            ),
+        ],
     )
 
     path_follower_node = Node(
@@ -82,15 +129,22 @@ def generate_launch_description():
         executable="pathFollower",
         name="pathFollower",
         output="screen",
-        parameters=[{
-            "sensorOffsetX" : sensorOffsetX,
-            "sensorOffsetY" : sensorOffsetY,
-            "twoWayDrive" : twoWayDrive,
-            "maxSpeed" : maxSpeed,
-            "autonomyMode" : autonomyMode,
-            "autonomySpeed" : autonomySpeed,
-            "joyToSpeedDelay" : joyToSpeedDelay,
-        }, os.path.join(get_package_share_directory('local_planner'), 'config', 'local_planner.yaml')]
+        parameters=[
+            {
+                "sensorOffsetX": sensorOffsetX,
+                "sensorOffsetY": sensorOffsetY,
+                "twoWayDrive": twoWayDrive,
+                "maxSpeed": maxSpeed,
+                "autonomyMode": autonomyMode,
+                "autonomySpeed": autonomySpeed,
+                "joyToSpeedDelay": joyToSpeedDelay,
+            },
+            os.path.join(
+                get_package_share_directory("local_planner"),
+                "config",
+                "local_planner.yaml",
+            ),
+        ],
     )
 
     ld = LaunchDescription()
@@ -110,6 +164,12 @@ def generate_launch_description():
     ld.add_action(local_planner_node)
     ld.add_action(path_follower_node)
 
-    ld.add_action(OpaqueFunction(function=get_vehicle_trans_publisher, args=[sensorOffsetX, sensorOffsetY]))
-    ld.add_action(OpaqueFunction(function=get_sensor_trans_publisher, args=[cameraOffsetZ]))
+    ld.add_action(
+        OpaqueFunction(
+            function=get_vehicle_trans_publisher, args=[sensorOffsetX, sensorOffsetY]
+        )
+    )
+    ld.add_action(
+        OpaqueFunction(function=get_sensor_trans_publisher, args=[cameraOffsetZ])
+    )
     return ld
