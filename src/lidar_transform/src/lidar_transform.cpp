@@ -19,7 +19,7 @@ LidarTransform::LidarTransform(const rclcpp::NodeOptions & options)
     } catch (tf2::TransformException & ex) {
       RCLCPP_WARN(this->get_logger(), "Could not transform IMU data: %s", ex.what());
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    std::this_thread::sleep_for(std::chrono::seconds(1));
   }
   imu_sub_ = this->create_subscription<sensor_msgs::msg::Imu>(
     "livox/imu", 10, std::bind(&LidarTransform::imu_callback, this, std::placeholders::_1));
