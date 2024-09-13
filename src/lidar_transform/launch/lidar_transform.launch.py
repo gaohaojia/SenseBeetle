@@ -43,9 +43,9 @@ def generate_launch_description():
                 lidar_positionX,
                 lidar_positionY,
                 lidar_positionZ,
-                lidar_rotateR,
-                lidar_rotateP,
                 lidar_rotateY,
+                lidar_rotateP,
+                lidar_rotateR,
             ],
         )
     )
