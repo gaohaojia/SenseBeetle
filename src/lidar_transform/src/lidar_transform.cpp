@@ -69,15 +69,13 @@ void LidarTransform::lidar_callback(const livox_ros_driver2::msg::CustomMsg::Sha
   pcl::PointCloud<pcl::PointXYZ>::Ptr transformed_cloud(new pcl::PointCloud<pcl::PointXYZ>);
   pcl_ros::transformPointCloud(*pcl_cloud, *transformed_cloud, frame_transform);
 
-  livox_ros_driver2::msg::CustomMsg lidar_transformed = *lidar_msg;
-  lidar_transformed.points.resize(transformed_cloud->points.size());
   for (size_t i = 0; i < transformed_cloud->points.size(); ++i) {
-    lidar_transformed.points[i].x = transformed_cloud->points[i].x;
-    lidar_transformed.points[i].y = transformed_cloud->points[i].y;
-    lidar_transformed.points[i].z = transformed_cloud->points[i].z;
+    lidar_msg->points[i].x = transformed_cloud->points[i].x;
+    lidar_msg->points[i].y = transformed_cloud->points[i].y;
+    lidar_msg->points[i].z = transformed_cloud->points[i].z;
   }
 
-  lidar_pub_->publish(lidar_transformed);
+  lidar_pub_->publish(*lidar_msg);
 }
 
 } // namespace lidar_transform
