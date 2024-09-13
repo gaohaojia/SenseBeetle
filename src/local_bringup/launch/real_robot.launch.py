@@ -18,6 +18,12 @@ def generate_launch_description():
     multiOffsetRotateR = LaunchConfiguration("multiOffsetRotateR")
     multiOffsetRotateP = LaunchConfiguration("multiOffsetRotateP")
     multiOffsetRotateY = LaunchConfiguration("multiOffsetRotateY")
+    lidarOffsetPositionX = LaunchConfiguration("lidarOffsetPositionX")
+    lidarOffsetPositionY = LaunchConfiguration("lidarOffsetPositionY")
+    lidarOffsetPositionZ = LaunchConfiguration("lidarOffsetPositionZ")
+    lidarOffsetRotateR = LaunchConfiguration("lidarOffsetRotateR")
+    lidarOffsetRotateP = LaunchConfiguration("lidarOffsetRotateP")
+    lidarOffsetRotateY = LaunchConfiguration("lidarOffsetRotateY")
 
     declare_robot_id = DeclareLaunchArgument(
         "robot_id", default_value="0", description=""
@@ -49,6 +55,24 @@ def generate_launch_description():
     declare_multiOffsetRotateY = DeclareLaunchArgument(
         "multiOffsetRotateY", default_value="0.0", description=""
     )
+    declare_lidarOffsetPositionX = DeclareLaunchArgument(
+        "lidarOffsetPositionX", default_value="0.0", description=""
+    )
+    declare_lidarOffsetPositionY = DeclareLaunchArgument(
+        "lidarOffsetPositionY", default_value="0.0", description=""
+    )
+    declare_lidarOffsetPositionZ = DeclareLaunchArgument(
+        "lidarOffsetPositionZ", default_value="0.0", description=""
+    )
+    declare_lidarOffsetRotateR = DeclareLaunchArgument(
+        "lidarOffsetRotateR", default_value="0.0", description=""
+    )
+    declare_lidarOffsetRotateP = DeclareLaunchArgument(
+        "lidarOffsetRotateP", default_value="0.0", description=""
+    )
+    declare_lidarOffsetRotateY = DeclareLaunchArgument(
+        "lidarOffsetRotateY", default_value="0.0", description=""
+    )
 
     start_livox_mid360 = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -69,6 +93,24 @@ def generate_launch_description():
             )
         ),
         launch_arguments={"rgb_camera.color_profile": "640x480x30"}.items(),
+    )
+
+    start_lidar_transform = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(
+                get_package_share_directory("lidar_transform"),
+                "launch",
+                "lidar_transform.launch.py",
+            )
+        ),
+        launch_arguments={
+            "lidarOffsetPositionX": lidarOffsetPositionX,
+            "lidarOffsetPositionY": lidarOffsetPositionY,
+            "lidarOffsetPositionZ": lidarOffsetPositionZ,
+            "lidarOffsetRotateR": lidarOffsetRotateR,
+            "lidarOffsetRotateP": lidarOffsetRotateP,
+            "lidarOffsetRotateY": lidarOffsetRotateY,
+        }.items(),
     )
 
     start_fast_lio = IncludeLaunchDescription(
@@ -201,9 +243,16 @@ def generate_launch_description():
     ld.add_action(declare_multiOffsetRotateR)
     ld.add_action(declare_multiOffsetRotateP)
     ld.add_action(declare_multiOffsetRotateY)
+    ld.add_action(declare_lidarOffsetPositionX)
+    ld.add_action(declare_lidarOffsetPositionY)
+    ld.add_action(declare_lidarOffsetPositionZ)
+    ld.add_action(declare_lidarOffsetRotateR)
+    ld.add_action(declare_lidarOffsetRotateP)
+    ld.add_action(declare_lidarOffsetRotateY)
 
     ld.add_action(start_livox_mid360)
     ld.add_action(start_realsense)
+    ld.add_action(start_lidar_transform)
     ld.add_action(start_fast_lio)
     ld.add_action(start_point_lio)
     ld.add_action(TimerAction(period=10.0, actions=[start_robot_communication]))
