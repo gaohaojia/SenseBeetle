@@ -23,8 +23,12 @@ LidarTransform::LidarTransform(const rclcpp::NodeOptions & options)
   }
   imu_sub_ = this->create_subscription<sensor_msgs::msg::Imu>(
     "livox/imu", 10, std::bind(&LidarTransform::imu_callback, this, std::placeholders::_1));
+  lidar_sub_ = this->create_subscription<livox_ros_driver2::msg::CustomMsg>(
+    "livox/lidar", 10, std::bind(&LidarTransform::lidar_callback, this, std::placeholders::_1));
 
   imu_pub_ = this->create_publisher<sensor_msgs::msg::Imu>("livox/imu_transformed", 10);
+  lidar_pub_ =
+    this->create_publisher<livox_ros_driver2::msg::CustomMsg>("livox/lidar_transformed", 10);
 }
 
 void LidarTransform::imu_callback(const sensor_msgs::msg::Imu::SharedPtr imu_msg)
@@ -46,6 +50,35 @@ void LidarTransform::imu_callback(const sensor_msgs::msg::Imu::SharedPtr imu_msg
   lidar_transformed.angular_velocity.z = transformed_angular_vel.getZ();
 
   imu_pub_->publish(lidar_transformed);
+}
+
+void LidarTransform::lidar_callback(const livox_ros_driver2::msg::CustomMsg::SharedPtr lidar_msg)
+{
+  pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+  for (size_t i = 0; i < lidar_msg->point_num; ++i) {
+    pcl::PointXYZ point;
+    point.x = lidar_msg->points[i].x;
+    point.y = lidar_msg->points[i].y;
+    point.z = lidar_msg->points[i].z;
+    pcl_cloud->points.push_back(point);
+  }
+  pcl_cloud->header.frame_id = lidar_msg->header.frame_id;
+
+  pcl::PointCloud<pcl::PointXYZ>::Ptr transformed_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl_ros::transformPointCloud(*pcl_cloud, *transformed_cloud, transform);
+
+  livox_ros_driver2::msg::CustomMsg transformed_msg = *lidar_msg;
+  transformed_msg.point_num = transformed_cloud->points.size();
+
+  for (const auto & point : transformed_cloud->points) {
+    livox_ros_driver2::msg::CustomPoint new_point;
+    new_point.x = point.x;
+    new_point.y = point.y;
+    new_point.z = point.z;
+    transformed_msg.points.push_back(new_point);
+  }
+
+  lidar_pub_->publish(transformed_msg);
 }
 
 } // namespace lidar_transform

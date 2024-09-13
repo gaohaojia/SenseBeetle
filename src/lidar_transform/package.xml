@@ -17,6 +17,9 @@
   <depend>tf2_eigen</depend>
   <depend>tf2_geometry_msgs</depend>
   <depend>geometry_msgs</depend>
+  <depend>livox_ros_driver2</depend>
+  <depend>pcl_ros</depend>
+  <depend>PCL</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
