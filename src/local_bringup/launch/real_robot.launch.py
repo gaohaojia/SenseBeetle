@@ -12,18 +12,6 @@ from launch.conditions import LaunchConfigurationEquals
 def generate_launch_description():
     robot_id = LaunchConfiguration("robot_id")
     checkTerrainConn = LaunchConfiguration("checkTerrainConn")
-    multiOffsetPositionX = LaunchConfiguration("multiOffsetPositionX")
-    multiOffsetPositionY = LaunchConfiguration("multiOffsetPositionY")
-    multiOffsetPositionZ = LaunchConfiguration("multiOffsetPositionZ")
-    multiOffsetRotateR = LaunchConfiguration("multiOffsetRotateR")
-    multiOffsetRotateP = LaunchConfiguration("multiOffsetRotateP")
-    multiOffsetRotateY = LaunchConfiguration("multiOffsetRotateY")
-    lidarOffsetPositionX = LaunchConfiguration("lidarOffsetPositionX")
-    lidarOffsetPositionY = LaunchConfiguration("lidarOffsetPositionY")
-    lidarOffsetPositionZ = LaunchConfiguration("lidarOffsetPositionZ")
-    lidarOffsetRotateR = LaunchConfiguration("lidarOffsetRotateR")
-    lidarOffsetRotateP = LaunchConfiguration("lidarOffsetRotateP")
-    lidarOffsetRotateY = LaunchConfiguration("lidarOffsetRotateY")
 
     declare_robot_id = DeclareLaunchArgument(
         "robot_id", default_value="0", description=""
@@ -36,42 +24,6 @@ def generate_launch_description():
     )
     declare_checkTerrainConn = DeclareLaunchArgument(
         "checkTerrainConn", default_value="true", description=""
-    )
-    declare_multiOffsetPositionX = DeclareLaunchArgument(
-        "multiOffsetPositionX", default_value="0.0", description=""
-    )
-    declare_multiOffsetPositionY = DeclareLaunchArgument(
-        "multiOffsetPositionY", default_value="0.0", description=""
-    )
-    declare_multiOffsetPositionZ = DeclareLaunchArgument(
-        "multiOffsetPositionZ", default_value="0.0", description=""
-    )
-    declare_multiOffsetRotateR = DeclareLaunchArgument(
-        "multiOffsetRotateR", default_value="0.0", description=""
-    )
-    declare_multiOffsetRotateP = DeclareLaunchArgument(
-        "multiOffsetRotateP", default_value="0.0", description=""
-    )
-    declare_multiOffsetRotateY = DeclareLaunchArgument(
-        "multiOffsetRotateY", default_value="0.0", description=""
-    )
-    declare_lidarOffsetPositionX = DeclareLaunchArgument(
-        "lidarOffsetPositionX", default_value="0.0", description=""
-    )
-    declare_lidarOffsetPositionY = DeclareLaunchArgument(
-        "lidarOffsetPositionY", default_value="0.0", description=""
-    )
-    declare_lidarOffsetPositionZ = DeclareLaunchArgument(
-        "lidarOffsetPositionZ", default_value="0.0", description=""
-    )
-    declare_lidarOffsetRotateR = DeclareLaunchArgument(
-        "lidarOffsetRotateR", default_value="0.0", description=""
-    )
-    declare_lidarOffsetRotateP = DeclareLaunchArgument(
-        "lidarOffsetRotateP", default_value="0.0", description=""
-    )
-    declare_lidarOffsetRotateY = DeclareLaunchArgument(
-        "lidarOffsetRotateY", default_value="0.0", description=""
     )
 
     start_livox_mid360 = IncludeLaunchDescription(
@@ -102,15 +54,7 @@ def generate_launch_description():
                 "launch",
                 "lidar_transform.launch.py",
             )
-        ),
-        launch_arguments={
-            "lidarOffsetPositionX": lidarOffsetPositionX,
-            "lidarOffsetPositionY": lidarOffsetPositionY,
-            "lidarOffsetPositionZ": lidarOffsetPositionZ,
-            "lidarOffsetRotateR": lidarOffsetRotateR,
-            "lidarOffsetRotateP": lidarOffsetRotateP,
-            "lidarOffsetRotateY": lidarOffsetRotateY,
-        }.items(),
+        )
     )
 
     start_fast_lio = IncludeLaunchDescription(
@@ -145,12 +89,6 @@ def generate_launch_description():
         ),
         launch_arguments={
             "robot_id": robot_id,
-            "multiOffsetPositionX": multiOffsetPositionX,
-            "multiOffsetPositionY": multiOffsetPositionY,
-            "multiOffsetPositionZ": multiOffsetPositionZ,
-            "multiOffsetRotateR": multiOffsetRotateR,
-            "multiOffsetRotateP": multiOffsetRotateP,
-            "multiOffsetRotateY": multiOffsetRotateY,
         }.items(),
     )
 
@@ -237,18 +175,6 @@ def generate_launch_description():
     ld.add_action(declare_lio_mode)
     ld.add_action(declare_planner_mode)
     ld.add_action(declare_checkTerrainConn)
-    ld.add_action(declare_multiOffsetPositionX)
-    ld.add_action(declare_multiOffsetPositionY)
-    ld.add_action(declare_multiOffsetPositionZ)
-    ld.add_action(declare_multiOffsetRotateR)
-    ld.add_action(declare_multiOffsetRotateP)
-    ld.add_action(declare_multiOffsetRotateY)
-    ld.add_action(declare_lidarOffsetPositionX)
-    ld.add_action(declare_lidarOffsetPositionY)
-    ld.add_action(declare_lidarOffsetPositionZ)
-    ld.add_action(declare_lidarOffsetRotateR)
-    ld.add_action(declare_lidarOffsetRotateP)
-    ld.add_action(declare_lidarOffsetRotateY)
 
     ld.add_action(start_livox_mid360)
     ld.add_action(start_realsense)
