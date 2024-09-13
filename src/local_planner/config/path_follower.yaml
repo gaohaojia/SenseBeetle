@@ -1,0 +1,23 @@
+pathFollower:
+  ros__parameters:
+    pubSkipNum: 1
+    lookAheadDis: 0.5
+    yawRateGain: 7.5
+    stopYawRateGain: 7.5
+    maxYawRate: 90.0
+    maxAccel: 2.5
+    switchTimeThre: 1.0
+    dirDiffThre: 0.1
+    stopDisThre: 0.2
+    slowDwnDisThre: 0.85
+    useInclRateToSlow: false
+    inclRateThre: 120.0
+    slowRate1: 0.25
+    slowRate2: 0.5
+    slowTime1: 2.0
+    slowTime2: 2.0
+    useInclToStop: false
+    inclThre: 45.0
+    stopTime: 5.0
+    noRotAtStop: false
+    noRotAtGoal: true

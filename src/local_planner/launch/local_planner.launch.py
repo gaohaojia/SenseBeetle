@@ -142,7 +142,7 @@ def generate_launch_description():
             os.path.join(
                 get_package_share_directory("local_planner"),
                 "config",
-                "local_planner.yaml",
+                "path_follower.yaml",
             ),
         ],
     )
