@@ -104,7 +104,7 @@ def generate_launch_description():
         parameters=[
             {
                 "pathFolder": os.path.join(
-                    get_package_share_directory("local_planner"), "paths"
+                    get_package_share_directory("local_planner"), "paths", "original"
                 ),
                 "sensorOffsetX": sensorOffsetX,
                 "sensorOffsetY": sensorOffsetY,
