@@ -53,7 +53,7 @@ def generate_launch_description():
         package="tf2_ros",
         executable="static_transform_publisher",
         name="idMapTransPublisher",
-        arguments=[*offsetList_str, "imu_link", "lidar"],
+        arguments=[*offsetList_str, "lidar", "imu_link"],
     )
 
     ld = LaunchDescription()

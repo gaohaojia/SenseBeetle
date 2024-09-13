@@ -15,7 +15,7 @@ LidarTransform::LidarTransform(const rclcpp::NodeOptions & options)
       geometry_msgs::msg::TransformStamped transform_stamped =
         tf_buffer_->lookupTransform("lidar", "imu_link", tf2::TimePointZero);
 
-      tf2::fromMsg(transform_stamped.transform, transform);
+      tf2::fromMsg(transform_stamped.transform, frame_transform);
       break;
     } catch (tf2::TransformException & ex) {
       RCLCPP_WARN(this->get_logger(), "Could not transform IMU data: %s", ex.what());
@@ -39,8 +39,8 @@ void LidarTransform::imu_callback(const sensor_msgs::msg::Imu::SharedPtr imu_msg
   tf2::Vector3 angular_vel(
     imu_msg->angular_velocity.x, imu_msg->angular_velocity.y, imu_msg->angular_velocity.z);
 
-  tf2::Vector3 transformed_accel = transform.getBasis() * linear_accel;
-  tf2::Vector3 transformed_angular_vel = transform.getBasis() * angular_vel;
+  tf2::Vector3 transformed_accel = frame_transform.getBasis() * linear_accel;
+  tf2::Vector3 transformed_angular_vel = frame_transform.getBasis() * angular_vel;
 
   sensor_msgs::msg::Imu imu_transformed = *imu_msg;
   imu_transformed.linear_acceleration.x = transformed_accel.getX();
@@ -66,7 +66,7 @@ void LidarTransform::lidar_callback(const livox_ros_driver2::msg::CustomMsg::Sha
   pcl_cloud->header.frame_id = lidar_msg->header.frame_id;
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr transformed_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl_ros::transformPointCloud(*pcl_cloud, *transformed_cloud, transform);
+  pcl_ros::transformPointCloud(*pcl_cloud, *transformed_cloud, frame_transform);
 
   for (size_t i = 0; i < transformed_cloud->points.size(); ++i) {
     lidar_msg->points[i].x = transformed_cloud->points[i].x;
