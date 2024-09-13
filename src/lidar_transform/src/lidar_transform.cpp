@@ -1,5 +1,6 @@
 #include "lidar_transform/lidar_transform.hpp"
 #include <chrono>
+#include <cstddef>
 #include <memory>
 
 namespace lidar_transform
@@ -41,15 +42,15 @@ void LidarTransform::imu_callback(const sensor_msgs::msg::Imu::SharedPtr imu_msg
   tf2::Vector3 transformed_accel = transform.getBasis() * linear_accel;
   tf2::Vector3 transformed_angular_vel = transform.getBasis() * angular_vel;
 
-  sensor_msgs::msg::Imu lidar_transformed = *imu_msg;
-  lidar_transformed.linear_acceleration.x = transformed_accel.getX();
-  lidar_transformed.linear_acceleration.y = transformed_accel.getY();
-  lidar_transformed.linear_acceleration.z = transformed_accel.getZ();
-  lidar_transformed.angular_velocity.x = transformed_angular_vel.getX();
-  lidar_transformed.angular_velocity.y = transformed_angular_vel.getY();
-  lidar_transformed.angular_velocity.z = transformed_angular_vel.getZ();
+  sensor_msgs::msg::Imu imu_transformed = *imu_msg;
+  imu_transformed.linear_acceleration.x = transformed_accel.getX();
+  imu_transformed.linear_acceleration.y = transformed_accel.getY();
+  imu_transformed.linear_acceleration.z = transformed_accel.getZ();
+  imu_transformed.angular_velocity.x = transformed_angular_vel.getX();
+  imu_transformed.angular_velocity.y = transformed_angular_vel.getY();
+  imu_transformed.angular_velocity.z = transformed_angular_vel.getZ();
 
-  imu_pub_->publish(lidar_transformed);
+  imu_pub_->publish(imu_transformed);
 }
 
 void LidarTransform::lidar_callback(const livox_ros_driver2::msg::CustomMsg::SharedPtr lidar_msg)
@@ -67,18 +68,13 @@ void LidarTransform::lidar_callback(const livox_ros_driver2::msg::CustomMsg::Sha
   pcl::PointCloud<pcl::PointXYZ>::Ptr transformed_cloud(new pcl::PointCloud<pcl::PointXYZ>);
   pcl_ros::transformPointCloud(*pcl_cloud, *transformed_cloud, transform);
 
-  livox_ros_driver2::msg::CustomMsg transformed_msg = *lidar_msg;
-  transformed_msg.point_num = transformed_cloud->points.size();
-
-  for (const auto & point : transformed_cloud->points) {
-    livox_ros_driver2::msg::CustomPoint new_point;
-    new_point.x = point.x;
-    new_point.y = point.y;
-    new_point.z = point.z;
-    transformed_msg.points.push_back(new_point);
+  for (size_t i = 0; i < transformed_cloud->points.size(); ++i) {
+    lidar_msg->points[i].x = transformed_cloud->points[i].x;
+    lidar_msg->points[i].y = transformed_cloud->points[i].y;
+    lidar_msg->points[i].z = transformed_cloud->points[i].z;
   }
 
-  lidar_pub_->publish(transformed_msg);
+  lidar_pub_->publish(*lidar_msg);
 }
 
 } // namespace lidar_transform
