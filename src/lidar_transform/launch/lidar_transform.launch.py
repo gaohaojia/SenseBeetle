@@ -16,12 +16,6 @@ def generate_launch_description():
     with open(params_file, "r") as file:
         offset_params = yaml.safe_load(file)["lidar_transform"]["ros__parameters"]
 
-    declare_enable_pid = DeclareLaunchArgument(
-        "enable_pid",
-        default_value="false",
-        description="Enable PID control for the lidar transform node",
-    )
-
     lidar_positionX = offset_params["lidar_positionX"]
     lidar_positionY = offset_params["lidar_positionY"]
     lidar_positionZ = offset_params["lidar_positionZ"]
@@ -65,7 +59,6 @@ def generate_launch_description():
 
     ld = LaunchDescription()
 
-    ld.add_action(declare_enable_pid)
     ld.add_action(map_trans_publisher)
     ld.add_action(TimerAction(period=10.0, actions=[lidar_transform_node]))
 
