@@ -22,6 +22,9 @@ def generate_launch_description():
     declare_planner_mode = DeclareLaunchArgument(
         "planner_mode", default_value="tare_planner", description=""
     )
+    declare_realsense_mode = DeclareLaunchArgument(
+        "realsense_mode", default_value="rs_d435", description=""
+    )
     declare_checkTerrainConn = DeclareLaunchArgument(
         "checkTerrainConn", default_value="true", description=""
     )
@@ -36,16 +39,20 @@ def generate_launch_description():
         )
     )
 
-    start_realsense = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(
-                get_package_share_directory("realsense2_camera"),
-                "launch",
-                "rs_launch.py",
-            )
-        ),
-        launch_arguments={"rgb_camera.color_profile": "640x480x30"}.items(),
-    )
+    try:
+        start_realsense = IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                os.path.join(
+                    get_package_share_directory("realsense2_camera"),
+                    "launch",
+                    "rs_launch.py",
+                )
+            ),
+            launch_arguments={"rgb_camera.color_profile": "640x480x30"}.items(),
+            condition=LaunchConfigurationEquals("realsense_mode", "rs_d435"),
+        )
+    except:
+        pass
 
     start_lidar_transform = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -174,10 +181,14 @@ def generate_launch_description():
     ld.add_action(declare_robot_id)
     ld.add_action(declare_lio_mode)
     ld.add_action(declare_planner_mode)
+    ld.add_action(declare_realsense_mode)
     ld.add_action(declare_checkTerrainConn)
 
+    try:
+        ld.add_action(start_realsense)
+    except:
+        pass
     ld.add_action(start_livox_mid360)
-    ld.add_action(start_realsense)
     ld.add_action(start_lidar_transform)
     ld.add_action(start_fast_lio)
     ld.add_action(start_point_lio)
