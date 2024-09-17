@@ -48,7 +48,7 @@ def generate_launch_description():
                 "network_ip": network_ip,
             },
             os.path.join(
-                get_package_share_directory("local_planner"),
+                get_package_share_directory("robot_communication"),
                 "config",
                 "robot_communication_params.yaml",
             ),
