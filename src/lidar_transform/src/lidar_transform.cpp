@@ -12,7 +12,7 @@ LidarTransform::LidarTransform(const rclcpp::NodeOptions & options)
   this->declare_parameter<double>("pid_kp", 0.0);
   this->declare_parameter<double>("pid_ki", 0.0);
   this->declare_parameter<double>("pid_kd", 0.0);
-  
+
   this->get_parameter("enable_pid", enable_pid);
   this->get_parameter("pid_kp", pid_kp);
   this->get_parameter("pid_ki", pid_ki);  
@@ -144,6 +144,8 @@ void LidarTransform::cmd_vel_callback(const geometry_msgs::msg::TwistStamped::Sh
     cmd_vel_pub_->publish(pid_output_msg);
 
     pid_prev_error = error_velocity;
+  }else{
+    cmd_vel_pub_->publish(*cmd_vel_msg);
   }
 }
 
