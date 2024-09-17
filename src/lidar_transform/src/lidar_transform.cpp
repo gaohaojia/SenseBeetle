@@ -47,6 +47,10 @@ LidarTransform::LidarTransform(const rclcpp::NodeOptions & options)
   lidar_pub_ =
     this->create_publisher<livox_ros_driver2::msg::CustomMsg>("livox/lidar_transformed", 10);
   cmd_vel_pub_ = this->create_publisher<geometry_msgs::msg::TwistStamped>("cmd_vel_pid", 10);
+
+  if (enable_pid) {
+    RCLCPP_INFO(this->get_logger(), "PID controller enabled!");
+  }
 }
 
 void LidarTransform::imu_callback(const sensor_msgs::msg::Imu::SharedPtr imu_msg)
