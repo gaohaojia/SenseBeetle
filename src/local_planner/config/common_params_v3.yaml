@@ -1,7 +1,7 @@
 sensorOffsetX: 0.0
 sensorOffsetY: 0.0
 cameraOffsetZ: 0.0
-twoWayDrive: false
+twoWayDrive: true
 maxSpeed: 2.0
 autonomyMode: true
 autonomySpeed: 2.0

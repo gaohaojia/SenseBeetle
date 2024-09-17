@@ -2,8 +2,8 @@ localPlanner:
   ros__parameters:
     vehicleLength: 0.25
     vehicleWidth: 0.25
-    laserVoxelSize: 0.05
-    terrainVoxelSize: 0.05
+    laserVoxelSize: 0.025
+    terrainVoxelSize: 0.025
     useTerrainAnalysis: true
     checkObstacle: true
     checkRotObstacle: false
@@ -20,7 +20,7 @@ localPlanner:
     dirThre: 90.0
     dirToVehicle: false
     pathScale: 1.25
-    minPathScale: 0.25
+    minPathScale: 0.5
     pathScaleStep: 0.25
     pathScaleBySpeed: true
     minPathRange: 1.0
