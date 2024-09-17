@@ -22,8 +22,6 @@ def generate_launch_description():
         description="Enable PID control for the lidar transform node",
     )
 
-    enable_pid = LaunchConfiguration("enable_pid")
-
     lidar_positionX = offset_params["lidar_positionX"]
     lidar_positionY = offset_params["lidar_positionY"]
     lidar_positionZ = offset_params["lidar_positionZ"]
@@ -42,7 +40,6 @@ def generate_launch_description():
                 "config",
                 "lidar_transform_params.yaml",
             ),
-            {"enable_pid": enable_pid},
         ],
     )
 

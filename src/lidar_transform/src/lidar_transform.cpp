@@ -9,7 +9,13 @@ LidarTransform::LidarTransform(const rclcpp::NodeOptions & options)
   : Node("lidar_transform", options)
 {
   this->declare_parameter<bool>("enable_pid", false);
+  this->declare_parameter<double>("pid_kp", 0.0);
+  this->declare_parameter<double>("pid_ki", 0.0);
+  this->declare_parameter<double>("pid_kd", 0.0);
   this->get_parameter("enable_pid", enable_pid);
+  this->get_parameter("pid_kp", pid_kp);
+  this->get_parameter("pid_ki", pid_ki);  
+  this->get_parameter("pid_kd", pid_kd);
 
   pid_current_velocity = geometry_msgs::msg::Twist();
   pid_target_velocity = geometry_msgs::msg::Twist();
