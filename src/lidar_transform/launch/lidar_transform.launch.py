@@ -1,7 +1,8 @@
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import TimerAction
+from launch.actions import DeclareLaunchArgument, TimerAction
 from launch_ros.actions import Node
+from launch.substitutions import LaunchConfiguration
 import os
 import yaml
 
@@ -14,6 +15,14 @@ def generate_launch_description():
     )
     with open(params_file, "r") as file:
         offset_params = yaml.safe_load(file)["lidar_transform"]["ros__parameters"]
+
+    declare_enable_pid = DeclareLaunchArgument(
+        "enable_pid",
+        default_value="false",
+        description="Enable PID control for the lidar transform node",
+    )
+
+    enable_pid = LaunchConfiguration("enable_pid")
 
     lidar_positionX = offset_params["lidar_positionX"]
     lidar_positionY = offset_params["lidar_positionY"]
@@ -32,7 +41,8 @@ def generate_launch_description():
                 get_package_share_directory("lidar_transform"),
                 "config",
                 "lidar_transform_params.yaml",
-            )
+            ),
+            {"enable_pid": enable_pid},
         ],
     )
 
@@ -58,6 +68,7 @@ def generate_launch_description():
 
     ld = LaunchDescription()
 
+    ld.add_action(declare_enable_pid)
     ld.add_action(map_trans_publisher)
     ld.add_action(TimerAction(period=10.0, actions=[lidar_transform_node]))
 
