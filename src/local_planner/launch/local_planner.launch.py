@@ -54,6 +54,7 @@ def get_sensor_trans_publisher(context: LaunchContext, cameraOffsetZ):
 def generate_launch_description():
     common_params_file = os.path.join(
         get_package_share_directory("local_planner"), "config", "common_params.yaml"
+        # get_package_share_directory("local_planner"), "config", "common_params_v3.yaml"
     )
     with open(common_params_file, "r") as file:
         params = yaml.safe_load(file)
@@ -105,6 +106,7 @@ def generate_launch_description():
             {
                 "pathFolder": os.path.join(
                     get_package_share_directory("local_planner"), "paths", "original"
+                    # get_package_share_directory("local_planner"), "paths", "v3"
                 ),
                 "sensorOffsetX": sensorOffsetX,
                 "sensorOffsetY": sensorOffsetY,
@@ -120,6 +122,7 @@ def generate_launch_description():
                 get_package_share_directory("local_planner"),
                 "config",
                 "local_planner.yaml",
+                # "local_planner_v3.yaml",
             ),
         ],
     )
@@ -143,6 +146,7 @@ def generate_launch_description():
                 get_package_share_directory("local_planner"),
                 "config",
                 "path_follower.yaml",
+                # "path_follower_v3.yaml",
             ),
         ],
     )

@@ -11,6 +11,7 @@ def generate_launch_description():
         get_package_share_directory("lidar_transform"),
         "config",
         "lidar_transform_params.yaml",
+        # "lidar_transform_params_v3.yaml",
     )
     with open(params_file, "r") as file:
         offset_params = yaml.safe_load(file)["lidar_transform"]["ros__parameters"]
@@ -28,11 +29,7 @@ def generate_launch_description():
         name="lidar_transform",
         output="screen",
         parameters=[
-            os.path.join(
-                get_package_share_directory("lidar_transform"),
-                "config",
-                "lidar_transform_params.yaml",
-            ),
+            params_file
         ],
     )
 
