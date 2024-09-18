@@ -1,9 +1,5 @@
 lidar_transform:
   ros__parameters:
-    pid_enable: false
-    pid_kp: 10.0
-    pid_ki: 0.01
-    pid_kd: 0.05
     lidar_positionX: 0.0
     lidar_positionY: 0.0
     lidar_positionZ: 0.0

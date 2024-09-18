@@ -8,20 +8,6 @@ namespace lidar_transform
 LidarTransform::LidarTransform(const rclcpp::NodeOptions & options)
   : Node("lidar_transform", options)
 {
-  this->declare_parameter<bool>("enable_pid", false);
-  this->declare_parameter<double>("pid_kp", 0.0);
-  this->declare_parameter<double>("pid_ki", 0.0);
-  this->declare_parameter<double>("pid_kd", 0.0);
-
-  this->get_parameter("enable_pid", enable_pid);
-  this->get_parameter("pid_kp", pid_kp);
-  this->get_parameter("pid_ki", pid_ki);  
-  this->get_parameter("pid_kd", pid_kd);
-
-  pid_current_velocity = geometry_msgs::msg::Twist();
-  pid_target_velocity = geometry_msgs::msg::Twist();
-  pid_integral = geometry_msgs::msg::Twist();
-
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
   while (rclcpp::ok()) {
@@ -40,17 +26,10 @@ LidarTransform::LidarTransform(const rclcpp::NodeOptions & options)
     "livox/imu", 10, std::bind(&LidarTransform::imu_callback, this, std::placeholders::_1));
   lidar_sub_ = this->create_subscription<livox_ros_driver2::msg::CustomMsg>(
     "livox/lidar", 10, std::bind(&LidarTransform::lidar_callback, this, std::placeholders::_1));
-  cmd_vel_sub_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
-    "cmd_vel", 10, std::bind(&LidarTransform::cmd_vel_callback, this, std::placeholders::_1));
 
   imu_pub_ = this->create_publisher<sensor_msgs::msg::Imu>("livox/imu_transformed", 10);
   lidar_pub_ =
     this->create_publisher<livox_ros_driver2::msg::CustomMsg>("livox/lidar_transformed", 10);
-  cmd_vel_pub_ = this->create_publisher<geometry_msgs::msg::TwistStamped>("cmd_vel_pid", 10);
-
-  if (enable_pid) {
-    RCLCPP_INFO(this->get_logger(), "PID controller enabled!");
-  }
 }
 
 void LidarTransform::imu_callback(const sensor_msgs::msg::Imu::SharedPtr imu_msg)
@@ -72,15 +51,6 @@ void LidarTransform::imu_callback(const sensor_msgs::msg::Imu::SharedPtr imu_msg
   imu_transformed.angular_velocity.z = transformed_angular_vel.getZ();
 
   imu_pub_->publish(imu_transformed);
-
-  if (enable_pid) {
-    pid_current_velocity.linear.x = imu_transformed.linear_acceleration.x;
-    pid_current_velocity.linear.y = imu_transformed.linear_acceleration.y;
-    pid_current_velocity.linear.z = imu_transformed.linear_acceleration.z;
-    pid_current_velocity.angular.x = imu_transformed.angular_velocity.x;
-    pid_current_velocity.angular.y = imu_transformed.angular_velocity.y;
-    pid_current_velocity.angular.z = imu_transformed.angular_velocity.z;
-  }
 }
 
 void LidarTransform::lidar_callback(const livox_ros_driver2::msg::CustomMsg::SharedPtr lidar_msg)
@@ -106,51 +76,6 @@ void LidarTransform::lidar_callback(const livox_ros_driver2::msg::CustomMsg::Sha
   }
 
   lidar_pub_->publish(*lidar_msg);
-}
-
-void LidarTransform::cmd_vel_callback(const geometry_msgs::msg::TwistStamped::SharedPtr cmd_vel_msg)
-{
-  if (enable_pid) {
-    pid_target_velocity = cmd_vel_msg->twist;
-
-    geometry_msgs::msg::Twist error_velocity = geometry_msgs::msg::Twist();
-    error_velocity.linear.x = pid_target_velocity.linear.x - pid_current_velocity.linear.x;
-    error_velocity.linear.y = pid_target_velocity.linear.y - pid_current_velocity.linear.y;
-    error_velocity.linear.z = pid_target_velocity.linear.z - pid_current_velocity.linear.z;
-    error_velocity.angular.x = pid_target_velocity.angular.x - pid_current_velocity.angular.x;
-    error_velocity.angular.y = pid_target_velocity.angular.y - pid_current_velocity.angular.y;
-    error_velocity.angular.z = pid_target_velocity.angular.z - pid_current_velocity.angular.z;
-
-    double dt = 0.1;
-    pid_integral.linear.x += error_velocity.linear.x * dt;
-    pid_integral.linear.y += error_velocity.linear.y * dt;
-    pid_integral.linear.z += error_velocity.linear.z * dt;
-    pid_integral.angular.x += error_velocity.angular.x * dt;
-    pid_integral.angular.y += error_velocity.angular.y * dt;
-    pid_integral.angular.z += error_velocity.angular.z * dt;
-
-    geometry_msgs::msg::Twist pid_output = geometry_msgs::msg::Twist();
-    pid_output.linear.x = pid_kp * error_velocity.linear.x + pid_ki * pid_integral.linear.x +
-      pid_kd * (error_velocity.linear.x - pid_prev_error.linear.x) / dt;
-    pid_output.linear.y = pid_kp * error_velocity.linear.y + pid_ki * pid_integral.linear.y +
-      pid_kd * (error_velocity.linear.y - pid_prev_error.linear.y) / dt;
-    pid_output.linear.z = pid_kp * error_velocity.linear.z + pid_ki * pid_integral.linear.z +
-      pid_kd * (error_velocity.linear.z - pid_prev_error.linear.z) / dt;
-    pid_output.angular.x = pid_kp * error_velocity.angular.x + pid_ki * pid_integral.angular.x +
-      pid_kd * (error_velocity.angular.x - pid_prev_error.angular.x) / dt;
-    pid_output.angular.y = pid_kp * error_velocity.angular.y + pid_ki * pid_integral.angular.y +
-      pid_kd * (error_velocity.angular.y - pid_prev_error.angular.y) / dt;
-    pid_output.angular.z = pid_kp * error_velocity.angular.z + pid_ki * pid_integral.angular.z +
-      pid_kd * (error_velocity.angular.z - pid_prev_error.angular.z) / dt;
-
-    geometry_msgs::msg::TwistStamped pid_output_msg = *cmd_vel_msg;
-    pid_output_msg.twist = pid_output;
-    cmd_vel_pub_->publish(pid_output_msg);
-
-    pid_prev_error = error_velocity;
-  }else{
-    cmd_vel_pub_->publish(*cmd_vel_msg);
-  }
 }
 
 } // namespace lidar_transform

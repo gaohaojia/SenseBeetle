@@ -1,8 +1,7 @@
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, TimerAction
+from launch.actions import TimerAction
 from launch_ros.actions import Node
-from launch.substitutions import LaunchConfiguration
 import os
 import yaml
 
