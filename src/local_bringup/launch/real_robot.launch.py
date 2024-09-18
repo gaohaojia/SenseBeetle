@@ -20,10 +20,10 @@ def generate_launch_description():
         "lio_mode", default_value="point_lio", description=""
     )
     declare_planner_mode = DeclareLaunchArgument(
-        "planner_mode", default_value="tare_planner", description=""
+        "planner_mode", default_value="none", description=""
     )
     declare_realsense_mode = DeclareLaunchArgument(
-        "realsense_mode", default_value="rs_d435", description=""
+        "realsense_mode", default_value="none", description=""
     )
     declare_checkTerrainConn = DeclareLaunchArgument(
         "checkTerrainConn", default_value="true", description=""
