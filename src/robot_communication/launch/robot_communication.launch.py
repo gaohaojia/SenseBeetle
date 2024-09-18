@@ -9,17 +9,9 @@ import yaml
 
 def generate_launch_description():
     robot_id = LaunchConfiguration("robot_id")
-    network_port = LaunchConfiguration("network_port")
-    network_ip = LaunchConfiguration("network_ip")
 
     declare_robot_id = DeclareLaunchArgument(
         "robot_id", default_value="0", description=""
-    )
-    declare_network_port = DeclareLaunchArgument(
-        "network_port", default_value="12130", description=""
-    )
-    declare_network_ip = DeclareLaunchArgument(
-        "network_ip", default_value="192.168.31.207", description=""
     )
 
     params_file = os.path.join(
@@ -44,8 +36,6 @@ def generate_launch_description():
         parameters=[
             {
                 "robot_id": robot_id,
-                "network_port": network_port,
-                "network_ip": network_ip,
             },
             os.path.join(
                 get_package_share_directory("robot_communication"),
@@ -78,8 +68,6 @@ def generate_launch_description():
     ld = LaunchDescription()
 
     ld.add_action(declare_robot_id)
-    ld.add_action(declare_network_port)
-    ld.add_action(declare_network_ip)
 
     ld.add_action(robot_communication_node)
     ld.add_action(map_trans_publisher)
