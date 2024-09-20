@@ -12,7 +12,7 @@ LidarTransform::LidarTransform(const rclcpp::NodeOptions& options)
   while (rclcpp::ok()) {
     try {
       geometry_msgs::msg::TransformStamped transform_stamped =
-          tf_buffer_->lookupTransform("base_link", "lidar", tf2::TimePointZero);
+        tf_buffer_->lookupTransform("base_link", "lidar", tf2::TimePointZero);
 
       tf2::fromMsg(transform_stamped.transform, frame_transform);
       break;
@@ -23,20 +23,20 @@ LidarTransform::LidarTransform(const rclcpp::NodeOptions& options)
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
   imu_sub_ = this->create_subscription<sensor_msgs::msg::Imu>(
-      "livox/imu", 10,
-      std::bind(&LidarTransform::imu_callback, this, std::placeholders::_1));
+    "livox/imu", 10,
+    std::bind(&LidarTransform::imu_callback, this, std::placeholders::_1));
   lidar_sub_ = this->create_subscription<livox_ros_driver2::msg::CustomMsg>(
-      "livox/lidar", 10,
-      std::bind(&LidarTransform::lidar_callback, this, std::placeholders::_1));
+    "livox/lidar", 10,
+    std::bind(&LidarTransform::lidar_callback, this, std::placeholders::_1));
 
-  imu_pub_ = this->create_publisher<sensor_msgs::msg::Imu>(
-      "livox/imu_transformed", 10);
+  imu_pub_ =
+    this->create_publisher<sensor_msgs::msg::Imu>("livox/imu_transformed", 10);
   lidar_pub_ = this->create_publisher<livox_ros_driver2::msg::CustomMsg>(
-      "livox/lidar_transformed", 10);
+    "livox/lidar_transformed", 10);
 }
 
 void LidarTransform::imu_callback(
-    const sensor_msgs::msg::Imu::SharedPtr imu_msg) {
+  const sensor_msgs::msg::Imu::SharedPtr imu_msg) {
   tf2::Vector3 linear_accel(imu_msg->linear_acceleration.x,
                             imu_msg->linear_acceleration.y,
                             imu_msg->linear_acceleration.z);
@@ -46,7 +46,7 @@ void LidarTransform::imu_callback(
 
   tf2::Vector3 transformed_accel = frame_transform.getBasis() * linear_accel;
   tf2::Vector3 transformed_angular_vel =
-      frame_transform.getBasis() * angular_vel;
+    frame_transform.getBasis() * angular_vel;
 
   sensor_msgs::msg::Imu imu_transformed = *imu_msg;
   imu_transformed.linear_acceleration.x = transformed_accel.getX();
@@ -60,9 +60,9 @@ void LidarTransform::imu_callback(
 }
 
 void LidarTransform::lidar_callback(
-    const livox_ros_driver2::msg::CustomMsg::SharedPtr lidar_msg) {
+  const livox_ros_driver2::msg::CustomMsg::SharedPtr lidar_msg) {
   pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_cloud(
-      new pcl::PointCloud<pcl::PointXYZ>);
+    new pcl::PointCloud<pcl::PointXYZ>);
   for (size_t i = 0; i < lidar_msg->point_num; ++i) {
     pcl::PointXYZ point;
     point.x = lidar_msg->points[i].x;
@@ -74,7 +74,7 @@ void LidarTransform::lidar_callback(
   pcl_cloud->height = 1;
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr transformed_cloud(
-      new pcl::PointCloud<pcl::PointXYZ>);
+    new pcl::PointCloud<pcl::PointXYZ>);
   pcl_ros::transformPointCloud(*pcl_cloud, *transformed_cloud, frame_transform);
 
   for (size_t i = 0; i < transformed_cloud->points.size(); ++i) {

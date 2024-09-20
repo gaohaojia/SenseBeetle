@@ -36,7 +36,7 @@ class LidarTransform : public rclcpp::Node {
 
   void imu_callback(const sensor_msgs::msg::Imu::SharedPtr imu_msg);
   void lidar_callback(
-      const livox_ros_driver2::msg::CustomMsg::SharedPtr lidar_msg);
+    const livox_ros_driver2::msg::CustomMsg::SharedPtr lidar_msg);
 };
 }  // namespace lidar_transform
 
