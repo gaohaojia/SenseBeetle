@@ -112,7 +112,7 @@ private:
 
     // publish odometry messages
     odomData.header.frame_id = "local_map";
-    odomData.child_frame_id = "sensor";
+    odomData.child_frame_id = "base_link";
     pubOdometry->publish(odomData);
 
     // publish tf messages
@@ -123,14 +123,14 @@ private:
     if (sendTF) {
       if (!reverseTF) {
         transformTfGeom = tf2::toMsg(odomTrans);
-        transformTfGeom.child_frame_id = "sensor";
+        transformTfGeom.child_frame_id = "base_link";
         transformTfGeom.header.stamp = odom->header.stamp;
         tfBroadcasterPointer->sendTransform(transformTfGeom);
       } 
       else{
         transformTfGeom.transform = tf2::toMsg(odomTrans.inverse());
         transformTfGeom.header.frame_id = "local_map";
-        transformTfGeom.child_frame_id = "sensor";
+        transformTfGeom.child_frame_id = "base_link";
         transformTfGeom.header.stamp = odom->header.stamp;
         tfBroadcasterPointer->sendTransform(transformTfGeom);
       }

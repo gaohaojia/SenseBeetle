@@ -260,7 +260,7 @@ int main(int argc, char** argv)
   auto pubSpeed = nh->create_publisher<geometry_msgs::msg::TwistStamped>("cmd_vel", 5);
 
   geometry_msgs::msg::TwistStamped cmd_vel;
-  cmd_vel.header.frame_id = "vehicle";
+  cmd_vel.header.frame_id = "base_link";
 
   if (autonomyMode) {
     joySpeed = autonomySpeed / maxSpeed;
