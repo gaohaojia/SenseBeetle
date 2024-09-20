@@ -235,7 +235,7 @@ void RobotCommunicationNode::NetworkRecvThread() {
   int n, len = sizeof(server_addr);
   while (rclcpp::ok()) {
     std::vector<uint8_t> buffer_tmp(BUFFER_SIZE);
-    n = recvfrom(sockfd, buffer_tmp.data(), BUFFER_SIZE, MSG_WAITALL,
+    n = recvfrom(sockfd, buffer_tmp.data(), BUFFER_SIZE, MSG_WAITFORONE,
                  (struct sockaddr *)&server_addr, (socklen_t *)&len);
     if (n < 0) {
       continue;
