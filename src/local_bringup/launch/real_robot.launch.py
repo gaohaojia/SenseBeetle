@@ -48,7 +48,7 @@ def generate_launch_description():
                     "rs_launch.py",
                 )
             ),
-            launch_arguments={"rgb_camera.color_profile": "640x480x30"}.items(),
+            launch_arguments={"pointcloud.enable": "true"}.items(),
             condition=LaunchConfigurationEquals("realsense_mode", "rs_d435"),
         )
     except:

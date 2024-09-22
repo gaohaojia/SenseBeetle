@@ -23,17 +23,23 @@ def generate_launch_description():
     lidar_rotateP = offset_params["lidar_rotateP"]
     lidar_rotateY = offset_params["lidar_rotateY"]
 
+    camera_positionX = offset_params["camera_positionX"]
+    camera_positionY = offset_params["camera_positionY"]
+    camera_positionZ = offset_params["camera_positionZ"]
+    camera_rotateR = offset_params["camera_rotateR"]
+    camera_rotateP = offset_params["camera_rotateP"]
+    camera_rotateY = offset_params["camera_rotateY"]
+
+
     lidar_transform_node = Node(
         package="lidar_transform",
         executable="lidar_transform_node",
         name="lidar_transform",
         output="screen",
-        parameters=[
-            params_file
-        ],
+        parameters=[params_file],
     )
 
-    offsetList_str = list(
+    lidarOffsetList_str = list(
         map(
             str,
             [
@@ -46,16 +52,39 @@ def generate_launch_description():
             ],
         )
     )
-    map_trans_publisher = Node(
+
+    cameraOffsetList_str = list(
+        map(
+            str,
+            [
+                camera_positionX,
+                camera_positionY,
+                camera_positionZ,
+                camera_rotateY,
+                camera_rotateP,
+                camera_rotateR,
+            ],
+        )
+    )
+
+    lidar_trans_publisher = Node(
         package="tf2_ros",
         executable="static_transform_publisher",
-        name="idMapTransPublisher",
-        arguments=[*offsetList_str, "base_link", "lidar"],
+        name="lidarTransPublisher",
+        arguments=[*lidarOffsetList_str, "base_link", "lidar"],
+    )
+
+    realsense_trans_publisher = Node(
+        package="tf2_ros",
+        executable="static_transform_publisher",
+        name="mapTransPublisher",
+        arguments=[*cameraOffsetList_str, "base_link", "camera_link"],
     )
 
     ld = LaunchDescription()
 
-    ld.add_action(map_trans_publisher)
+    ld.add_action(lidar_trans_publisher)
+    ld.add_action(realsense_trans_publisher)
     ld.add_action(TimerAction(period=10.0, actions=[lidar_transform_node]))
 
     return ld

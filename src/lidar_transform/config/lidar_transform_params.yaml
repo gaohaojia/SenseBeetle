@@ -6,3 +6,10 @@ lidar_transform:
     lidar_rotateR: 0.0
     lidar_rotateP: 0.0
     lidar_rotateY: 0.0
+
+    camera_positionX: 0.0
+    camera_positionY: 0.0
+    camera_positionZ: 0.0
+    camera_rotateR: 0.0
+    camera_rotateP: 0.0
+    camera_rotateY: 0.0

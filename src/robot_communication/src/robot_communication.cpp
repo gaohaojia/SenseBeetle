@@ -19,6 +19,7 @@
 #include <functional>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <memory>
+#include <rclcpp/logging.hpp>
 #include <rclcpp/qos.hpp>
 #include <rclcpp/serialization.hpp>
 #include <rclcpp/serialized_message.hpp>
@@ -35,9 +36,14 @@
 #define BUFFER_SIZE 65535
 #define MAX_BUFFER_QUEUE_SIZE 256
 
+#define LOCAL_MAP_FRAME "local_map"
+#define MAP_FRAME "map"
+#define CAMERA_FRAME "camera_depth_optical_frame"
+#define BASE_FRAME "base_link"
+
 namespace robot_communication {
 RobotCommunicationNode::RobotCommunicationNode(
-  const rclcpp::NodeOptions &options)
+  const rclcpp::NodeOptions& options)
     : Node("robot_communication", options) {
   this->declare_parameter<int>("robot_id", 0);
   this->declare_parameter<int>("network_port", 12130);
@@ -49,35 +55,22 @@ RobotCommunicationNode::RobotCommunicationNode(
 
   registered_scan_sub_ =
     this->create_subscription<sensor_msgs::msg::PointCloud2>(
-      "registered_scan", 5,
+      "cloud_registered", 5,
       std::bind(&RobotCommunicationNode::RegisteredScanCallBack, this,
                 std::placeholders::_1));
   way_point_sub_ = this->create_subscription<geometry_msgs::msg::PointStamped>(
     "way_point", 2,
     std::bind(&RobotCommunicationNode::WayPointCallBack, this,
               std::placeholders::_1));
-  realsense_image_sub_ = this->create_subscription<sensor_msgs::msg::Image>(
-    "camera/camera/color/image_raw", 2,
-    std::bind(&RobotCommunicationNode::RealsenseImageCallBack, this,
+  realsense_pointcloud_sub_ =
+    this->create_subscription<sensor_msgs::msg::PointCloud2>(
+      "camera/camera/depth/color/points", 2,
+      std::bind(&RobotCommunicationNode::RealsensePointCallBack, this,
+                std::placeholders::_1));
+  odometry_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
+    "Odometry", 2,
+    std::bind(&RobotCommunicationNode::OdometryCallBack, this,
               std::placeholders::_1));
-  // terrain_map_sub_ =
-  // this->create_subscription<sensor_msgs::msg::PointCloud2>(
-  //   "terrain_map",
-  //   2,
-  //   std::bind(&RobotCommunicationNode::TerrainMapCallBack, this,
-  //   std::placeholders::_1));
-  // terrain_map_ext_sub_ =
-  // this->create_subscription<sensor_msgs::msg::PointCloud2>(
-  //   "terrain_map_ext",
-  //   2,
-  //   std::bind(&RobotCommunicationNode::TerrainMapExtCallBack, this,
-  //   std::placeholders::_1));
-  // state_estimation_at_scan_sub_ =
-  // this->create_subscription<nav_msgs::msg::Odometry>(
-  //   "state_estimation_at_scan",
-  //   5,
-  //   std::bind(&RobotCommunicationNode::StateEstimationAtScanCallBack, this,
-  //   std::placeholders::_1));
 
   local_way_point_pub_ =
     this->create_publisher<geometry_msgs::msg::PointStamped>("local_way_point",
@@ -105,21 +98,28 @@ RobotCommunicationNode::~RobotCommunicationNode() {
 
 // initialize the tf from local_map to map
 void RobotCommunicationNode::InitMapTF() {
-  std::string fromFrameRel = "local_map";
-  std::string toFrameRel = "map";
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
-  geometry_msgs::msg::TransformStamped transformStamped;
   try {
-    transformStamped = tf_buffer_->lookupTransform(
-      toFrameRel, fromFrameRel, tf2::TimePointZero, tf2::durationFromSec(10.0));
-  } catch (const tf2::TransformException &ex) {
-    RCLCPP_INFO(this->get_logger(), "Could not transform %s to %s: %s",
-                toFrameRel.c_str(), fromFrameRel.c_str(), ex.what());
+    geometry_msgs::msg::TransformStamped local_to_global_transform,
+      camera_to_base_transform;
+    local_to_global_transform = tf_buffer_->lookupTransform(
+      MAP_FRAME, LOCAL_MAP_FRAME, tf2::TimePointZero,
+      tf2::durationFromSec(10.0));
+    local_to_global_matrix =
+      tf2::transformToEigen(local_to_global_transform.transform)
+        .matrix()
+        .cast<double>();
+    camera_to_base_transform = tf_buffer_->lookupTransform(
+      BASE_FRAME, CAMERA_FRAME, tf2::TimePointZero, tf2::durationFromSec(10.0));
+    camera_to_base_matrix =
+      tf2::transformToEigen(camera_to_base_transform.transform)
+        .matrix()
+        .cast<double>();
+  } catch (const tf2::TransformException& ex) {
+    RCLCPP_INFO(this->get_logger(), "Could not transform!");
     return;
   }
-  local_to_global =
-    tf2::transformToEigen(transformStamped.transform).matrix().cast<double>();
   tf_update_thread_ =
     std::thread(&RobotCommunicationNode::TFUpdateThread, this);
 }
@@ -150,7 +150,7 @@ void RobotCommunicationNode::InitClient() {
 void RobotCommunicationNode::WayPointCallBack(
   const geometry_msgs::msg::PointStamped::ConstSharedPtr way_point_msg) {
   geometry_msgs::msg::PointStamped local_point = tf_buffer_->transform(
-    *way_point_msg, "local_map", tf2::durationFromSec(10.0));
+    *way_point_msg, LOCAL_MAP_FRAME, tf2::durationFromSec(10.0));
   local_way_point_pub_->publish(local_point);
 }
 
@@ -161,17 +161,18 @@ void RobotCommunicationNode::RegisteredScanCallBack(
   pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_result(
     new pcl::PointCloud<pcl::PointXYZI>());
   pcl::fromROSMsg(*registered_scan_msg, *pointcloud_tmp);
+
   try {
     pcl::transformPointCloud(*pointcloud_tmp, *pointcloud_result,
-                             local_to_global);
-  } catch (const tf2::TransformException &ex) {
+                             local_to_global_matrix);
+  } catch (const tf2::TransformException& ex) {
     RCLCPP_INFO(this->get_logger(), "%s", ex.what());
     return;
   }
   sensor_msgs::msg::PointCloud2 totalRegisteredScan;
   pcl::toROSMsg(*pointcloud_result, totalRegisteredScan);
   totalRegisteredScan.header.stamp = registered_scan_msg->header.stamp;
-  totalRegisteredScan.header.frame_id = "map";
+  totalRegisteredScan.header.frame_id = MAP_FRAME;
 
   std::vector<uint8_t> data_buffer =
     SerializeMsg<sensor_msgs::msg::PointCloud2>(totalRegisteredScan);
@@ -182,10 +183,34 @@ void RobotCommunicationNode::RegisteredScanCallBack(
   prepare_buffer_queue.push(pthread_buffer);
 }
 
-void RobotCommunicationNode::RealsenseImageCallBack(
-  const sensor_msgs::msg::Image::ConstSharedPtr image_msg) {
+void RobotCommunicationNode::RealsensePointCallBack(
+  const sensor_msgs::msg::PointCloud2::ConstSharedPtr
+    realsense_pointcloud_msg) {
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointcloud_tmp(
+    new pcl::PointCloud<pcl::PointXYZRGB>());
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointcloud_tmp2(
+    new pcl::PointCloud<pcl::PointXYZRGB>());
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointcloud_result(
+    new pcl::PointCloud<pcl::PointXYZRGB>());
+  pcl::fromROSMsg(*realsense_pointcloud_msg, *pointcloud_tmp);
+
+  try {
+    pcl::transformPointCloud(*pointcloud_tmp, *pointcloud_tmp2,
+                             camera_to_base_matrix);
+    pcl::transformPointCloud(*pointcloud_tmp2, *pointcloud_result,
+                             odom_to_local_matrix);
+  } catch (const tf2::TransformException& ex) {
+    RCLCPP_INFO(this->get_logger(), "%s", ex.what());
+    return;
+  }
+
+  sensor_msgs::msg::PointCloud2 totalRegisteredScan;
+  pcl::toROSMsg(*pointcloud_result, totalRegisteredScan);
+  totalRegisteredScan.header.stamp = realsense_pointcloud_msg->header.stamp;
+  totalRegisteredScan.header.frame_id = MAP_FRAME;
+
   std::vector<uint8_t> data_buffer =
-    SerializeMsg<sensor_msgs::msg::Image>(*image_msg);
+    SerializeMsg<sensor_msgs::msg::PointCloud2>(totalRegisteredScan);
   PrepareBuffer pthread_buffer = {robot_id, data_buffer, 1};
   if (prepare_buffer_queue.size() >= MAX_BUFFER_QUEUE_SIZE) {
     return;
@@ -193,20 +218,38 @@ void RobotCommunicationNode::RealsenseImageCallBack(
   prepare_buffer_queue.push(pthread_buffer);
 }
 
+void RobotCommunicationNode::OdometryCallBack(
+  const nav_msgs::msg::Odometry::ConstSharedPtr odometry_msg) {
+  geometry_msgs::msg::TransformStamped odom_to_local_transform;
+  odom_to_local_transform.transform.rotation =
+    odometry_msg->pose.pose.orientation;
+  odom_to_local_transform.transform.translation.x =
+    odometry_msg->pose.pose.position.x;
+  odom_to_local_transform.transform.translation.y =
+    odometry_msg->pose.pose.position.y;
+  odom_to_local_transform.transform.translation.z =
+    odometry_msg->pose.pose.position.z;
+
+  odom_to_local_matrix =
+    tf2::transformToEigen(odom_to_local_transform.transform)
+      .matrix()
+      .cast<double>();
+}
+
 void RobotCommunicationNode::TFUpdateThread() {
-  geometry_msgs::msg::TransformStamped transformStamped;
-  std::vector<uint8_t> data_buffer;
   while (rclcpp::ok()) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    try {
-      transformStamped = tf_buffer_->lookupTransform(
-        "map", "base_link", tf2::TimePointZero, tf2::durationFromSec(10.0));
-    } catch (...) {
-      continue;
-    }
+
+    Eigen::Matrix4d odom_to_map_matrix =
+      odom_to_local_matrix * local_to_global_matrix;
+    Eigen::Affine3d tmp(odom_to_map_matrix);
+    geometry_msgs::msg::TransformStamped transformStamped =
+      tf2::eigenToTransform(tmp);
+    transformStamped.header.frame_id = MAP_FRAME;
     transformStamped.child_frame_id =
       "robot_" + std::to_string(robot_id) + "/base_link";
-    data_buffer =
+    transformStamped.header.stamp = this->get_clock()->now();
+    std::vector<uint8_t> data_buffer =
       SerializeMsg<geometry_msgs::msg::TransformStamped>(transformStamped);
     PrepareBuffer pthread_buffer = {robot_id, data_buffer, 2};
     if (prepare_buffer_queue.size() >= MAX_BUFFER_QUEUE_SIZE) {
@@ -225,7 +268,7 @@ void RobotCommunicationNode::NetworkSendThread() {
     SendBuffer s_buffer = buffer_queue.front();
     buffer_queue.pop();
     if (sendto(sockfd, s_buffer.buffer.data(), s_buffer.buffer.size(), 0,
-               (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+               (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
       RCLCPP_ERROR(this->get_logger(), "Send failed!");
     }
   }
@@ -236,7 +279,7 @@ void RobotCommunicationNode::NetworkRecvThread() {
   while (rclcpp::ok()) {
     std::vector<uint8_t> buffer_tmp(BUFFER_SIZE);
     n = recvfrom(sockfd, buffer_tmp.data(), BUFFER_SIZE, MSG_WAITFORONE,
-                 (struct sockaddr *)&server_addr, (socklen_t *)&len);
+                 (struct sockaddr*)&server_addr, (socklen_t*)&len);
     if (n < 0) {
       continue;
     }
@@ -360,7 +403,7 @@ void RobotCommunicationNode::ParseBufferThread() {
 
 // Serialization
 template <class T>
-std::vector<uint8_t> RobotCommunicationNode::SerializeMsg(const T &msg) {
+std::vector<uint8_t> RobotCommunicationNode::SerializeMsg(const T& msg) {
   rclcpp::SerializedMessage serialized_msg;
   rclcpp::Serialization<T> serializer;
   serializer.serialize_message(&msg, &serialized_msg);
@@ -375,7 +418,7 @@ std::vector<uint8_t> RobotCommunicationNode::SerializeMsg(const T &msg) {
 
 // Deserialization
 template <class T>
-T RobotCommunicationNode::DeserializeMsg(const std::vector<uint8_t> &data) {
+T RobotCommunicationNode::DeserializeMsg(const std::vector<uint8_t>& data) {
   rclcpp::SerializedMessage serialized_msg;
   rclcpp::Serialization<T> serializer;
 
@@ -389,68 +432,6 @@ T RobotCommunicationNode::DeserializeMsg(const std::vector<uint8_t> &data) {
 
   return msg;
 }
-
-// void RobotCommunicationNode::TerrainMapCallBack(
-//   const sensor_msgs::msg::PointCloud2::ConstSharedPtr terrain_map_msg)
-// {
-//   pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_tmp(new
-//   pcl::PointCloud<pcl::PointXYZI>()); pcl::PointCloud<pcl::PointXYZI>::Ptr
-//   pointcloud_result(new pcl::PointCloud<pcl::PointXYZI>());
-//   pcl::fromROSMsg(*terrain_map_msg, *pointcloud_tmp);
-//   try{
-//     pcl::transformPointCloud(*pointcloud_tmp, *pointcloud_result,
-//     *fromIdMapToMap);
-//   }catch(const tf2::TransformException& ex){
-//     RCLCPP_INFO(this->get_logger(), "%s", ex.what());
-//     return;
-//   }
-//   std::shared_ptr<sensor_msgs::msg::PointCloud2> totalTerrainCloud(
-//     new sensor_msgs::msg::PointCloud2());
-//   pcl::toROSMsg(*pointcloud_result, *totalTerrainCloud);
-//   totalTerrainCloud->header.stamp = terrain_map_msg->header.stamp;
-//   totalTerrainCloud->header.frame_id = "map";
-//   total_terrain_map_pub_->publish(*totalTerrainCloud);
-// }
-
-// void RobotCommunicationNode::TerrainMapExtCallBack(
-//   const sensor_msgs::msg::PointCloud2::ConstSharedPtr terrain_map_ext_msg)
-// {
-//   pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_tmp(new
-//   pcl::PointCloud<pcl::PointXYZI>()); pcl::PointCloud<pcl::PointXYZI>::Ptr
-//   pointcloud_result(new pcl::PointCloud<pcl::PointXYZI>());
-//   pcl::fromROSMsg(*terrain_map_ext_msg, *pointcloud_tmp);
-//   try{
-//     pcl::transformPointCloud(*pointcloud_tmp, *pointcloud_result,
-//     *fromIdMapToMap);
-//   }catch(const tf2::TransformException& ex){
-//     RCLCPP_INFO(this->get_logger(), "%s", ex.what());
-//     return;
-//   }
-//   std::shared_ptr<sensor_msgs::msg::PointCloud2> totalTerrainExtCloud(
-//     new sensor_msgs::msg::PointCloud2());
-//   pcl::toROSMsg(*pointcloud_result, *totalTerrainExtCloud);
-//   totalTerrainExtCloud->header.stamp = terrain_map_ext_msg->header.stamp;
-//   totalTerrainExtCloud->header.frame_id = "map";
-//   total_terrain_map_ext_pub_->publish(*totalTerrainExtCloud);
-// }
-
-// void RobotCommunicationNode::StateEstimationAtScanCallBack(
-//   const nav_msgs::msg::Odometry::ConstSharedPtr state_estimation_at_scan_msg)
-// {
-//   std::shared_ptr<geometry_msgs::msg::PoseStamped> local_state(new
-//   geometry_msgs::msg::PoseStamped);
-//   local_state->set__pose(state_estimation_at_scan_msg->pose.pose);
-//   local_state->header = state_estimation_at_scan_msg->header;
-//   std::shared_ptr<geometry_msgs::msg::PoseStamped> total_state;
-//   total_state = std::make_shared<geometry_msgs::msg::PoseStamped>(
-//     tf_buffer_->transform(*local_state, "map", tf2::durationFromSec(10.0)));
-//   std::shared_ptr<nav_msgs::msg::Odometry>
-//   total_state_estimation_at_scan_msg(
-//     new nav_msgs::msg::Odometry(*state_estimation_at_scan_msg));
-//   total_state_estimation_at_scan_msg->pose.set__pose(total_state->pose);
-//   total_state_estimation_at_scan_msg->header.frame_id = "map";
-//   total_state_estimation_at_scan_pub_->publish(*total_state_estimation_at_scan_msg);
-// }
 
 }  // namespace robot_communication
 

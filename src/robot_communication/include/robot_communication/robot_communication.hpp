@@ -64,7 +64,9 @@ class RobotCommunicationNode : public rclcpp::Node {
 
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
-  Eigen::Matrix4d local_to_global;
+  Eigen::Matrix4d odom_to_local_matrix;
+  Eigen::Matrix4d local_to_global_matrix;
+  Eigen::Matrix4d camera_to_base_matrix;
 
   void InitMapTF();
   void InitClient();
@@ -75,16 +77,13 @@ class RobotCommunicationNode : public rclcpp::Node {
   void PrepareBufferThread();
   void ParseBufferThread();
 
-  void TerrainMapCallBack(
-    const sensor_msgs::msg::PointCloud2::ConstSharedPtr terrain_map_msg);
-  void TerrainMapExtCallBack(
-    const sensor_msgs::msg::PointCloud2::ConstSharedPtr terrain_map_ext_msg);
   void RegisteredScanCallBack(
     const sensor_msgs::msg::PointCloud2::ConstSharedPtr registered_scan_msg);
-  void StateEstimationAtScanCallBack(
-    const nav_msgs::msg::Odometry::ConstSharedPtr state_estimation_at_scan_msg);
-  void RealsenseImageCallBack(
-    const sensor_msgs::msg::Image::ConstSharedPtr image_msg);
+  void RealsensePointCallBack(
+    const sensor_msgs::msg::PointCloud2::ConstSharedPtr
+      realsense_pointcloud_msg);
+  void OdometryCallBack(
+    const nav_msgs::msg::Odometry::ConstSharedPtr odometry_msg);
 
   void WayPointCallBack(
     const geometry_msgs::msg::PointStamped::ConstSharedPtr way_point_msg);
@@ -95,16 +94,12 @@ class RobotCommunicationNode : public rclcpp::Node {
   T DeserializeMsg(const std::vector<uint8_t>& data);
 
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr
-    terrain_map_sub_;
-  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr
-    terrain_map_ext_sub_;
-  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr
     registered_scan_sub_;
-  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr
-    state_estimation_at_scan_sub_;
   rclcpp::Subscription<geometry_msgs::msg::PointStamped>::SharedPtr
     way_point_sub_;
-  rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr realsense_image_sub_;
+  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr
+    realsense_pointcloud_sub_;
+  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odometry_sub_;
 
   rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr
     local_way_point_pub_;
