@@ -80,7 +80,7 @@ def generate_launch_description():
             os.path.join(
                 get_package_share_directory("point_lio"),
                 "launch",
-                "mapping_mid360.launch.py",
+                "point_lio.launch.py",
             )
         ),
         condition=LaunchConfigurationEquals("lio_mode", "point_lio"),
