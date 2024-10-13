@@ -12,32 +12,32 @@ from launch.conditions import LaunchConfigurationEquals
 def generate_launch_description():
     robot_id = LaunchConfiguration("robot_id")
     checkTerrainConn = LaunchConfiguration("checkTerrainConn")
+    lidar_type = LaunchConfiguration("lidar_type")
 
     declare_robot_id = DeclareLaunchArgument(
         "robot_id", default_value="0", description=""
     )
-    declare_lio_mode = DeclareLaunchArgument(
-        "lio_mode", default_value="point_lio", description=""
-    )
     declare_planner_mode = DeclareLaunchArgument(
         "planner_mode", default_value="none", description=""
-    )
-    declare_realsense_mode = DeclareLaunchArgument(
-        "realsense_mode", default_value="none", description=""
     )
     declare_checkTerrainConn = DeclareLaunchArgument(
         "checkTerrainConn", default_value="true", description=""
     )
 
-    start_livox_mid360 = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(
-                get_package_share_directory("livox_ros_driver2"),
-                "launch",
-                "msg_MID360_launch.py",
+    optional_nodes = []
+    try:
+        start_livox_mid360 = IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                os.path.join(
+                    get_package_share_directory("livox_ros_driver2"),
+                    "launch",
+                    "msg_MID360_launch.py",
+                )
             )
         )
-    )
+        optional_nodes.append(start_livox_mid360)
+    except:
+        print("Not found livox_ros_driver2 package.")
 
     try:
         start_realsense = IncludeLaunchDescription(
@@ -49,10 +49,39 @@ def generate_launch_description():
                 )
             ),
             launch_arguments={"pointcloud.enable": "true"}.items(),
-            condition=LaunchConfigurationEquals("realsense_mode", "rs_d435"),
         )
+        optional_nodes.append(start_realsense)
     except:
-        pass
+        print("Not found realsense2_camera package.")
+
+    try:
+        start_std = IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                os.path.join(
+                    get_package_share_directory("std_detector"),
+                    "launch",
+                    "std_detector.launch.py",
+                )
+            )
+        )
+        optional_nodes.append(start_std)
+    except:
+        print("Not found std_detector package.")
+
+    try:
+        start_tare_planner = IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                os.path.join(
+                    get_package_share_directory("tare_planner"),
+                    "launch",
+                    "multi_explore.launch.py",
+                )
+            ),
+            condition=LaunchConfigurationEquals("planner_mode", "tare_planner"),
+        )
+        optional_nodes.append(start_tare_planner)
+    except:
+        print("Not found tare_planner package.")
 
     start_lidar_transform = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -64,17 +93,6 @@ def generate_launch_description():
         )
     )
 
-    start_fast_lio = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(
-                get_package_share_directory("fast_lio"),
-                "launch",
-                "mapping_mid360.launch.py",
-            )
-        ),
-        condition=LaunchConfigurationEquals("lio_mode", "fast_lio"),
-    )
-
     start_point_lio = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(
@@ -83,7 +101,9 @@ def generate_launch_description():
                 "point_lio.launch.py",
             )
         ),
-        condition=LaunchConfigurationEquals("lio_mode", "point_lio"),
+        launch_arguments={
+            "lidar_type": lidar_type
+        }.items(),
     )
 
     start_robot_communication = IncludeLaunchDescription(
@@ -152,17 +172,6 @@ def generate_launch_description():
         ),
     )
 
-    start_tare_planner = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(
-                get_package_share_directory("tare_planner"),
-                "launch",
-                "multi_explore.launch.py",
-            )
-        ),
-        condition=LaunchConfigurationEquals("planner_mode", "tare_planner"),
-    )
-
     start_rviz = Node(
         package="rviz2",
         executable="rviz2",
@@ -179,18 +188,15 @@ def generate_launch_description():
 
     # Add the actions
     ld.add_action(declare_robot_id)
-    ld.add_action(declare_lio_mode)
     ld.add_action(declare_planner_mode)
-    ld.add_action(declare_realsense_mode)
     ld.add_action(declare_checkTerrainConn)
 
-    try:
-        ld.add_action(start_realsense)
-    except:
-        pass
-    ld.add_action(start_livox_mid360)
+    for node in optional_nodes:
+        try:
+            ld.add_action(node)
+        except:
+            continue
     ld.add_action(start_lidar_transform)
-    ld.add_action(start_fast_lio)
     ld.add_action(start_point_lio)
     ld.add_action(TimerAction(period=10.0, actions=[start_robot_communication]))
     ld.add_action(start_local_planner)
@@ -198,7 +204,6 @@ def generate_launch_description():
     ld.add_action(start_terrain_analysis_ext)
     ld.add_action(start_sensor_scan_generation)
     ld.add_action(start_loam_interface)
-    ld.add_action(start_tare_planner)
     ld.add_action(TimerAction(period=8.0, actions=[start_rviz]))
 
     return ld
