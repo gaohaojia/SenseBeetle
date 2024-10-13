@@ -30,12 +30,17 @@ class LidarTransform : public rclcpp::Node {
   tf2::Transform frame_transform;
 
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
-  rclcpp::Subscription<livox_ros_driver2::msg::CustomMsg>::SharedPtr lidar_sub_;
+  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr lidar_sub_;
+  rclcpp::Subscription<livox_ros_driver2::msg::CustomMsg>::SharedPtr
+    livox_lidar_sub_;
   rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_pub_;
-  rclcpp::Publisher<livox_ros_driver2::msg::CustomMsg>::SharedPtr lidar_pub_;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr lidar_pub_;
+  rclcpp::Publisher<livox_ros_driver2::msg::CustomMsg>::SharedPtr
+    livox_lidar_pub_;
 
   void imu_callback(const sensor_msgs::msg::Imu::SharedPtr imu_msg);
-  void lidar_callback(
+  void lidar_callback(const sensor_msgs::msg::PointCloud2::SharedPtr lidar_msg);
+  void livox_lidar_callback(
     const livox_ros_driver2::msg::CustomMsg::SharedPtr lidar_msg);
 };
 }  // namespace lidar_transform

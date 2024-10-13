@@ -25,14 +25,21 @@ LidarTransform::LidarTransform(const rclcpp::NodeOptions& options)
   imu_sub_ = this->create_subscription<sensor_msgs::msg::Imu>(
     "imu_data", 10,
     std::bind(&LidarTransform::imu_callback, this, std::placeholders::_1));
-  lidar_sub_ = this->create_subscription<livox_ros_driver2::msg::CustomMsg>(
+  lidar_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "lidar_points", 10,
     std::bind(&LidarTransform::lidar_callback, this, std::placeholders::_1));
+  livox_lidar_sub_ =
+    this->create_subscription<livox_ros_driver2::msg::CustomMsg>(
+      "livox/lidar_points", 10,
+      std::bind(&LidarTransform::livox_lidar_callback, this,
+                std::placeholders::_1));
 
   imu_pub_ =
     this->create_publisher<sensor_msgs::msg::Imu>("imu_transformed", 10);
-  lidar_pub_ = this->create_publisher<livox_ros_driver2::msg::CustomMsg>(
+  lidar_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
     "lidar_transformed", 10);
+  livox_lidar_pub_ = this->create_publisher<livox_ros_driver2::msg::CustomMsg>(
+    "livox/lidar_transformed", 10);
 }
 
 void LidarTransform::imu_callback(
@@ -60,6 +67,22 @@ void LidarTransform::imu_callback(
 }
 
 void LidarTransform::lidar_callback(
+  const sensor_msgs::msg::PointCloud2::SharedPtr lidar_msg) {
+  pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_cloud(
+    new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::fromROSMsg(*lidar_msg, *pcl_cloud);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr transformed_cloud(
+    new pcl::PointCloud<pcl::PointXYZ>);
+  pcl_ros::transformPointCloud(*pcl_cloud, *transformed_cloud, frame_transform);
+
+  sensor_msgs::msg::PointCloud2 lidar_transformed;
+  pcl::toROSMsg(*transformed_cloud, lidar_transformed);
+  lidar_transformed.header.frame_id = lidar_msg->header.frame_id;
+  lidar_transformed.header.stamp = lidar_msg->header.stamp;
+  lidar_pub_->publish(lidar_transformed);
+}
+
+void LidarTransform::livox_lidar_callback(
   const livox_ros_driver2::msg::CustomMsg::SharedPtr lidar_msg) {
   pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_cloud(
     new pcl::PointCloud<pcl::PointXYZ>);
@@ -83,7 +106,7 @@ void LidarTransform::lidar_callback(
     lidar_msg->points[i].z = transformed_cloud->points[i].z;
   }
 
-  lidar_pub_->publish(*lidar_msg);
+  livox_lidar_pub_->publish(*lidar_msg);
 }
 
 }  // namespace lidar_transform
