@@ -23,16 +23,16 @@ LidarTransform::LidarTransform(const rclcpp::NodeOptions& options)
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
   imu_sub_ = this->create_subscription<sensor_msgs::msg::Imu>(
-    "livox/imu", 10,
+    "imu_raw", 10,
     std::bind(&LidarTransform::imu_callback, this, std::placeholders::_1));
   lidar_sub_ = this->create_subscription<livox_ros_driver2::msg::CustomMsg>(
-    "livox/lidar", 10,
+    "lidar_points", 10,
     std::bind(&LidarTransform::lidar_callback, this, std::placeholders::_1));
 
   imu_pub_ =
-    this->create_publisher<sensor_msgs::msg::Imu>("livox/imu_transformed", 10);
+    this->create_publisher<sensor_msgs::msg::Imu>("imu_transformed", 10);
   lidar_pub_ = this->create_publisher<livox_ros_driver2::msg::CustomMsg>(
-    "livox/lidar_transformed", 10);
+    "lidar_transformed", 10);
 }
 
 void LidarTransform::imu_callback(
