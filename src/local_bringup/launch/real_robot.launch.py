@@ -196,10 +196,7 @@ def generate_launch_description():
     ld.add_action(declare_checkTerrainConn)
 
     for node in optional_nodes:
-        try:
-            ld.add_action(node)
-        except:
-            continue
+        ld.add_action(node)
     ld.add_action(start_lidar_transform)
     ld.add_action(start_point_lio)
     ld.add_action(TimerAction(period=10.0, actions=[start_robot_communication]))
