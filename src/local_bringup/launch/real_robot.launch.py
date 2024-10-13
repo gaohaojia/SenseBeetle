@@ -23,6 +23,9 @@ def generate_launch_description():
     declare_checkTerrainConn = DeclareLaunchArgument(
         "checkTerrainConn", default_value="true", description=""
     )
+    declare_lidar_type = DeclareLaunchArgument(
+        "lidar_type", default_value="mid360", description=""
+    )
 
     optional_nodes = []
     try:
@@ -188,6 +191,7 @@ def generate_launch_description():
 
     # Add the actions
     ld.add_action(declare_robot_id)
+    ld.add_action(declare_lidar_type)
     ld.add_action(declare_planner_mode)
     ld.add_action(declare_checkTerrainConn)
 
