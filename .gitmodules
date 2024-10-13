@@ -1,6 +1,6 @@
 [submodule "src/Point_LIO"]
 	path = src/Point_LIO
 	url = https://github.com/gaohaojia/Point_LIO
-[submodule "src/livox_ros_drvier2"]
-	path = src/livox_ros_drvier2
+[submodule "src/livox_ros_driver2"]
+	path = src/livox_ros_driver2
 	url = https://github.com/gaohaojia/Livox_ROS_Driver2
