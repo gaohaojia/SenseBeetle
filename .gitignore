@@ -6,5 +6,4 @@ __pycache__
 .cache
 .vscode
 /src/STD_ros2
-/src/livox_ros_driver2
 /src/tare_planner
