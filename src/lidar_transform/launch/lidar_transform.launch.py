@@ -30,7 +30,6 @@ def generate_launch_description():
     camera_rotateP = offset_params["camera_rotateP"]
     camera_rotateY = offset_params["camera_rotateY"]
 
-
     lidar_transform_node = Node(
         package="lidar_transform",
         executable="lidar_transform_node",
