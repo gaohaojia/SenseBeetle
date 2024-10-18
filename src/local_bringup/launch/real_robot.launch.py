@@ -41,6 +41,33 @@ def generate_launch_description():
         optional_nodes.append(start_livox_mid360)
     except:
         print("Not found livox_ros_driver2 package.")
+    
+    try:
+        start_unilidar_lidar = IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                os.path.join(
+                    get_package_share_directory("unitree_lidar_ros2"),
+                    "launch.py",
+                )
+            )
+        )
+        optional_nodes.append(start_unilidar_lidar)
+    except:
+        print("Not found unitree_lidar_ros2 package.")
+
+    try:
+        start_starros_lidar = IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                os.path.join(
+                    get_package_share_directory("starros"),
+                    "launch",
+                    "Dome.launch.py"
+                )
+            )
+        )
+        optional_nodes.append(start_starros_lidar)
+    except:
+        print("Not found starros package.")
 
     try:
         start_realsense = IncludeLaunchDescription(
