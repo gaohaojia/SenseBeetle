@@ -11,11 +11,15 @@ from launch.conditions import LaunchConfigurationEquals
 
 def generate_launch_description():
     robot_id = LaunchConfiguration("robot_id")
+    robot_type = LaunchConfiguration("robot_type")
     checkTerrainConn = LaunchConfiguration("checkTerrainConn")
     lidar_type = LaunchConfiguration("lidar_type")
 
     declare_robot_id = DeclareLaunchArgument(
         "robot_id", default_value="0", description=""
+    )
+    declare_robot_type = DeclareLaunchArgument(
+        "robot_type", default_value="v4", description=""
     )
     declare_planner_mode = DeclareLaunchArgument(
         "planner_mode", default_value="none", description=""
@@ -120,7 +124,10 @@ def generate_launch_description():
                 "launch",
                 "lidar_transform.launch.py",
             )
-        )
+        ),
+        launch_arguments={
+            "robot_type": robot_type
+        }.items(),
     )
 
     start_point_lio = IncludeLaunchDescription(
@@ -156,7 +163,10 @@ def generate_launch_description():
                 "launch",
                 "local_planner.launch.py",
             )
-        )
+        ),
+        launch_arguments={
+            "robot_type": robot_type,
+        }.items(),
     )
 
     start_terrain_analysis = IncludeLaunchDescription(
@@ -218,6 +228,7 @@ def generate_launch_description():
 
     # Add the actions
     ld.add_action(declare_robot_id)
+    ld.add_action(declare_robot_type)
     ld.add_action(declare_lidar_type)
     ld.add_action(declare_planner_mode)
     ld.add_action(declare_checkTerrainConn)

@@ -1,20 +1,64 @@
-import os
-import yaml
-
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch_ros.actions import Node
 from launch.substitutions import LaunchConfiguration
+from launch.conditions import LaunchConfigurationEquals
+
+import os
+import yaml
 
 
 def generate_launch_description():
-    common_params_file = os.path.join(
-        get_package_share_directory("local_planner"),
-        "config",
-        "common_params.yaml",
-        # get_package_share_directory("local_planner"), "config", "common_params_v3.yaml"
+    robot_type = LaunchConfiguration("robot_type")
+
+    declare_robot_type = DeclareLaunchArgument(
+        "robot_type", default_value="simulated", description=""
     )
+
+    if LaunchConfigurationEquals(robot_type, "v4"):
+        common_params_file = os.path.join(
+            get_package_share_directory("local_planner"),
+            "config",
+            "common_params_v4.yaml",
+        )
+        local_planner_file = os.path.join(
+            get_package_share_directory("local_planner"),
+            "config",
+            "local_planner_v4.yaml",
+        )
+        path_follower_file = os.path.join(
+            get_package_share_directory("local_planner"),
+            "config",
+            "path_follower_v4.yaml",
+        )
+        path_folder = os.path.join(
+            get_package_share_directory("local_planner"),
+            "paths",
+            "v4",
+        )
+    else:
+        common_params_file = os.path.join(
+            get_package_share_directory("local_planner"),
+            "config",
+            "common_params_simulated.yaml",
+        )
+        local_planner_file = os.path.join(
+            get_package_share_directory("local_planner"),
+            "config",
+            "local_planner_simulated.yaml",
+        )
+        path_follower_file = os.path.join(
+            get_package_share_directory("local_planner"),
+            "config",
+            "path_follower_simulated.yaml",
+        )
+        path_folder = os.path.join(
+            get_package_share_directory("local_planner"),
+            "paths",
+            "simulated",
+        )
+
     with open(common_params_file, "r") as file:
         params = yaml.safe_load(file)
 
@@ -51,12 +95,7 @@ def generate_launch_description():
         output="screen",
         parameters=[
             {
-                "pathFolder": os.path.join(
-                    get_package_share_directory("local_planner"),
-                    "paths",
-                    "original",
-                    # get_package_share_directory("local_planner"), "paths", "v3"
-                ),
+                "pathFolder": path_folder,
                 "twoWayDrive": twoWayDrive,
                 "maxSpeed": maxSpeed,
                 "autonomyMode": autonomyMode,
@@ -65,12 +104,7 @@ def generate_launch_description():
                 "goalX": goalX,
                 "goalY": goalY,
             },
-            os.path.join(
-                get_package_share_directory("local_planner"),
-                "config",
-                "local_planner.yaml",
-                # "local_planner_v3.yaml",
-            ),
+            local_planner_file,
         ],
     )
 
@@ -87,18 +121,14 @@ def generate_launch_description():
                 "autonomySpeed": autonomySpeed,
                 "joyToSpeedDelay": joyToSpeedDelay,
             },
-            os.path.join(
-                get_package_share_directory("local_planner"),
-                "config",
-                "path_follower.yaml",
-                # "path_follower_v3.yaml",
-            ),
+            path_follower_file,
         ],
     )
 
     ld = LaunchDescription()
 
     # Add the actions
+    ld.add_action(declare_robot_type)
     ld.add_action(declare_twoWayDrive)
     ld.add_action(declare_maxSpeed)
     ld.add_action(declare_autonomyMode)

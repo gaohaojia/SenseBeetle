@@ -1,18 +1,33 @@
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import TimerAction
+from launch.actions import DeclareLaunchArgument, TimerAction
 from launch_ros.actions import Node
+from launch.substitutions import LaunchConfiguration
+from launch.conditions import LaunchConfigurationEquals
 import os
 import yaml
 
 
 def generate_launch_description():
-    params_file = os.path.join(
-        get_package_share_directory("lidar_transform"),
-        "config",
-        "lidar_transform_params.yaml",
-        # "lidar_transform_params_v3.yaml",
+    robot_type = LaunchConfiguration("robot_type")
+
+    declare_robot_type = DeclareLaunchArgument(
+        "robot_type", default_value="simulated", description=""
     )
+
+    if LaunchConfigurationEquals(robot_type, "v4"):
+        params_file = os.path.join(
+            get_package_share_directory("lidar_transform"),
+            "config",
+            "lidar_transform_params_v4.yaml",
+        )
+    else:
+        params_file = os.path.join(
+            get_package_share_directory("lidar_transform"),
+            "config",
+            "lidar_transform_params_simulated.yaml",
+        )
+
     with open(params_file, "r") as file:
         offset_params = yaml.safe_load(file)["lidar_transform"]["ros__parameters"]
 
@@ -81,6 +96,7 @@ def generate_launch_description():
     )
 
     ld = LaunchDescription()
+    ld.add_action(declare_robot_type)
 
     ld.add_action(lidar_trans_publisher)
     ld.add_action(realsense_trans_publisher)
