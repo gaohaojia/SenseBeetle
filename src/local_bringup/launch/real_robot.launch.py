@@ -19,7 +19,7 @@ def generate_launch_description():
         "robot_id", default_value="0", description=""
     )
     declare_robot_type = DeclareLaunchArgument(
-        "robot_type", default_value="v4", description=""
+        "robot_type", default_value="simulated", description=""
     )
     declare_planner_mode = DeclareLaunchArgument(
         "planner_mode", default_value="none", description=""
