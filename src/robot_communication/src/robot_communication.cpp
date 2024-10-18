@@ -87,11 +87,11 @@ RobotCommunicationNode::~RobotCommunicationNode() {
   if (recv_thread_.joinable()) {
     recv_thread_.join();
   }
-  if (prepare_buffer_thread_.joinable()) {
-    prepare_buffer_thread_.join();
-  }
   if (parse_buffer_thread_.joinable()) {
     parse_buffer_thread_.join();
+  }
+  if (tf_update_thread_.joinable()) {
+    tf_update_thread_.join();
   }
   close(sockfd);
 }
@@ -100,25 +100,31 @@ RobotCommunicationNode::~RobotCommunicationNode() {
 void RobotCommunicationNode::InitMapTF() {
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
+  geometry_msgs::msg::TransformStamped local_to_global_transform,
+    camera_to_base_transform;
+  while (rclcpp::ok()) {
+    try {
+      local_to_global_transform = tf_buffer_->lookupTransform(
+        MAP_FRAME, LOCAL_MAP_FRAME, tf2::TimePointZero,
+        tf2::durationFromSec(5.0));
+      local_to_global_matrix =
+        tf2::transformToEigen(local_to_global_transform.transform)
+          .matrix()
+          .cast<double>();
+      break;
+    } catch (const tf2::TransformException& ex) {
+      RCLCPP_WARN(this->get_logger(), "Could not transform: %s", ex.what());
+    }
+  }
   try {
-    geometry_msgs::msg::TransformStamped local_to_global_transform,
-      camera_to_base_transform;
-    local_to_global_transform = tf_buffer_->lookupTransform(
-      MAP_FRAME, LOCAL_MAP_FRAME, tf2::TimePointZero,
-      tf2::durationFromSec(10.0));
-    local_to_global_matrix =
-      tf2::transformToEigen(local_to_global_transform.transform)
-        .matrix()
-        .cast<double>();
     camera_to_base_transform = tf_buffer_->lookupTransform(
-      BASE_FRAME, CAMERA_FRAME, tf2::TimePointZero, tf2::durationFromSec(10.0));
+      BASE_FRAME, CAMERA_FRAME, tf2::TimePointZero, tf2::durationFromSec(5.0));
     camera_to_base_matrix =
       tf2::transformToEigen(camera_to_base_transform.transform)
         .matrix()
         .cast<double>();
   } catch (const tf2::TransformException& ex) {
-    RCLCPP_INFO(this->get_logger(), "Could not transform!");
-    return;
+    RCLCPP_WARN(this->get_logger(), "Could not transform camera!");
   }
   tf_update_thread_ =
     std::thread(&RobotCommunicationNode::TFUpdateThread, this);
@@ -139,10 +145,9 @@ void RobotCommunicationNode::InitClient() {
 
   send_thread_ = std::thread(&RobotCommunicationNode::NetworkSendThread, this);
   recv_thread_ = std::thread(&RobotCommunicationNode::NetworkRecvThread, this);
-  prepare_buffer_thread_ =
-    std::thread(&RobotCommunicationNode::PrepareBufferThread, this);
   parse_buffer_thread_ =
     std::thread(&RobotCommunicationNode::ParseBufferThread, this);
+
   RCLCPP_INFO(this->get_logger(), "Client start! Target ip: %s, port: %d",
               ip.c_str(), port);
 }
@@ -176,11 +181,8 @@ void RobotCommunicationNode::RegisteredScanCallBack(
 
   std::vector<uint8_t> data_buffer =
     SerializeMsg<sensor_msgs::msg::PointCloud2>(totalRegisteredScan);
-  PrepareBuffer pthread_buffer = {robot_id, data_buffer, 0};
-  if (prepare_buffer_queue.size() >= MAX_BUFFER_QUEUE_SIZE) {
-    return;
-  }
-  prepare_buffer_queue.push(pthread_buffer);
+  SendBuffer prepare_buffer = {robot_id, data_buffer, 0};
+  PrepareBuffer(prepare_buffer);
 }
 
 void RobotCommunicationNode::RealsensePointCallBack(
@@ -211,11 +213,8 @@ void RobotCommunicationNode::RealsensePointCallBack(
 
   std::vector<uint8_t> data_buffer =
     SerializeMsg<sensor_msgs::msg::PointCloud2>(totalRegisteredScan);
-  PrepareBuffer pthread_buffer = {robot_id, data_buffer, 1};
-  if (prepare_buffer_queue.size() >= MAX_BUFFER_QUEUE_SIZE) {
-    return;
-  }
-  prepare_buffer_queue.push(pthread_buffer);
+  SendBuffer prepare_buffer = {robot_id, data_buffer, 1};
+  PrepareBuffer(prepare_buffer);
 }
 
 void RobotCommunicationNode::OdometryCallBack(
@@ -251,22 +250,19 @@ void RobotCommunicationNode::TFUpdateThread() {
     transformStamped.header.stamp = this->get_clock()->now();
     std::vector<uint8_t> data_buffer =
       SerializeMsg<geometry_msgs::msg::TransformStamped>(transformStamped);
-    PrepareBuffer pthread_buffer = {robot_id, data_buffer, 2};
-    if (prepare_buffer_queue.size() >= MAX_BUFFER_QUEUE_SIZE) {
-      return;
-    }
-    prepare_buffer_queue.push(pthread_buffer);
+    SendBuffer prepare_buffer = {robot_id, data_buffer, 2};
+    PrepareBuffer(prepare_buffer);
   }
 }
 
 void RobotCommunicationNode::NetworkSendThread() {
   while (rclcpp::ok()) {
-    if (buffer_queue.empty()) {
+    if (send_buffer_queue.empty()) {
       std::this_thread::sleep_for(std::chrono::nanoseconds(10));
       continue;
     }
-    SendBuffer s_buffer = buffer_queue.front();
-    buffer_queue.pop();
+    SendBuffer s_buffer = send_buffer_queue.front();
+    send_buffer_queue.pop();
     if (sendto(sockfd, s_buffer.buffer.data(), s_buffer.buffer.size(), 0,
                (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
       RCLCPP_ERROR(this->get_logger(), "Send failed!");
@@ -284,47 +280,36 @@ void RobotCommunicationNode::NetworkRecvThread() {
       continue;
     }
     buffer_tmp.resize(n);
-    if (parse_buffer_queue.size() >= MAX_BUFFER_QUEUE_SIZE) {
+    if (recv_buffer_queue.size() >= MAX_BUFFER_QUEUE_SIZE) {
       continue;
     }
-    parse_buffer_queue.push(buffer_tmp);
+    recv_buffer_queue.push(buffer_tmp);
   }
 }
 
-void RobotCommunicationNode::PrepareBufferThread() {
-  while (rclcpp::ok()) {
-    if (prepare_buffer_queue.empty()) {
-      std::this_thread::sleep_for(std::chrono::nanoseconds(10));
-      continue;
-    }
-    PrepareBuffer pthread_buffer = prepare_buffer_queue.front();
-    prepare_buffer_queue.pop();
-    const int total_packet =
-      (pthread_buffer.buffer.size() + MAX_PACKET_SIZE - 1) / MAX_PACKET_SIZE;
-    if (prepare_buffer_queue.size() >= MAX_BUFFER_QUEUE_SIZE) {
-      return;
-    }
-    for (int i = 0; i < total_packet; i++) {
-      uint8_t id = pthread_buffer.id;
-      uint8_t type = pthread_buffer.msg_type;
-      uint16_t idx = i;
-      uint8_t max_idx = total_packet;
-      std::vector<uint8_t> header(sizeof(uint32_t) + sizeof(uint8_t));
-      std::memcpy(header.data(), &id, sizeof(id));
-      std::memcpy(header.data() + sizeof(uint8_t), &type, sizeof(type));
-      std::memcpy(header.data() + sizeof(uint16_t), &idx, sizeof(idx));
-      std::memcpy(header.data() + sizeof(uint32_t), &max_idx, sizeof(max_idx));
-      std::vector<uint8_t> packet;
-      packet.insert(packet.end(), header.begin(), header.end());
-      packet.insert(
-        packet.end(), pthread_buffer.buffer.begin() + i * MAX_PACKET_SIZE,
-        i == total_packet - 1
-          ? pthread_buffer.buffer.end()
-          : pthread_buffer.buffer.begin() + (i + 1) * MAX_PACKET_SIZE);
-      SendBuffer s_buffer;
-      s_buffer.buffer = packet;
-      buffer_queue.push(s_buffer);
-    }
+void RobotCommunicationNode::PrepareBuffer(const SendBuffer& prepare_buffer) {
+  const int total_packet =
+    (prepare_buffer.buffer.size() + MAX_PACKET_SIZE - 1) / MAX_PACKET_SIZE;
+  for (int i = 0; i < total_packet; i++) {
+    uint8_t id = prepare_buffer.id;
+    uint8_t type = prepare_buffer.msg_type;
+    uint16_t idx = i;
+    uint8_t max_idx = total_packet;
+    std::vector<uint8_t> header(sizeof(uint32_t) + sizeof(uint8_t));
+    std::memcpy(header.data(), &id, sizeof(id));
+    std::memcpy(header.data() + sizeof(uint8_t), &type, sizeof(type));
+    std::memcpy(header.data() + sizeof(uint16_t), &idx, sizeof(idx));
+    std::memcpy(header.data() + sizeof(uint32_t), &max_idx, sizeof(max_idx));
+    std::vector<uint8_t> packet;
+    packet.insert(packet.end(), header.begin(), header.end());
+    packet.insert(
+      packet.end(), prepare_buffer.buffer.begin() + i * MAX_PACKET_SIZE,
+      i == total_packet - 1
+        ? prepare_buffer.buffer.end()
+        : prepare_buffer.buffer.begin() + (i + 1) * MAX_PACKET_SIZE);
+    SendBuffer s_buffer;
+    s_buffer.buffer = packet;
+    send_buffer_queue.push(s_buffer);
   }
 }
 
@@ -333,12 +318,12 @@ void RobotCommunicationNode::ParseBufferThread() {
   int packet_type = -1;
   std::vector<uint8_t> buffer;
   while (rclcpp::ok()) {
-    if (parse_buffer_queue.empty()) {
+    if (recv_buffer_queue.empty()) {
       std::this_thread::sleep_for(std::chrono::nanoseconds(10));
       continue;
     }
-    std::vector<uint8_t> buffer_tmp = parse_buffer_queue.front();
-    parse_buffer_queue.pop();
+    std::vector<uint8_t> buffer_tmp = recv_buffer_queue.front();
+    recv_buffer_queue.pop();
 
     uint8_t id, type, max_idx;
     uint16_t idx;
@@ -348,16 +333,11 @@ void RobotCommunicationNode::ParseBufferThread() {
     std::memcpy(&max_idx, buffer_tmp.data() + sizeof(uint32_t),
                 sizeof(max_idx));
 
-    RCLCPP_INFO(this->get_logger(), "Received packet type: %d, IDX: %d",
-                packet_type, idx);
-
     if (packet_type == -1) {
       packet_type = type;
-    } else if (packet_type < type) {
-      continue;
-    } else if (packet_type > type) {
-      packet_type = type;
+    } else if (packet_type != type) {
       packet_idx = 0;
+      packet_type = -1;
       buffer = std::vector<uint8_t>(0);
     }
 

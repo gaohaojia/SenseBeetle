@@ -1,6 +1,6 @@
 robot_communication:
   ros__parameters:
-    network_ip: "192.168.43.59"
+    network_ip: "192.168.31.208"
     network_port: 12130
     multi_positionX: 0.0
     multi_positionY: 0.0
